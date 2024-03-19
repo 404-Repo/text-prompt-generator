@@ -94,3 +94,25 @@ def test_filter_prompts_with_words():
                  "building with the yellow column base"].sort()
 
     assert ref_lines == res_lines
+
+
+def test_single_colour_filter():
+    single_word_colors = ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
+    test_dataset = ["A golden frog",
+                    "black",
+                    "frog",
+                    "Green bug",
+                    " green",
+                    "car"]
+    res_lines = []
+    for l in test_dataset:
+        res_lines.append(' '.join(word.lower() for word in l.split()))
+
+    res_lines = [l for l in res_lines if l not in single_word_colors].sort()
+
+    ref_lines = ["a golden frog",
+                 "frog",
+                 "green bug",
+                 "car"].sort()
+
+    assert ref_lines == res_lines
