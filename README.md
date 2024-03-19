@@ -52,7 +52,10 @@ prompt: "Generate a prompt dataset for generating 3D models.
 obj_categories: ["animals", "furniture", "cars", "fantasy creatures", "weapons", "buildings", "trees", "plants", "jewelry", "rocks", "gadgets"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
-filter_prompts_with_words: ["sky", "river", "ocean", "sea", "garden", "wind", "field", "jungle", "forest", "space", "pool"]
+filter_prompts_with_words: ["sky", "river", "ocean", "sea", "garden", "wind", "field", "jungle", "forest", "space", "pool", "pond", "I", "fields", "floor", "grass"]
+
+# prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
+filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
 
 # amount of prompts to generate per category.
 prompts_num: 10
