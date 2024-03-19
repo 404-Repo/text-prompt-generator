@@ -20,7 +20,6 @@ if __name__ == '__main__':
 
     with open("launching_config.yml", "r") as file:
         config_data = yaml.safe_load(file)
-        # print(config_data)
 
     # model to pick up from the hugging face (should have .gguf extension to run with llama)
     hf_model_repo = config_data["hugging_face_repo"]
