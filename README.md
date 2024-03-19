@@ -57,8 +57,11 @@ filter_prompts_with_words: ["sky", "river", "ocean", "sea", "garden", "wind", "f
 # amount of prompts to generate per category.
 prompts_num: 10
 
+# specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
+iteration_num: 1
+
 # file where to output the prompts (.txt file)
-prompts_output_file: "prompts_dataset1.txt"
+prompts_output_file: "prompts_dataset.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
