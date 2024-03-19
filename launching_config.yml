@@ -4,6 +4,12 @@ hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
 # the file with model that will be downloaded from the hugging face (note on file format: llama-cpp support .gguf only)
 llm_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
 
+# one of the models supported by groq platform
+groq_llm_model: "llama2-70b-4096"
+
+#
+groq_api_key: "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"
+
 # path to where download the LLM model
 cache_folder: "./model"
 
@@ -21,10 +27,13 @@ prompt: "Generate a prompt dataset for generating 3D models.
          Generate prompts_num prompts. "
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["animals", "furniture", "cars", "fantasy creatures", "weapons", "buildings", "trees", "plants", "jewelry", "rocks", "gadgets"]
+obj_categories: ["animals", "furniture", "cars", "creatures", "weapons", "buildings", "trees", "plants", "jewelry", "rocks", "gadgets"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
-filter_prompts_with_words: ["sky", "river", "ocean", "sea", "garden", "wind", "field", "jungle", "forest", "space", "pool", "pond", "I", "fields", "floor", "grass"]
+filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field",
+                            "jungle", "forest", "space", "pool", "pond", "I", "fields",
+                            "floor", "grass", "nature", "mist", "air", "waterfall", "music",
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt"]
 
 # prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
 filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
