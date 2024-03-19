@@ -17,13 +17,15 @@ if __name__ == '__main__':
         for i, l in enumerate(lines):
             lines[i] = ' '.join(word.lower() for word in l.split())
 
-
     print(f"[INFO] Total lines in the dataset before: {colorama.Fore.GREEN}{ len(lines)}{colorama.Style.RESET_ALL}")
+
     articles = ["a", "the", "an"]
     lines = [' '.join(word for word in sentence.split() if word.lower() not in articles) for sentence in lines]
     lines = list(set(lines))
     lines = list(filter(lambda sentence: 3 <= len(sentence) <= float("inf"), lines))
     lines = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(config_data["filter_prompts_with_words"]), lines))
+    lines = [l for l in lines if l not in config_data["filter_colors"]]
+
     print(f"[INFO] Total lines in the dataset after: {colorama.Fore.GREEN}{ len(lines)}{colorama.Style.RESET_ALL}")
 
     with open(config_data["prompts_output_file"], "w") as file:
