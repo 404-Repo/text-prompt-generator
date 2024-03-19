@@ -8,6 +8,7 @@ import colorama
 import re
 import yaml
 import random
+import sys
 
 
 if __name__ == '__main__':
@@ -41,8 +42,13 @@ if __name__ == '__main__':
     print("[INFO] Preparing model.")
     t1 = time()
 
+    if config_data['llm_model']['seed'] < 0:
+        seed = random.randint(0, sys.maxsize)
+    else:
+        seed = config_data['llm_model']['seed']
+
     llm_model = Llama(model_path=model_path,
-                      seed=config_data['llm_model']['seed'],
+                      seed=seed,
                       n_ctx=config_data['llm_model']['n_ctx'],
                       last_n_tokens_size=config_data['llm_model']['last_n_tokens_size'],
                       n_threads=config_data['llm_model']['n_threads'],
@@ -88,7 +94,7 @@ if __name__ == '__main__':
             prompt = prompt.replace("member_placeholder", category)
             output = llm_model.create_completion(prompt=prompt,
                                                  max_tokens=config_data['llm_model']['max_tokens'],
-                                                 seed=config_data['llm_model']['seed'],
+                                                 seed=seed,
                                                  echo=False,
                                                  grammar=grammar,
                                                  temperature=temperature)
