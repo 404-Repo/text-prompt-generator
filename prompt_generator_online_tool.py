@@ -3,9 +3,9 @@ import yaml
 import tqdm
 import re
 import sys
-import os
 import colorama
 import random
+import copy
 from time import time
 
 
@@ -20,7 +20,7 @@ if __name__ == '__main__':
         config_data = yaml.safe_load(file)
 
     # prompt for dataset generation
-    prompt = config_data["prompt"]
+    prompt = config_data["prompt_groq"]
     prompt = prompt.replace("prompts_num", str(config_data["prompts_num"]))
 
     print("[INFO] Input prompt: ")
@@ -40,11 +40,13 @@ if __name__ == '__main__':
 
     for i in range(config_data["iteration_num"]):
         print(f"\n[INFO] Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL} \n")
+        prompt_in = copy.copy(prompt)
+
         for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
             temperature = random.uniform(0.45, 0.65)
             print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
             # find 'member' in the input string and replace it with category
-            prompt = prompt.replace("member_placeholder", category)
+            prompt_in = prompt_in.replace("member_placeholder", category)
 
             if config_data['llm_model']['seed'] < 0:
                 seed = random.randint(0, sys.maxsize)
@@ -53,41 +55,36 @@ if __name__ == '__main__':
 
             output = client.chat.completions.create(messages=[
                                                 {
-                                                    "role": "system",
-                                                    "content": "you are a helpful assistant. Be silent."
-                                                },
-                                                {
                                                     "role": "user",
-                                                    "content": prompt + " Output format: python string with single prompt without numbers and ], [, (, ), {, }. "
-                                                                        " Example: a red gorilla with green eyes. Single prompt per line. Avoid extra output."
+                                                    "content": prompt_in
                                                 }
                                             ],
                                             model=config_data["groq_llm_model"],
                                             temperature=temperature,
                                             seed=seed,
+                                            top_p=1,
                                             max_tokens=config_data["llm_model"]["max_tokens"])
 
-            prompt = prompt.replace(category, "member_placeholder")
+            prompt_in = prompt_in.replace(category, "member_placeholder")
 
             # extracting the response of the llm model: generated prompts
             output_list.append(output.choices[0].message.content)
 
-        t2 = time()
-        duration = (t2 - t1) / 60.0
-        print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
-        print("[INFO] Done.")
-
-        # pattern = r'[{}\[\]()\n"\'\\;/]'
-        pattern = r'[^a-zA-Z\s]'
+        pattern = r'[^a-zA-Z\s-]'
         result_prompts = []
         for el in output_list:
-            lines = el.split(",")
+            lines = el.split(".")
             for i in range(len(lines)):
                 lines[i] = re.sub(pattern, '', lines[i])
             result_prompts += lines
 
         # writing generated prompts to file
         with open(config_data["prompts_output_file"], "a") as file:
-            for prompt in result_prompts:
-                print(prompt)
-                file.write("%s\n" % prompt)
+            for p in result_prompts:
+                # print(prompt)
+                file.write("%s" % p)
+
+    t2 = time()
+    duration = (t2 - t1) / 60.0
+    print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
+    print("[INFO] Done.")
