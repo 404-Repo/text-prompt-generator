@@ -9,6 +9,16 @@ import copy
 from time import time
 
 
+def make_lowercase_except_ta(text):
+    modified_text = ''
+    for char in text:
+        if char.upper() not in ['T', 'A']:
+            modified_text += char.lower()
+        else:
+            modified_text += char
+    return modified_text
+
+
 if __name__ == '__main__':
     colorama.init()
 
@@ -70,18 +80,23 @@ if __name__ == '__main__':
             # extracting the response of the llm model: generated prompts
             output_list.append(output.choices[0].message.content)
 
-        pattern = r'[^a-zA-Z\s-]'
         result_prompts = []
         for el in output_list:
             lines = el.split(".")
+            processed_lines = []
             for i in range(len(lines)):
-                lines[i] = re.sub(pattern, '', lines[i])
-            result_prompts += lines
+                line = re.sub(r'[^a-zA-Z`\s-]', '', lines[i])
+                line = make_lowercase_except_ta(line)
+                split_line = re.findall(r'[A-Z][^A-Z]*', line)
+                final_lines = [split_line[j] + split_line[j+1] if j+1 < len(split_line) and split_line[j+1][0].islower() else split_line[j]
+                              for j in range(len(split_line)) if split_line[j][0].isupper()]
+                final_lines = [l + "\n" if "\n" not in l else l for l in final_lines]
+                processed_lines += final_lines
+            result_prompts += processed_lines
 
         # writing generated prompts to file
         with open(config_data["prompts_output_file"], "a") as file:
             for p in result_prompts:
-                # print(prompt)
                 file.write("%s" % p)
 
     t2 = time()
