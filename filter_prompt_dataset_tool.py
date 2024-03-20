@@ -22,7 +22,7 @@ if __name__ == '__main__':
     articles = ["a", "the", "an"]
     lines = [' '.join(word for word in sentence.split() if word.lower() not in articles) for sentence in lines]
     lines = list(set(lines))
-    lines = list(filter(lambda sentence: 3 <= len(sentence) <= float("inf"), lines))
+    lines = list(filter(lambda sentence: 3 <= len(sentence) <= 40, lines))
     lines = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(config_data["filter_prompts_with_words"]), lines))
     lines = [l for l in lines if l not in config_data["filter_colors"]]
 
