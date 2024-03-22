@@ -4,7 +4,7 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", required=True, help="either set to 'online' or 'offline' or 'filter'.")
+    parser.add_argument("--mode", required=True, help="either set to 'online' or 'offline' or 'filter' or 'grammar'.")
     args = parser.parse_args()
 
     prompt_generator = PromptGenerator.PromptGenerator()
@@ -18,6 +18,11 @@ if __name__ == '__main__':
 
     elif args.mode == "filter":
         prompt_generator.filter_prompts()
+
+    elif args.mode == "grammar":
+        prompts = prompt_generator.load_file_with_prompts()
+        checked_prompts = prompt_generator.check_grammar(prompts)
+        prompt_generator.save_prompts(checked_prompts, "w")
     else:
-        raise ValueError(f"Unknown mode was specified: {args.mode}. Supported modes are 'online', 'offline', 'filter'.")
+        raise ValueError(f"Unknown mode was specified: {args.mode}. Supported modes are 'online', 'offline', 'filter', 'grammar.")
 
