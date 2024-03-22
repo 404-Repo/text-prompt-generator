@@ -7,8 +7,7 @@ import colorama
 import random
 import tqdm
 
-import spacy
-import contextualSpellCheck
+import gramformer
 import llama_cpp
 import groq
 
@@ -17,18 +16,22 @@ from time import time
 
 
 '''
+Class that implements a text prompt generator for creating prompts for generating 3D models.
+It provides access to two different LLM APIs:
+1) Groq (online) - platform that provides access to three LLM models with quick inference
+2) Offline LLM - slower than Groq but any LLM model can be plugged in that is compatible with llama-cpp
 '''
 class PromptGenerator:
     def __init__(self):
         colorama.init()
         self.__config_data = self.load_config_file()
-        self.__nlp = spacy.load("en_core_web_sm")
-        contextualSpellCheck.add_to_pipe(self.__nlp)
+        self.__gf = gramformer.Gramformer(models=1, use_gpu=True)  # 1=corrector, 2=detector
 
     '''
+    Function that calls groq api for generating requested output 
     '''
     def online_generator(self):
-        print("*" * 40)
+        print("\n", "*" * 40)
         print("[INFO] *** Prompt Dataset Generator ***")
         print("*" * 40, "\n")
 
@@ -75,7 +78,8 @@ class PromptGenerator:
                 output_list.append(output.choices[0].message.content)
 
             processed_prompts = self.post_process_prompts(output_list)
-            self.save_prompts(processed_prompts)
+            checked_prompts = self.check_grammar(processed_prompts)
+            self.save_prompts(checked_prompts)
 
         t2 = time()
         duration = (t2 - t1) / 60.0
@@ -83,6 +87,7 @@ class PromptGenerator:
         print("[INFO] Done.")
 
     '''
+    llama-cpp 
     '''
     def offline_generator(self):
         print("*" * 40)
@@ -180,8 +185,6 @@ class PromptGenerator:
             prompts = [line.rstrip() for line in file]
             for i, p in enumerate(prompts):
                 prompts[i] = ' '.join(word.lower() for word in p.split())
-                prompt = self.__nlp(prompts[i])
-                prompts[i] = prompt._.outcome_spellCheck
 
         print(f"[INFO] Total lines in the dataset before: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
 
@@ -191,10 +194,23 @@ class PromptGenerator:
         prompts = list(filter(lambda sentence: 5 <= len(sentence) <= 100, prompts))
         prompts = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(self.__config_data["filter_prompts_with_words"]), prompts))
         prompts = [p for p in prompts if p not in self.__config_data["filter_colors"]]
+        prompts = [l + "\n" if "\n" not in l else l for l in prompts]
 
         print(f"[INFO] Total lines in the dataset after: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
 
-        self.save_prompts(prompts)
+        self.save_prompts(prompts, "w")
+
+    def check_grammar(self, prompts: list):
+        print("[INFO] Performing spell check of the generated prompts")
+        t1 = time()
+
+        for i in tqdm.trange(len(prompts)):
+            prompts[i] = str(self.__gf.correct(prompts[i], max_candidates=1))
+
+        t2 = time()
+        duration = (t2 - t1) / 60.0
+        print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
+        return prompts
 
     '''
     '''
