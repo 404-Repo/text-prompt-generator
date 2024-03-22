@@ -23,5 +23,4 @@ dependencies:
     - tqdm
     - pytest
     - groq
-    - spacy
-    - contextualSpellCheck
+    - "git+https://github.com/PrithivirajDamodaran/Gramformer.git"
