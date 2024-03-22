@@ -205,7 +205,10 @@ class PromptGenerator:
         t1 = time()
 
         for i in tqdm.trange(len(prompts)):
-            prompts[i] = str(self.__gf.correct(prompts[i], max_candidates=1))
+            prompt = str(self.__gf.correct(prompts[i], max_candidates=1))
+            prompts[i] = re.sub(r'[^a-zA-Z`\s-]', '', prompt)
+
+        prompts = [l + "\n" if "\n" not in l else l for l in prompts]
 
         t2 = time()
         duration = (t2 - t1) / 60.0
@@ -219,6 +222,11 @@ class PromptGenerator:
         with open("launching_config.yml", "r") as file:
             config_data = yaml.safe_load(file)
         return config_data
+
+    def load_file_with_prompts(self):
+        with open(self.__config_data["prompts_output_file"], "r") as file:
+            prompts = [line.rstrip() for line in file]
+        return prompts
 
     '''
     
