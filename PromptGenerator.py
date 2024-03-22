@@ -7,6 +7,8 @@ import colorama
 import random
 import tqdm
 
+import spacy
+import contextualSpellCheck
 import llama_cpp
 import groq
 
@@ -20,6 +22,8 @@ class PromptGenerator:
     def __init__(self):
         colorama.init()
         self.__config_data = self.load_config_file()
+        self.__nlp = spacy.load("en_core_web_sm")
+        contextualSpellCheck.add_to_pipe(self.__nlp)
 
     '''
     '''
@@ -43,7 +47,7 @@ class PromptGenerator:
 
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
                 temperature = random.uniform(0.45, 0.65)
-                print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
+                # print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
 
                 # find 'member' in the input string and replace it with category
                 prompt_in = prompt_in.replace("member_placeholder", category)
@@ -58,7 +62,7 @@ class PromptGenerator:
                                                                         "role": "user",
                                                                         "content": prompt_in
                                                                     }
-                                                                ],
+                                                                 ],
                                                         model=self.__config_data["groq_llm_model"],
                                                         temperature=temperature,
                                                         seed=seed,
@@ -123,7 +127,7 @@ class PromptGenerator:
             print(f"\n[INFO] Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL} \n")
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
                 temperature = random.uniform(0.45, 0.65)
-                print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
+                # print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
 
                 # find 'member' in the input string and replace it with category
                 prompt = prompt.replace("member_placeholder", category)
@@ -176,13 +180,15 @@ class PromptGenerator:
             prompts = [line.rstrip() for line in file]
             for i, p in enumerate(prompts):
                 prompts[i] = ' '.join(word.lower() for word in p.split())
+                prompt = self.__nlp(prompts[i])
+                prompts[i] = prompt._.outcome_spellCheck
 
         print(f"[INFO] Total lines in the dataset before: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
 
         articles = ["a", "the", "an"]
         prompts = [' '.join(word for word in sentence.split() if word.lower() not in articles) for sentence in prompts]
         prompts = list(set(prompts))
-        prompts = list(filter(lambda sentence: 4 <= len(sentence) <= 100, prompts))
+        prompts = list(filter(lambda sentence: 5 <= len(sentence) <= 100, prompts))
         prompts = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(self.__config_data["filter_prompts_with_words"]), prompts))
         prompts = [p for p in prompts if p not in self.__config_data["filter_colors"]]
 
@@ -201,8 +207,8 @@ class PromptGenerator:
     '''
     
     '''
-    def save_prompts(self, prompts_list: list):
-        with open(self.__config_data["prompts_output_file"], "a") as file:
+    def save_prompts(self, prompts_list: list, mode: str = "a"):
+        with open(self.__config_data["prompts_output_file"], mode) as file:
             for p in prompts_list:
                 file.write("%s" % p)
 
