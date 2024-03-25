@@ -1,4 +1,5 @@
 import pytest
+from textblob import TextBlob
 
 
 def test_list_to_set():
@@ -116,3 +117,19 @@ def test_single_colour_filter():
                  "car"].sort()
 
     assert ref_lines == res_lines
+
+
+def test_grammar_check():
+    test_dataset = ["A red baloon",
+                    "Motorcycle sleek and powerful",
+                    "Income was $9.4 milion compared to the prior year of $2.7 milion"]
+
+    corrected_prompts = []
+    for p in test_dataset:
+        corrected_prompts.append(str(TextBlob(p).correct()))
+
+    ref_prompts = ["A red balloon",
+                   "Motorcycle sleek and powerful",
+                   "Income was $9.4 million compared to the prior year of $2.7 million"]
+
+    assert ref_prompts == corrected_prompts
