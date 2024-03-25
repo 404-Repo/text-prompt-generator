@@ -18,4 +18,4 @@ conda env create -f environment.yml
 conda activate three_gen_prompt_generator
 conda info --env
 
-python -m spacy download en_core_web_sm
+python -m textblob.download_corpora
