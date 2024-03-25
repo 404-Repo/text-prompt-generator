@@ -21,4 +21,4 @@ dependencies:
     - tqdm
     - pytest
     - groq
-    - "git+https://github.com/PrithivirajDamodaran/Gramformer.git"
+    - textblob
