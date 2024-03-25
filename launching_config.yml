@@ -45,7 +45,8 @@ obj_categories: ["animals", "furniture", "cars", "fantastic creatures", "weapons
 filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city",
                             "jungle", "forest", "space", "pool", "pond", "I", "fields", "horizon", "oops", "hillside", "underwater",
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money"]
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money",
+                            "vacuum"]
 
 # prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
 filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
