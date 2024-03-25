@@ -11,7 +11,8 @@ import llama_cpp
 import groq
 
 from huggingface_hub import hf_hub_download
-from textblob import TextBlob
+from symspellpy import SymSpell
+import pkg_resources
 from time import time
 
 
@@ -41,12 +42,12 @@ class PromptGenerator:
         t1 = time()
 
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
-        output_list = []
 
         for i in range(self.__config_data["iteration_num"]):
             print(f"\n[INFO] Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL} \n")
             prompt_in = copy.copy(prompt)
 
+            output_list = []
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
                 temperature = random.uniform(0.45, 0.65)
                 # print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
@@ -126,9 +127,9 @@ class PromptGenerator:
         # generate prompts using the provided object categories
         print("[INFO] Started prompt generation.")
         t1 = time()
-        output_list = []
         for i in range(self.__config_data["iteration_num"]):
             print(f"\n[INFO] Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL} \n")
+            output_list = []
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
                 temperature = random.uniform(0.45, 0.65)
                 # print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
@@ -213,9 +214,18 @@ class PromptGenerator:
         print("[INFO] Performing spell check of the generated prompts")
         t1 = time()
 
+        sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+        dictionary_path = pkg_resources.resource_filename(
+            "symspellpy", "frequency_dictionary_en_82_765.txt"
+        )
+        bigram_path = pkg_resources.resource_filename(
+            "symspellpy", "frequency_bigramdictionary_en_243_342.txt"
+        )
+
         corrected_prompts = []
         for i in tqdm.trange(len(prompts)):
-            prompt = str(TextBlob(prompts[i]).correct())
+            terms = sym_spell.lookup_compound(prompts[i], max_edit_distance=2)
+            prompt = terms[0].term
             if "\n" not in prompt:
                 prompt += "\n"
             corrected_prompts.append(prompt)
