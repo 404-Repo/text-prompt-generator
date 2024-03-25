@@ -54,7 +54,7 @@ llm_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
 groq_llm_model: "mixtral-8x7b-32768"
 
 # put here token generated at https://console.groq.com/keys
-groq_api_key: ""
+groq_api_key: "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"
 
 # path to where download the LLM model
 cache_folder: "./model"
@@ -108,27 +108,27 @@ prompts_output_file: "prompts_dataset_mixtral_test.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
-    # RNG seed, -1 for random
+    # RNG seed, -1 for random [llama-cpp & Groq]
     seed: -1
 
-    # text context, should correspond to little_endian (2048) and big_endian (4096)
+    # text context, should correspond to little_endian (2048) and big_endian (4096) [llama-cpp]
     n_ctx: 2048
 
-    # enable/disable extra output from llama-cpp
+    # enable/disable extra output from llama-cpp [llama-cpp]
     verbose: false
 
-    # Maximum number of tokens to keep in the last_n_tokens deque
+    # Maximum number of tokens to keep in the last_n_tokens deque [llama-cpp]
     last_n_tokens_size: 128
 
-    #  Number of threads to use for generation
+    #  Number of threads to use for generation [llama-cpp]
     n_threads: 16
 
-    # Number of layers to offload to GPU (-ngl). If -1, all layers are offloaded.
+    # Number of layers to offload to GPU (-ngl). If -1, all layers are offloaded. [llama-cpp]
     n_gpu_layers: 35
 
     # The maximum number of tokens to generate. If max_tokens <= 0 or None, the maximum number of tokens to generate is unlimited and depends on n_ctx.
+    # [llama-cpp & Groq]
     max_tokens: 1024
-
 ```
 
 ### Installing packages
