@@ -16,20 +16,17 @@ import pkg_resources
 from time import time
 
 
-'''
-Class that implements a text prompt generator for creating prompts for generating 3D models.
-It provides access to two different LLM APIs:
-1) Groq (online) - platform that provides access to three LLM models with quick inference
-2) Offline LLM - slower than Groq but any LLM model can be plugged in that is compatible with llama-cpp
-'''
 class PromptGenerator:
+    """ Class that implements a text prompt generator for creating prompts for generating 3D models.
+    It provides access to two different LLM APIs:
+    1) Groq (online) - platform that provides access to three LLM models with quick inference
+    2) Offline LLM - slower than Groq but any LLM model can be plugged in that is compatible with llama-cpp
+    """
     def __init__(self):
         colorama.init()
         self.__config_data = self.load_config_file()
 
-    '''
-    Function that calls Groq api for generating requested output. All supported by Groq models are supported.
-    '''
+    """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
     def online_generator(self):
         print("\n", "*" * 40)
         print("[INFO] *** Prompt Dataset Generator ***")
@@ -86,9 +83,7 @@ class PromptGenerator:
         print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         print("[INFO] Done.")
 
-    '''
-    llama-cpp loader for LLM models. LLM models should be stored in .gguf file format.
-    '''
+    """ llama-cpp loader for LLM models. LLM models should be stored in .gguf file format. """
     def offline_generator(self):
         print("*" * 40)
         print("[INFO] *** Prompt Dataset Generator ***")
@@ -155,11 +150,10 @@ class PromptGenerator:
         print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         print("[INFO] Done.")
 
-    '''
-    Function for post processing the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
+    """ Function for post processing the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
     :param prompt_list: a list with strings (generated prompts)
     :return a list with processed prompts stored as strings.
-    '''
+    """
     def post_process_prompts(self, prompts_list: list):
         result_prompts = []
         for el in prompts_list:
@@ -177,9 +171,7 @@ class PromptGenerator:
 
         return result_prompts
 
-    '''
-    Function for filtering the prompts: removing prompts with certain words and prompts of certain length.
-    '''
+    """ Function for filtering the prompts: removing prompts with certain words and prompts of certain length. """
     def filter_prompts(self):
         print("*" * 40)
         print("[INFO] *** Prompt Dataset Cleaner ***")
@@ -204,11 +196,10 @@ class PromptGenerator:
 
         self.save_prompts(prompts, "w")
 
-    '''
-    Function for checking the words in prompts for spelling errors
+    """ Function for checking the words in prompts for spelling errors
     :param prompts: a list with strings (generated prompts)
     :return a list with processed prompts stored as strings.
-    '''
+    """
     @staticmethod
     def check_grammar(prompts: list):
         print("[INFO] Performing spell check of the generated prompts")
@@ -238,38 +229,33 @@ class PromptGenerator:
         print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         return corrected_prompts
 
-    '''
-    Function for loading parameters for running the LLM
-    '''
+    """ Function for loading parameters for running the LLM """
     @staticmethod
     def load_config_file():
         with open("launching_config.yml", "r") as file:
             config_data = yaml.safe_load(file)
         return config_data
 
-    '''
-    Function for loading the prompts dataset for processing.
+    """ Function for loading the prompts dataset for processing.
     :return list with loaded prompts
-    '''
+    """
     def load_file_with_prompts(self):
         with open(self.__config_data["prompts_output_file"], "r") as file:
             prompts = [line.rstrip() for line in file]
         return prompts
 
-    '''
-    Function for saving the prompts stored in the prompts list
+    """ Function for saving the prompts stored in the prompts list
     :param prompts_list: a list with strings (generated prompts)
     :param mode: mode for writing the file: 'a', 'w'
-    '''
+    """
     def save_prompts(self, prompts_list: list, mode: str = "a"):
         with open(self.__config_data["prompts_output_file"], mode) as file:
             for p in prompts_list:
                 file.write("%s" % p)
 
-    '''
-    Function for loading input prompt-instruction for the LLM. It will be used for generating prompts.
+    """Function for loading input prompt-instruction for the LLM. It will be used for generating prompts.
     :return loaded prompt as a string from the config file.
-    '''
+    """
     def _load_input_prompt(self):
         # prompt for dataset generation
         prompt = self.__config_data["prompt_groq"]
@@ -281,18 +267,15 @@ class PromptGenerator:
         print(f"{colorama.Fore.GREEN}{prompt_printing}{colorama.Style.RESET_ALL}")
         return prompt
 
-    '''
-    Function for loading object categories from where the LLM will sample objects' names for generating prompts
+    """Function for loading object categories from where the LLM will sample objects' names for generating prompts
     :return a list with stored object categories names.
-    '''
+    """
     def _load_object_categories(self):
         object_categories = self.__config_data['obj_categories']
         print(f"[INFO] Object categories: {colorama.Fore.GREEN}{object_categories}{colorama.Style.RESET_ALL}")
         return object_categories
 
-    '''
-    Function for loading (including downloading from hugging face) the requested LLM for offline generations. 
-    '''
+    """ Function for loading (including downloading from hugging face) the requested LLM for offline generations. """
     def _load_offline_model(self):
         # model to pick up from the hugging face (should have .gguf extension to run with llama)
         hf_model_repo = self.__config_data["hugging_face_repo"]
@@ -312,9 +295,7 @@ class PromptGenerator:
 
         return model_path
 
-    '''
-    Function that bring to lower case all letters except T and A; helper function for filtering.
-    '''
+    """ Function that bring to lower case all letters except T and A; helper function for filtering. """
     @staticmethod
     def _make_lowercase_except_ta(text: str):
         modified_text = ''
