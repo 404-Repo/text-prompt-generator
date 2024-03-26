@@ -222,6 +222,9 @@ class PromptGenerator:
             "symspellpy", "frequency_bigramdictionary_en_243_342.txt"
         )
 
+        sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
+        sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
+
         corrected_prompts = []
         for i in tqdm.trange(len(prompts)):
             terms = sym_spell.lookup_compound(prompts[i], max_edit_distance=2)
