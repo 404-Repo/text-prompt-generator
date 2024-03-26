@@ -37,16 +37,16 @@ prompt_groq: "Generate a prompt dataset for generating 3D models.
 
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["animals", "furniture", "cars", "fantastic creatures", "weapons",
+obj_categories: ["animals", "furniture", "vehicles", "fantastic creatures", "weapons",
                  "buildings", "trees", "plants", "jewelry", "rocks", "gadgets", "sea creatures",
-                 "lego", "instruments"]
+                 "lego", "instruments", "accessory", "food", "architecture"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
 filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city",
                             "jungle", "forest", "space", "pool", "pond", "I", "fields", "horizon", "oops", "hillside", "underwater",
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room",
                             "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money",
-                            "vacuum"]
+                            "vacuum", "outdoor", "to", "us"]
 
 # prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
 filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
@@ -55,10 +55,10 @@ filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "b
 prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
-iteration_num: 1
+iteration_num: 50
 
 # file where to output the prompts (.txt file)
-prompts_output_file: "prompts_dataset_mixtral_test.txt"
+prompts_output_file: "prompt_dataset_test.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
