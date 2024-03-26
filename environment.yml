@@ -21,4 +21,4 @@ dependencies:
     - tqdm
     - pytest
     - groq
-    - textblob
+    - symspellpy
