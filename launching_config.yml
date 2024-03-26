@@ -46,7 +46,7 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "jungle", "forest", "space", "pool", "pond", "I", "fields", "horizon", "oops", "hillside", "underwater",
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room",
                             "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money",
-                            "vacuum", "outdoor", "to", "us"]
+                            "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken"]
 
 # prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
 filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
