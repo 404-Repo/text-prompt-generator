@@ -9,16 +9,16 @@ dependencies:
   - pip
   - cuda-toolkit=12.1.1
   - pip:
-    - numpy==1.23
+    - numpy==1.23.0
     - torch==2.1.1
     - torchvision
     - "--extra-index-url https://download.pytorch.org/whl/cu121"
     - huggingface_hub==0.19.4
-    - einops~=0.7.0
-    - sentencepiece~=0.1.98
     - transformers>=4.38.2
     - protobuf>=4.21.0,<5.0.0
     - llama-cpp-python
     - colorama
     - tqdm
     - pytest
+    - groq
+    - symspellpy

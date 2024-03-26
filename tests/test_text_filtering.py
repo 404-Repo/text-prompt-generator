@@ -1,4 +1,9 @@
 import pytest
+from textblob import TextBlob
+
+from symspellpy import SymSpell
+import pkg_resources
+from itertools import islice
 
 
 def test_list_to_set():
@@ -116,3 +121,35 @@ def test_single_colour_filter():
                  "car"].sort()
 
     assert ref_lines == res_lines
+
+
+def test_grammar_check():
+    test_dataset = ["malachite earring with gold hook",
+                    "seahorse with blue and orange striped tail",
+                    "checkered lego table with chairs",
+                    "white hospital building",
+                    "squirrel with puple fur and red tail"]
+
+    sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+    dictionary_path = pkg_resources.resource_filename(
+        "symspellpy", "frequency_dictionary_en_82_765.txt"
+    )
+    bigram_path = pkg_resources.resource_filename(
+        "symspellpy", "frequency_bigramdictionary_en_243_342.txt"
+    )
+
+    sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
+    sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
+
+    corrected_prompts = []
+    for p in test_dataset:
+        terms = sym_spell.lookup_compound(p, max_edit_distance=2)
+        corrected_prompts.append(terms[0].term)
+
+    ref_prompts = ["malachite earring with gold hook",
+                   "seahorse with blue and orange striped tail",
+                   "check red lego table with chairs",
+                   "white hospital building",
+                   "squirrel with purple fur and red tail"]
+
+    assert ref_prompts == corrected_prompts
