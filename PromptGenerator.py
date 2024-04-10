@@ -83,6 +83,30 @@ class PromptGenerator:
         print(f"[INFO] It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         print("[INFO] Done.")
 
+    def check_prompt(self, prompt: str):
+        prompt_in = "'" + prompt + ("' make a semantic and contextual check of this prompt. "
+                                    "Check if the prompt makes sense. "
+                                    "Give this prompt a score between 0 (does not make sense) and 1 (makes sense). "
+                                    "This prompt might describe a fictional non-existing magical object. "
+                                    "Your answer must be very concise and short. "
+                                    "You must always output only a single float digit.")
+
+        client = groq.Groq(api_key=self.__config_data["groq_api_key"])
+        output = client.chat.completions.create(messages=[{
+                                                                "role": "user",
+                                                                "content": prompt_in
+                                                          }],
+                                                model="gemma-7b-it",
+                                                seed=self.__config_data['llm_model']['seed'],
+                                                temperature=0.5,
+                                                top_p=1,
+                                                max_tokens=100)
+        result = output.choices[0].message.content
+        score = re.findall("\d+\.\d+", result)
+
+        return score
+
+
     """ llama-cpp loader for LLM models. LLM models should be stored in .gguf file format. """
     def offline_generator(self):
         print("*" * 40)
@@ -248,8 +272,13 @@ class PromptGenerator:
     :param prompts_list: a list with strings (generated prompts)
     :param mode: mode for writing the file: 'a', 'w'
     """
-    def save_prompts(self, prompts_list: list, mode: str = "a"):
-        with open(self.__config_data["prompts_output_file"], mode) as file:
+    def save_prompts(self, prompts_list: list, mode: str = "a", file_name=""):
+        if file_name != "":
+            file_n = file_name
+        else:
+            file_n = self.__config_data["prompts_output_file"]
+
+        with open(file_n, mode) as file:
             for p in prompts_list:
                 file.write("%s" % p)
 
