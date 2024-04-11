@@ -84,12 +84,15 @@ class PromptGenerator:
         print("[INFO] Done.")
 
     def check_prompt(self, prompt: str):
-        prompt_in = "'" + prompt + ("' make a semantic and contextual check of this prompt. "
-                                    "Check if the prompt makes sense. "
-                                    "Give this prompt a score between 0 (does not make sense) and 1 (makes sense). "
-                                    "This prompt might describe a fictional non-existing magical object. "
-                                    "Your answer must be very concise and short. "
-                                    "You must always output only a single float digit.")
+        prompt_in = (f"input prompt: '{prompt}'. "
+                     f"This prompt might describe a fictional non-existing magical object. "
+                     f"Make a semantic check of the input prompt. "
+                     f"Make a contextual check of the input prompt. "
+                     f"Check if the input prompt makes sense. "
+                     f"Check if the input prompt has a subject or object. If no, score it the lowest. "
+                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
+                     f"Your answer must be very concise and short. "
+                     f"You must always output only a single float digit. ")
 
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
         output = client.chat.completions.create(messages=[{
@@ -98,7 +101,7 @@ class PromptGenerator:
                                                           }],
                                                 model="gemma-7b-it",
                                                 seed=self.__config_data['llm_model']['seed'],
-                                                temperature=0.5,
+                                                temperature=1.0,
                                                 top_p=1,
                                                 max_tokens=100)
         result = output.choices[0].message.content
