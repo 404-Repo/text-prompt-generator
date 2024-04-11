@@ -28,22 +28,18 @@ if __name__ == '__main__':
 
     elif args.mode == "semantic_check":
         prompts = prompt_generator.load_file_with_prompts()
-        wrong_prompts = []
-        correct_prompts = []
-        for p, _ in zip(prompts, tqdm.trange(len(prompts))):
+        # for p, _ in zip(prompts[:200], tqdm.trange(len(prompts[:200])), ):
+
+        for p in prompts[:100]:
             score = prompt_generator.check_prompt(p)
+            print(f"{p}, [ {score[0]} ]")
 
             if float(score[0]) >= 0.5:
-                correct_prompts.append(p)
+                p += "\n"
+                prompt_generator.save_prompts(p, "a", file_name="correct_prompts.txt")
             else:
-                # print(f"prompt: {p}, score: {score}")
-                wrong_prompts.append(p + ", [ " + score[0] + " ]")
-
-        prompt_generator.save_prompts(correct_prompts, "w", file_name="correct_prompts.txt")
-        prompt_generator.save_prompts(wrong_prompts, "w", file_name="wrong_prompts.txt")
-
-
-
+                p += ", [ " + score[0] + " ]\n"
+                prompt_generator.save_prompts(p, "a", file_name="wrong_prompts.txt")
     else:
         raise ValueError(f"Unknown mode was specified: {args.mode}. Supported modes are 'online', 'offline', 'filter', 'grammar.")
 
