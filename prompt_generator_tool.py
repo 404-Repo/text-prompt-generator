@@ -6,7 +6,7 @@ import argparse
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", required=True, help="either set to 'online' or 'offline' or 'filter' or 'grammar'.")
+    parser.add_argument("--mode", required=True, help="either set to 'online' or 'offline' or 'filter' or 'grammar' or 'semantic_check'.")
     args = parser.parse_args()
 
     prompt_generator = PromptGenerator.PromptGenerator()
@@ -28,11 +28,9 @@ if __name__ == '__main__':
 
     elif args.mode == "semantic_check":
         prompts = prompt_generator.load_file_with_prompts()
-        # for p, _ in zip(prompts[:200], tqdm.trange(len(prompts[:200])), ):
-
-        for p in prompts[:100]:
+        # edit [:] to give a range for check. It is fast, but not fast enough to check big dataset quicly
+        for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):
             score = prompt_generator.check_prompt(p)
-            print(f"{p}, [ {score[0]} ]")
 
             if float(score[0]) >= 0.5:
                 p += "\n"
@@ -41,5 +39,5 @@ if __name__ == '__main__':
                 p += ", [ " + score[0] + " ]\n"
                 prompt_generator.save_prompts(p, "a", file_name="wrong_prompts.txt")
     else:
-        raise ValueError(f"Unknown mode was specified: {args.mode}. Supported modes are 'online', 'offline', 'filter', 'grammar.")
+        raise ValueError(f"Unknown mode was specified: {args.mode}. Supported modes are 'online', 'offline', 'filter', 'grammar', 'semantic_check'.")
 
