@@ -235,6 +235,35 @@ class PromptGenerator:
 
         return score[0]
 
+    def correct_prompt(self, prompt: str):
+        object_categories = self._load_object_categories()
+
+        prompt_in = (f"input prompt: {prompt}. "
+                     f"This prompt might describe an object from one of these categories: {object_categories}. "
+                     f"Perform semantic analysis check of the input prompt. "
+                     f"Perform contextual analysis check of the input prompt. "
+                     f"Remove all digits from the corrected prompt. "
+                     f"On the basis of those checks correct input prompt so it will pass them with the highest score. "
+                     f"Corrected prompt should contain no more than five or six words. "
+                     f"You must always output only corrected prompt and nothing else. ")
+
+        client = groq.Groq(api_key=self.__config_data["groq_api_key"])
+        output = client.chat.completions.create(messages=[{
+                                                              "role": "user",
+                                                              "content": prompt_in
+                                                          }],
+                                                model="gemma-7b-it",
+                                                seed=self.__config_data['llm_model']['seed'],
+                                                temperature=0.5,
+                                                top_p=1,
+                                                max_tokens=500)
+        result = output.choices[0].message.content
+
+        result = result.split("\n")
+        result = result[0].replace("**Corrected Prompt:**", "").strip()
+
+        return result
+
     """ Function for post processing the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
     :param prompt_list: a list with strings (generated prompts)
     :return a list with processed prompts stored as strings.
@@ -330,8 +359,13 @@ class PromptGenerator:
     """ Function for loading the prompts dataset for processing.
     :return list with loaded prompts
     """
-    def load_file_with_prompts(self):
-        with open(self.__config_data["prompts_output_file"], "r") as file:
+    def load_file_with_prompts(self, file_name=""):
+        if file_name != "":
+            file_n = file_name
+        else:
+            file_n = self.__config_data["prompts_output_file"]
+
+        with open(file_n, "r") as file:
             prompts = [line.rstrip() for line in file]
         return prompts
 
