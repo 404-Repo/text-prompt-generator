@@ -40,11 +40,11 @@ class PromptGenerator:
 
     """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
     def online_generator(self):
-        print("\n")
+        self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
         self.__logger.info(" *** Prompt Dataset Generator ***")
         self.__logger.info("*" * 40)
-        print("\n")
+        self.__logger.info(f"\n")
 
         prompt = self._load_input_prompt()
         object_categories = self._load_object_categories()
@@ -56,9 +56,9 @@ class PromptGenerator:
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
 
         for i in range(self.__config_data["iteration_num"]):
-            print("\n")
+            self.__logger.info(f"\n")
             self.__logger.info(f" Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL}")
-            print("\n")
+            self.__logger.info(f"\n")
 
             prompt_in = copy.copy(prompt)
 
@@ -91,57 +91,36 @@ class PromptGenerator:
 
                 # extracting the response of the llm model: generated prompts
                 output_prompt = output.choices[0].message.content
-                score = self.check_prompt(output_prompt)
-                if float(score[0]) > 0.5:
-                    output_list.append(output_prompt)
+                output_list.append(output_prompt)
 
             processed_prompts = self.post_process_prompts(output_list)
             checked_prompts = self.check_grammar(processed_prompts)
-            self.save_prompts(checked_prompts)
+
+            self.__logger.info(f" Checking that generated prompts are valid.")
+            for p in checked_prompts:
+                score = self.check_prompt(prompt)
+                if float(score) > 0.5:
+                    p += "\n"
+                    self.save_prompts([p], "a")
+                else:
+                    p += ", [ " + score + " ]\n"
+                    self.save_prompts([p], "a", file_name="wrong_prompts.txt")
+            self.__logger.info(f" Done.")
+            self.__logger.info(f"\n")
 
         t2 = time()
         duration = (t2 - t1) / 60.0
         self.__logger.info(f" It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         self.__logger.info(" Done.")
-        print("\n")
-
-    def check_prompt(self, prompt: str):
-
-        object_categories = self._load_object_categories()
-
-        prompt_in = (f"input prompt: '{prompt}'. "
-                     f"This prompt might describe an object from one of these categories: {object_categories}. "
-                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
-                     f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
-                     f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
-                     f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
-                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
-                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
-                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
-                     "You must keep answers short and concise. "
-                     f"You must always output only a single float digit. ")
-
-        client = groq.Groq(api_key=self.__config_data["groq_api_key"])
-        output = client.chat.completions.create(messages=[{
-                                                                "role": "user",
-                                                                "content": prompt_in
-                                                          }],
-                                                model="gemma-7b-it",
-                                                seed=self.__config_data['llm_model']['seed'],
-                                                temperature=0.5,
-                                                top_p=1,
-                                                max_tokens=100)
-        result = output.choices[0].message.content
-        score = re.findall("\d+\.\d+", result)
-
-        return score
+        self.__logger.info(f"\n")
 
     """ llama-cpp loader for LLM models. LLM models should be stored in .gguf file format. """
     def offline_generator(self):
+        self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
         self.__logger.info(" *** Prompt Dataset Generator ***")
         self.__logger.info("*" * 40)
-        print("\n")
+        self.__logger.info(f"\n")
 
         model_path = self._load_offline_model()
 
@@ -161,7 +140,7 @@ class PromptGenerator:
                                     n_gpu_layers=self.__config_data['llm_model']['n_gpu_layers'],
                                     verbose=self.__config_data['llm_model']['verbose'])
         self.__logger.info(" Done.")
-        print("\n")
+        self.__logger.info(f"\n")
 
         prompt = self._load_input_prompt()
         object_categories = self._load_object_categories()
@@ -180,9 +159,9 @@ class PromptGenerator:
         self.__logger.info(" Started prompt generation.")
         t1 = time()
         for i in range(self.__config_data["iteration_num"]):
-            print("\n")
+            self.__logger.info(f"\n")
             self.__logger.info(f" Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL}")
-            print("\n")
+            self.__logger.info(f"\n")
 
             output_list = []
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
@@ -206,13 +185,55 @@ class PromptGenerator:
                     output_list.append(output_prompt)
 
             processed_prompts = self.post_process_prompts(output_list)
-            self.save_prompts(processed_prompts)
+            checked_prompts = self.check_grammar(processed_prompts)
+            self.__logger.info(f" Checking that generated prompts are valid.")
+            for p in checked_prompts:
+                score = self.check_prompt(prompt)
+                if float(score) > 0.5:
+                    p += "\n"
+                    self.save_prompts([p], "a")
+                else:
+                    p += ", [ " + score + " ]\n"
+                    self.save_prompts([p], "a", file_name="wrong_prompts.txt")
+            self.__logger.info(f" Done.")
+            self.__logger.info(f"\n")
 
         t2 = time()
         duration = (t2 - t1) / 60.0
         self.__logger.info(f" It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         self.__logger.info(" Done.")
-        print("\n")
+        self.__logger.info(f"\n")
+
+    def check_prompt(self, prompt: str):
+
+        object_categories = self._load_object_categories()
+
+        prompt_in = (f"input prompt: '{prompt}'. "
+                     f"This prompt might describe an object from one of these categories: {object_categories}. "
+                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
+                     f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
+                     f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
+                     f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
+                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
+                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
+                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
+                     f"You must keep answers short and concise. "
+                     f"You must always output only a single float digit. ")
+
+        client = groq.Groq(api_key=self.__config_data["groq_api_key"])
+        output = client.chat.completions.create(messages=[{
+                                                                "role": "user",
+                                                                "content": prompt_in
+                                                          }],
+                                                model="gemma-7b-it",
+                                                seed=self.__config_data['llm_model']['seed'],
+                                                temperature=0.5,
+                                                top_p=1,
+                                                max_tokens=100)
+        result = output.choices[0].message.content
+        score = re.findall("\d+\.\d+", result)
+
+        return score[0]
 
     """ Function for post processing the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
     :param prompt_list: a list with strings (generated prompts)
@@ -237,10 +258,11 @@ class PromptGenerator:
 
     """ Function for filtering the prompts: removing prompts with certain words and prompts of certain length. """
     def filter_prompts(self):
+        self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
         self.__logger.info(" *** Prompt Dataset Cleaner ***")
         self.__logger.info("*" * 40)
-        print("\n")
+        self.__logger.info(f"\n")
 
         with open(self.__config_data["prompts_output_file"], "r") as file:
             prompts = [line.rstrip() for line in file]
@@ -259,7 +281,7 @@ class PromptGenerator:
 
         self.__logger.info(f" Total lines in the dataset after: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
         self.__logger.info(" Done.")
-        print("\n")
+        self.__logger.info(f"\n")
 
         self.save_prompts(prompts, "w")
 
@@ -294,7 +316,7 @@ class PromptGenerator:
         duration = (t2 - t1) / 60.0
         self.__logger.info(f" It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         self.__logger.info(" Done.")
-        print("\n")
+        self.__logger.info(f"\n")
 
         return corrected_prompts
 
