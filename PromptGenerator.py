@@ -34,6 +34,7 @@ class PromptGenerator:
 
         prompt = self._load_input_prompt()
         object_categories = self._load_object_categories()
+        print(f"[INFO] Object categories: {colorama.Fore.GREEN}{object_categories}{colorama.Style.RESET_ALL}")
 
         print("[INFO] Started prompt generation.")
         t1 = time()
@@ -84,14 +85,19 @@ class PromptGenerator:
         print("[INFO] Done.")
 
     def check_prompt(self, prompt: str):
+
+        object_categories = self._load_object_categories()
+
         prompt_in = (f"input prompt: '{prompt}'. "
-                     f"This prompt might describe a fictional non-existing magical object. "
-                     f"Make a semantic check of the input prompt. "
-                     f"Make a contextual check of the input prompt. "
-                     f"Check if the input prompt makes sense. "
-                     f"Check if the input prompt has a subject or object. If no, score it the lowest. "
+                     f"This prompt might describe an object from one of these categories: {object_categories}. "
+                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
+                     f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
+                     f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
+                     f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
+                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest. "
+                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
                      f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
-                     f"Your answer must be very concise and short. "
+                     "You must keep answers short and concise. "
                      f"You must always output only a single float digit. ")
 
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
@@ -101,7 +107,7 @@ class PromptGenerator:
                                                           }],
                                                 model="gemma-7b-it",
                                                 seed=self.__config_data['llm_model']['seed'],
-                                                temperature=1.0,
+                                                temperature=0.5,
                                                 top_p=1,
                                                 max_tokens=100)
         result = output.choices[0].message.content
@@ -136,6 +142,7 @@ class PromptGenerator:
 
         prompt = self._load_input_prompt()
         object_categories = self._load_object_categories()
+        print(f"[INFO] Object categories: {colorama.Fore.GREEN}{object_categories}{colorama.Style.RESET_ALL}")
 
         # defining the grammar for the LLM model -> forcing to output strings according to specified rules
         grammar = llama_cpp.LlamaGrammar.from_string(r'''root ::= items
@@ -304,7 +311,6 @@ class PromptGenerator:
     """
     def _load_object_categories(self):
         object_categories = self.__config_data['obj_categories']
-        print(f"[INFO] Object categories: {colorama.Fore.GREEN}{object_categories}{colorama.Style.RESET_ALL}")
         return object_categories
 
     """ Function for loading (including downloading from hugging face) the requested LLM for offline generations. """
