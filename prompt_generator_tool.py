@@ -32,12 +32,12 @@ if __name__ == '__main__':
         for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):
             score = prompt_generator.check_prompt(p)
 
-            if float(score[0]) >= 0.5:
+            if float(score) >= 0.5:
                 p += "\n"
-                prompt_generator.save_prompts(p, "a", file_name="correct_prompts.txt")
+                prompt_generator.save_prompts([p], "a", file_name="correct_prompts.txt")
             else:
-                p += ", [ " + score[0] + " ]\n"
-                prompt_generator.save_prompts(p, "a", file_name="wrong_prompts.txt")
+                p += ", [ " + score + " ]\n"
+                prompt_generator.save_prompts([p], "a", file_name="wrong_prompts.txt")
     else:
         raise ValueError(f"Unknown mode was specified: {args.mode}. Supported modes are 'online', 'offline', 'filter', 'grammar', 'semantic_check'.")
 
