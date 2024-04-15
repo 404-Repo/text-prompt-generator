@@ -50,11 +50,18 @@ hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
 # the file with model that will be downloaded from the hugging face (note on file format: llama-cpp support .gguf only)
 llm_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
 
-# one of the models supported by groq platform: llama2-70b-4096, mixtral-8x7b-32768
+# one of the models supported by groq platform: llama2-70b-4096, mixtral-8x7b-32768, gemma-7b-it
 groq_llm_model: "mixtral-8x7b-32768"
 
+# the llm model that will be used for checking the quality of the prompts
+transformers_llm_model: "google/gemma-1.1-7b-it"
+
 # put here token generated at https://console.groq.com/keys
-groq_api_key: "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"
+groq_api_key: ""
+
+# hugging face api token, can be generated within your account on the platform. Will be required
+# for downloading gemma LLM.
+hugging_face_api_key: ""
 
 # path to where download the LLM model
 cache_folder: "./model"
@@ -77,22 +84,24 @@ prompt_groq: "Generate a prompt dataset for generating 3D models.
               The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
               Each object should be different and must be strictly picked from the member_placeholder category. 
               Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden, water, sun, moon. 
-              Generate a single unique prompt on the new line with no more than five words.
+              Generate a single unique finished prompt on the new line with no more than five or six words.
               Prompt examples: a red gorilla with green eyes, a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium. 
               Generate prompts_num prompts. "
 
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["animals", "furniture", "cars", "fantastic creatures", "weapons",
+obj_categories: ["animals", "furniture", "vehicles", "fantastic creatures", "weapons",
                  "buildings", "trees", "plants", "jewelry", "rocks", "gadgets", "sea creatures",
-                 "lego", "instruments"]
+                 "lego", "instruments", "accessory", "food", "architecture"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
-filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city",
-                            "jungle", "forest", "space", "pool", "pond", "I", "fields", "horizon", "oops", "hillside", "underwater",
-                            "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money",
-                            "vacuum"]
+filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city", "accessories",
+                            "jungle", "forest", "space", "pool", "pond", "I", "i", "fields", "horizon", "oops", "hillside", "underwater",
+                            "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
+                            "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
+                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "texture", "song"
+                            ]
 
 # prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
 filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
@@ -101,10 +110,10 @@ filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "b
 prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
-iteration_num: 1
+iteration_num: 100
 
 # file where to output the prompts (.txt file)
-prompts_output_file: "prompts_dataset_mixtral_test.txt"
+prompts_output_file: "prompt_dataset.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
@@ -146,3 +155,5 @@ python prompt_generator_tool.py --mode online
 - 'offline' - running llama-cpp API
 - 'grammar' - check the grammar of the generated prompts if it has not been done before
 - 'filter'  - filter the generated prompts if it has not been done before
+- 'semantic_check_online' - checking & correcting the prompts using groq API
+- 'semantic_check_offline' - checking & correcting the prompts using transformers API
