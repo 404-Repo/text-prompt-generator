@@ -1,9 +1,7 @@
 import pytest
-from textblob import TextBlob
 
 from symspellpy import SymSpell
 import pkg_resources
-from itertools import islice
 
 
 def test_list_to_set():
