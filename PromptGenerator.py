@@ -10,8 +10,11 @@ import logging
 
 import llama_cpp
 import groq
+import torch
+import transformers
 
 from huggingface_hub import hf_hub_download
+from huggingface_hub import login
 from symspellpy import SymSpell
 import pkg_resources
 from time import time
@@ -27,9 +30,27 @@ class PromptGenerator:
         colorama.init()
         self.__logger = self._init_logger()
         self.__config_data = self.load_config_file()
+        transformers.logging.set_verbosity_error()
+
+        if self.__config_data["groq_api_key"] == "":
+            self.__logger.setLevel(logging.WARNING)
+            self.__logger.warning(f"{colorama.Fore.RED} Groq Api Access Token was not specified. "
+                                  f"You will not be able to use Groq API without it.{colorama.Style.RESET_ALL}")
+            self.__logger.setLevel(logging.INFO)
+
+        # login to hugging face platform using api token
+        if self.__config_data["hugging_face_api_key"] == "":
+            self.__logger.setLevel(logging.WARNING)
+            self.__logger.warning(f"{colorama.Fore.RED} Hugging Face Api Access Token was not specified. "
+                                  f"You will not be able to download Gemma model.{colorama.Style.RESET_ALL}")
+            self.__logger.setLevel(logging.INFO)
+        else:
+            login(token=self.__config_data["hugging_face_api_key"])
+        self.__pipeline = None
 
     """ Initializing custom logger """
-    def _init_logger(self):
+    @staticmethod
+    def _init_logger():
         logger = logging.getLogger("app")
         logger.setLevel(logging.INFO)
         handler = logging.StreamHandler(sys.stdout)
@@ -39,7 +60,7 @@ class PromptGenerator:
         return logger
 
     """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
-    def online_generator(self):
+    def groq_generator(self):
         self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
         self.__logger.info(" *** Prompt Dataset Generator ***")
@@ -98,7 +119,9 @@ class PromptGenerator:
 
             self.__logger.info(f" Checking that generated prompts are valid.")
             for p in checked_prompts:
-                score = self.check_prompt(prompt)
+                if self.__config_data["groq_llm_model"] != "gemma-7b-it":
+                    p = self.groq_correct_prompt(p)
+                score = self.groq_check_prompt(prompt)
                 if float(score) > 0.5:
                     p += "\n"
                     self.save_prompts([p], "a")
@@ -115,7 +138,7 @@ class PromptGenerator:
         self.__logger.info(f"\n")
 
     """ llama-cpp loader for LLM models. LLM models should be stored in .gguf file format. """
-    def offline_generator(self):
+    def llamacpp_generator(self):
         self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
         self.__logger.info(" *** Prompt Dataset Generator ***")
@@ -186,17 +209,7 @@ class PromptGenerator:
 
             processed_prompts = self.post_process_prompts(output_list)
             checked_prompts = self.check_grammar(processed_prompts)
-            self.__logger.info(f" Checking that generated prompts are valid.")
-            for p in checked_prompts:
-                score = self.check_prompt(prompt)
-                if float(score) > 0.5:
-                    p += "\n"
-                    self.save_prompts([p], "a")
-                else:
-                    p += ", [ " + score + " ]\n"
-                    self.save_prompts([p], "a", file_name="wrong_prompts.txt")
-            self.__logger.info(f" Done.")
-            self.__logger.info(f"\n")
+            self.save_prompts(checked_prompts)
 
         t2 = time()
         duration = (t2 - t1) / 60.0
@@ -204,7 +217,12 @@ class PromptGenerator:
         self.__logger.info(" Done.")
         self.__logger.info(f"\n")
 
-    def check_prompt(self, prompt: str):
+    """ Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
+    This uses online groq api. Keep in mind that with time the performance will degenerate.
+    :param prompt: a string with prompt that will be checked.
+    :return a float value between 0 and 1 that will be used for filtering of the prompt. 
+    """
+    def groq_check_prompt(self, prompt: str):
 
         object_categories = self._load_object_categories()
 
@@ -235,11 +253,18 @@ class PromptGenerator:
 
         return score[0]
 
-    def correct_prompt(self, prompt: str):
+    """ Function for correcting the input prompt in case if it does not satisfy provided conditions.
+    This uses online groq api. Keep in mind that with time the performance will degenerate.
+    :param prompt: a string with prompt that will be checked and potentially rewritten.
+    :return a rewritten prompt as a python string. 
+    """
+    def groq_correct_prompt(self, prompt: str):
         object_categories = self._load_object_categories()
+        filter_words = self.__config_data["filter_prompts_with_words"]
 
         prompt_in = (f"input prompt: {prompt}. "
                      f"This prompt might describe an object from one of these categories: {object_categories}. "
+                     f"Avoid using words from the list: {filter_words}. "
                      f"Perform semantic analysis check of the input prompt. "
                      f"Perform contextual analysis check of the input prompt. "
                      f"Remove all digits from the corrected prompt. "
@@ -264,7 +289,107 @@ class PromptGenerator:
 
         return result
 
-    """ Function for post processing the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
+    """ Function for pre-loading checkpoints for the requested models using transformers.
+    :param load_in_4bit: a boolean parameter that controls whether the model will be loaded using 4 bit quantization (VRAM used ~ 9 Gb).
+    :param load_in_8bit: a boolean parameter that controls whether the model will be loaded using 8 bit quantization (VRAM used ~ 18 Gb). 
+    """
+    def transformers_load_checkpoint(self, load_in_4bit: bool = True, load_in_8bit: bool = False):
+        if load_in_4bit:
+            load_in_8bit = False
+        elif load_in_8bit:
+            load_in_4bit = False
+        else:
+            load_in_4bit = True
+            load_in_8bit = False
+
+        model = self.__config_data["transformers_llm_model"]
+        self.__pipeline = transformers.pipeline(
+            "text-generation",
+            model=model,
+            model_kwargs={
+                "torch_dtype": torch.bfloat16,
+                "quantization_config": {"load_in_4bit": load_in_4bit, "load_in_8bit": load_in_8bit}
+            },
+        )
+
+    """ Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
+    :param prompt: a string with prompt that will be checked.
+    :return a float value between 0 and 1 that will be used for filtering of the prompt. 
+    """
+    def transformers_check_prompt(self, prompt: str):
+        if self.__pipeline is None:
+            raise ValueError("Transfomers pipeline was not initialized by calling transformers_load_checkpoint() function. Abort!")
+
+        object_categories = self._load_object_categories()
+
+        prompt_in = (f"input prompt: '{prompt}'. "
+                     f"This prompt might describe an object from one of these categories: {object_categories}. "
+                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
+                     f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
+                     f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
+                     f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
+                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
+                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
+                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
+                     f"You must keep answers short and concise. "
+                     f"You must always output only a single float digit. ")
+
+        prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=
+                                                               [{
+                                                                    "role": "user",
+                                                                    "content": prompt_in
+                                                               }],
+                                                               tokenize=False,
+                                                               add_generation_prompt=True)
+        outputs = self.__pipeline(prompt,
+                                  max_new_tokens=100,
+                                  do_sample=True,
+                                  temperature=0.5,
+                                  top_k=1)
+
+        result = outputs[0]["generated_text"][len(prompt):]
+        score = re.findall("\d+\.\d+", result)
+
+        return score[0]
+
+    """  Function for correcting the input prompt in case if it does not satisfy provided conditions.
+    :param prompt: a string with prompt that will be checked and potentially rewritten.
+    :return a rewritten prompt as a python string. 
+    """
+    def transformers_correct_prompt(self, prompt:str):
+        object_categories = self._load_object_categories()
+        filter_words = self.__config_data["filter_prompts_with_words"]
+
+        prompt_in = (f"input prompt: {prompt}. "
+                     f"This prompt might describe an object from one of these categories: {object_categories}. "
+                     f"Avoid using words from the list: {filter_words}. "
+                     f"Perform semantic analysis check of the input prompt. "
+                     f"Perform contextual analysis check of the input prompt. "
+                     f"Remove all digits from the corrected prompt. "
+                     f"On the basis of those checks correct input prompt so it will pass them with the highest score. "
+                     f"Corrected prompt should contain no more than five or six words. "
+                     f"You must always output only corrected prompt and nothing else. ")
+
+        prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=
+                                                               [{
+                                                                    "role": "user",
+                                                                    "content": prompt_in
+                                                               }],
+                                                               tokenize=False,
+                                                               add_generation_prompt=True)
+        outputs = self.__pipeline(prompt,
+                                  max_new_tokens=500,
+                                  do_sample=True,
+                                  temperature=0.5,
+                                  top_k=1)
+
+        result = outputs[0]["generated_text"][len(prompt):]
+        result = result.split("\n")
+        result = result[0].replace("**Corrected Prompt:**", "").strip()
+
+        return result
+
+    """ Function for post processing of the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
     :param prompt_list: a list with strings (generated prompts)
     :return a list with processed prompts stored as strings.
     """
