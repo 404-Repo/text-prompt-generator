@@ -32,7 +32,7 @@ if __name__ == '__main__':
         prompts = prompt_generator.load_file_with_prompts()
 
         # edit [:] to give a range for check. It is fast, but not fast enough to check big dataset quicly
-        for p, _ in zip(prompts[8245:15000], tqdm.trange(len(prompts[8245:15000]))):
+        for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):
             score = prompt_generator.transformers_check_prompt(p)
 
             if float(score) >= 0.5:
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     elif args.mode == "semantic_check_online":
         prompts = prompt_generator.load_file_with_prompts()
         # edit [:] to give a range for check. It is fast, but not fast enough to check big dataset quicly
-        for p, _ in zip(prompts[8245:8300], tqdm.trange(len(prompts[8245:8300]))):
+        for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):
             score = prompt_generator.groq_check_prompt(p)
 
             if float(score) >= 0.5:
