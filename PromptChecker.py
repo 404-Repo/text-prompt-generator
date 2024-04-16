@@ -96,7 +96,7 @@ class PromptChecker:
     :param prompt: a string with prompt that will be checked and potentially rewritten.
     :return a rewritten prompt as a python string. 
     """
-    def groq_correct_prompt(self, prompt: str):
+    def groq_correct_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self.__config_data['obj_categories']
         filter_words = self.__config_data["filter_prompts_with_words"]
 
@@ -112,14 +112,14 @@ class PromptChecker:
 
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
         output = client.chat.completions.create(messages=[{
-            "role": "user",
-            "content": prompt_in
-        }],
-            model="gemma-7b-it",
-            seed=self.__config_data['llm_model']['seed'],
-            temperature=0.5,
-            top_p=1,
-            max_tokens=500)
+                                                            "role": "user",
+                                                            "content": prompt_in
+                                                          }],
+                                                model="gemma-7b-it",
+                                                seed=self.__config_data['llm_model']['seed'],
+                                                temperature=temperature,
+                                                top_p=1,
+                                                max_tokens=500)
         result = output.choices[0].message.content
 
         result = result.split("\n")
@@ -193,7 +193,7 @@ class PromptChecker:
     :param prompt: a string with prompt that will be checked and potentially rewritten.
     :return a rewritten prompt as a python string. 
     """
-    def transformers_correct_prompt(self, prompt: str):
+    def transformers_correct_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self.__config_data['obj_categories']
         filter_words = self.__config_data["filter_prompts_with_words"]
 
@@ -216,7 +216,7 @@ class PromptChecker:
         outputs = self.__pipeline(prompt,
                                   max_new_tokens=500,
                                   do_sample=True,
-                                  temperature=0.5,
+                                  temperature=temperature,
                                   top_k=1)
 
         result = outputs[0]["generated_text"][len(prompt):]
