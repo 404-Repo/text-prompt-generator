@@ -52,20 +52,21 @@ def recycle_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: list, 
     :param prompts: list with input prompts
     :param mode: can be 'online' or 'offline'
     """
+
     for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):
         pattern = r'\[\s*\d+(\.\d+)?\s*\]'
         p = re.sub(pattern, '', p)
 
         if mode == "offline":
-            prompt = prompt_checker.transformers_correct_prompt(p)
+            prompt = prompt_checker.transformers_correct_prompt(p, 1.0)
             score = prompt_checker.transformers_check_prompt(prompt)
         elif mode == "online":
-            prompt = prompt_checker.groq_correct_prompt(p)
+            prompt = prompt_checker.groq_correct_prompt(p, 1.0)
             score = prompt_checker.groq_check_prompt(prompt)
         else:
             raise ValueError("Unknown mode was specified. Supported ones are: online and offline")
 
-        if float(score) >= 0.5:
+        if float(score) > 0.5:
             prompt += "\n"
             PromptGenerator.save_prompts("correct_prompts_.txt", [prompt], "a")
 
