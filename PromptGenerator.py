@@ -55,7 +55,9 @@ class PromptGenerator:
     """
     def __init__(self, config_file_data: dict):
         colorama.init()
-        self.__logger = self._init_logger()
+        self._init_logger()
+        self.__logger = logging.getLogger("app1")
+
         self.__config_data = config_file_data
 
         transformers.logging.set_verbosity_error()
@@ -79,13 +81,12 @@ class PromptGenerator:
     """ Initializing custom logger """
     @staticmethod
     def _init_logger():
-        logger = logging.getLogger("app")
+        logger = logging.getLogger("app1")
         logger.setLevel(logging.INFO)
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter('%(levelname)s:%(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        return logger
 
     """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
     def groq_generator(self):
@@ -230,31 +231,27 @@ class PromptGenerator:
         self.__logger.info(" Done.")
         self.__logger.info(f"\n")
 
+    """ Transformers version of the pipeline for generating prompt dataset """
     def transformers_generator(self):
-        model_name = "mistralai/Mistral-7B-Instruct-v0.2"
+        model_name = self.__config_data["transformers_llm_model"]
 
-        bnb_config = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True)
+        bnb_config = BitsAndBytesConfig(load_in_4bit=True, load_in_8bit=False, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = model = AutoModelForCausalLM.from_pretrained(model_name,
-                                                             quantization_config=bnb_config,
-                                                             torch_dtype=torch.bfloat16,
-                                                             device_map="auto",
-                                                             trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained(model_name,
+                                                     quantization_config=bnb_config,
+                                                     torch_dtype=torch.bfloat16,
+                                                     device_map="auto",
+                                                     trust_remote_code=True)
 
         self.__pipeline = transformers.pipeline("text-generation",
                                                 model=model,
-                                                tokenizer = tokenizer,
+                                                tokenizer=tokenizer,
                                                 torch_dtype=torch.bfloat16,
                                                 device_map="auto")
 
         prompt = self._load_input_prompt()
         object_categories = self.__config_data['obj_categories']
         self.__logger.info(f" Object categories: {colorama.Fore.GREEN}{object_categories}{colorama.Style.RESET_ALL}")
-
-        if self.__config_data['llm_model']['seed'] < 0:
-            seed = random.randint(0, sys.maxsize)
-        else:
-            seed = self.__config_data['llm_model']['seed']
 
         # generate prompts using the provided object categories
         self.__logger.info(" Started prompt generation.")
@@ -272,23 +269,16 @@ class PromptGenerator:
 
                 # find 'member' in the input string and replace it with category
                 prompt_in = prompt.replace("member_placeholder", category)
-                # prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=[{
-                #                                                                         "role": "user",
-                #                                                                         "content": prompt_in
-                #                                                                     }],
-                #                                                        tokenize=False,
-                #                                                        add_generation_prompt=True)
                 outputs = self.__pipeline(prompt_in,
                                           max_new_tokens=self.__config_data['llm_model']['max_tokens'],
                                           do_sample=True,
                                           temperature=temperature,
-                                          top_k=1,
-                                          num_return_sequences=1)
+                                          top_k=1)
 
                 prompt = prompt.replace(category, "member_placeholder")
 
                 # extracting the response of the llm model: generated prompts
-                output_prompt = outputs[0]['generated_text'][len(prompt)]
+                output_prompt = outputs[0]['generated_text']
                 output_list.append(output_prompt)
 
             processed_prompts = self.post_process_prompts(output_list)
