@@ -15,11 +15,19 @@ import pkg_resources
 
 
 class PromptChecker:
+    """
+    Class that provides an implementation for different filtering & correction methods for generated prompts.
+    """
+
+    """
+    :param config_file_data: a dictionary with preloaded parameters for running the pipeline.
+    """
     def __init__(self, config_file_data: dict):
         colorama.init()
         transformers.logging.set_verbosity_error()
         self.__config_data = config_file_data
-        self.__logger = self._init_logger()
+        self._init_logger()
+        self.__logger = logging.getLogger("app2")
 
         if self.__config_data["groq_api_key"] == "":
             self.__logger.setLevel(logging.WARNING)
@@ -40,13 +48,12 @@ class PromptChecker:
     """ Initializing custom logger """
     @staticmethod
     def _init_logger():
-        logger = logging.getLogger("app")
+        logger = logging.getLogger("app2")
         logger.setLevel(logging.INFO)
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter('%(levelname)s:%(message)s')
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        return logger
 
     """ Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
     This uses online groq api. Keep in mind that with time the performance will degenerate.
@@ -133,13 +140,13 @@ class PromptChecker:
             load_in_4bit = True
             load_in_8bit = False
 
-        model = self.__config_data["transformers_llm_model"]
+        model = self.__config_data["transformers_llm_model_prompt_checker"]
         self.__pipeline = transformers.pipeline(
             "text-generation",
             model=model,
             model_kwargs={
                 "torch_dtype": torch.bfloat16,
-                # "quantization_config": {"load_in_4bit": load_in_4bit, "load_in_8bit": load_in_8bit}
+                "quantization_config": {"load_in_4bit": load_in_4bit, "load_in_8bit": load_in_8bit}
             },
         )
 
@@ -149,7 +156,7 @@ class PromptChecker:
     """
     def transformers_check_prompt(self, prompt: str):
         if self.__pipeline is None:
-            raise ValueError("Transfomers pipeline was not initialized by calling transformers_load_checkpoint() function. Abort!")
+            raise ValueError("Transformers pipeline was not initialized by calling transformers_load_checkpoint() function. Abort!")
 
         object_categories = self.__config_data['obj_categories']
 
@@ -200,13 +207,12 @@ class PromptChecker:
                      f"Corrected prompt should contain no more than five or six words. "
                      f"You must always output only corrected prompt and nothing else. ")
 
-        prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=
-        [{
-            "role": "user",
-            "content": prompt_in
-        }],
-            tokenize=False,
-            add_generation_prompt=True)
+        prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=[{
+                                                                                "role": "user",
+                                                                                "content": prompt_in
+                                                                            }],
+                                                               tokenize=False,
+                                                               add_generation_prompt=True)
         outputs = self.__pipeline(prompt,
                                   max_new_tokens=500,
                                   do_sample=True,
@@ -216,21 +222,20 @@ class PromptChecker:
         result = outputs[0]["generated_text"][len(prompt):]
         result = result.split("\n")
         result = result[0].replace("**Corrected Prompt:**", "").strip()
+        result = result.replace("**Corrected prompt:**", "")
 
         return result
 
     """ Function for filtering the prompts: removing prompts with certain words and prompts of certain length. """
-    def filter_prompts(self, file_name:str):
+    def filter_prompts(self, prompts):
         self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
         self.__logger.info(" *** Prompt Dataset Cleaner ***")
         self.__logger.info("*" * 40)
         self.__logger.info(f"\n")
 
-        with open(file_name, "r") as file:
-            prompts = [line.rstrip() for line in file]
-            for i, p in enumerate(prompts):
-                prompts[i] = ' '.join(word.lower() for word in p.split())
+        for i, p in enumerate(prompts):
+            prompts[i] = ' '.join(word.lower() for word in p.split())
 
         self.__logger.info(f" Total lines in the dataset before: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
 
