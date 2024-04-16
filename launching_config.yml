@@ -57,7 +57,8 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
                             "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
                             "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
-                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance", "texture"
+                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
+                            "texture", "orbit", "hope", "melody", "animate"
                             ]
 
 # prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
@@ -70,7 +71,7 @@ prompts_num: 30
 iteration_num: 1
 
 # file where to output the prompts (.txt file)
-prompts_output_file: "prompt_dataset.txt"
+prompts_output_file: "correct_prompts_.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
