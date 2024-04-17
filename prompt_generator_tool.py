@@ -57,14 +57,15 @@ if __name__ == '__main__':
     config_data = PromptGenerator.load_config_file()
     prompt_generator = PromptGenerator.PromptGenerator(config_data)
     prompt_checker = PromptChecker.PromptChecker(config_data)
-    prompt_checker.transformers_load_checkpoint()
 
     if args.mode == "online":
+        prompt_checker.transformers_load_checkpoint()
         prompts = prompt_generator.groq_generator()
         prompts = postprocess_prompts(prompt_checker, prompts)
         check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "offline")
 
     elif args.mode == "offline":
+        prompt_checker.transformers_load_checkpoint()
         prompts = prompt_generator.transformers_generator()
         prompts = postprocess_prompts(prompt_checker, prompts)
         check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "offline")
@@ -85,10 +86,12 @@ if __name__ == '__main__':
         PromptGenerator.save_prompts(config_data["prompts_output_file"], prompts, "w")
 
     elif args.mode == "semantic_check_offline":
+        prompt_checker.transformers_load_checkpoint()
         prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
         check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "offline")
 
     elif args.mode == "semantic_check_online":
+        prompt_checker.transformers_load_checkpoint()
         prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
         check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "online")
 
