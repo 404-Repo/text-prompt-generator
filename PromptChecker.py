@@ -270,7 +270,7 @@ class PromptChecker:
     def _llamacpp_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
         model_path = self.llamacpp_load_checkpoint()
 
-        llm_model = llama_cpp.Llama(model_path=model_path,
+        llm_model = llama_cpp.Llama(model_path=self.__llamacpp_model_path,
                                     n_ctx=self.__config_data['llm_model']['n_ctx'],
                                     last_n_tokens_size=self.__config_data['llm_model']['last_n_tokens_size'],
                                     n_threads=self.__config_data['llm_model']['n_threads'],
