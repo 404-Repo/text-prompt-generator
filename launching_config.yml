@@ -28,22 +28,13 @@ cache_folder: "./model"
 # prompts_num will be replaced with prompts_num from this config;
 # member_placeholder will be replaced with one of the strings stored in obj_categories list.
 prompt: "Generate a prompt dataset for generating 3D models. 
-         Each prompt should be meaningful and define a single 3D object that can be generated in 3D with no more than five words. 
-         The object description should contain one or two distinctive features such as color, shape, or pose of the generating object. 
-         Make all prompts simple, e.g. a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium.  
-         Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden.
-         Every prompt must be unique and remove repetitions.
-         Each object should be different and must be strictly picked up from the member_placeholder category. 
+         Each prompt should define a single 3D object that can be generated as a 3D mesh. 
+         The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
+         Each object should be different and must be strictly picked from the member_placeholder category. 
+         Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden, water, sun, moon. 
+         Generate a single unique finished prompt on the new line with no more than five or six words.
+         Prompt examples: a red gorilla with green eyes, a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium. 
          Generate prompts_num prompts. "
-
-prompt_groq: "Generate a prompt dataset for generating 3D models. 
-              Each prompt should define a single 3D object that can be generated as a 3D mesh. 
-              The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
-              Each object should be different and must be strictly picked from the member_placeholder category. 
-              Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden, water, sun, moon. 
-              Generate a single unique finished prompt on the new line with no more than five or six words.
-              Prompt examples: a red gorilla with green eyes, a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium. 
-              Generate prompts_num prompts. "
 
 
 # Categories of objects from where the LLM model could sample the data.
@@ -58,11 +49,8 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
                             "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
                             "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
-                            "texture", "orbit", "hope", "melody", "animate"
+                            "orbit", "hope", "melody", "animate"
                             ]
-
-# prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
-filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
 
 # amount of prompts to generate per category.
 prompts_num: 30
@@ -71,7 +59,7 @@ prompts_num: 30
 iteration_num: 1
 
 # file where to output the prompts (.txt file)
-prompts_output_file: "correct_prompts_.txt"
+prompts_output_file: "prompts_dataset.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
