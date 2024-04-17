@@ -349,7 +349,7 @@ class PromptGenerator:
 
     def _load_input_prompt(self):
         # prompt for dataset generation
-        prompt = self.__config_data["prompt_groq"]
+        prompt = self.__config_data["prompt"]
         prompt = prompt.replace("prompts_num", str(self.__config_data["prompts_num"]))
 
         self.__logger.info(" Input prompt: ")
