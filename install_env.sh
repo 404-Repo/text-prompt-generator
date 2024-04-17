@@ -19,3 +19,16 @@ conda activate three_gen_prompt_generator
 conda info --env
 
 python -m textblob.download_corpora
+
+# LLAMA-CPP backends, uncomment one option and comment out the rest
+# CUDA support for llama-cpp
+CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+
+# If you want to use metal api uncomment this
+# CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+
+# if you have amd gpu, uncomment this
+# CMAKE_ARGS="-DLLAMA_CLBLAST=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+
+# if you want to use Vulkan API, uncomment this
+# CMAKE_ARGS="-DLLAMA_VULKAN=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
