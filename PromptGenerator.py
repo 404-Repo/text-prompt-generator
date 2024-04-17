@@ -76,7 +76,9 @@ class PromptGenerator:
             self.__logger.setLevel(logging.INFO)
         else:
             login(token=self.__config_data["hugging_face_api_key"])
+
         self.__pipeline = None
+        self.__llamacpp_model_path = ""
 
     """ Initializing custom logger """
     @staticmethod
@@ -165,8 +167,6 @@ class PromptGenerator:
         self.__logger.info("*" * 40)
         self.__logger.info(f"\n")
 
-        model_path = self.llamacpp_load_checkpoint()
-
         # init the llm model using Llama pipeline
         self.__logger.info(" Preparing model.")
 
@@ -175,7 +175,7 @@ class PromptGenerator:
         else:
             seed = self.__config_data['llm_model']['seed']
 
-        llm_model = llama_cpp.Llama(model_path=model_path,
+        llm_model = llama_cpp.Llama(model_path=self.__llamacpp_model_path,
                                     seed=seed,
                                     n_ctx=self.__config_data['llm_model']['n_ctx'],
                                     last_n_tokens_size=self.__config_data['llm_model']['last_n_tokens_size'],
@@ -298,7 +298,7 @@ class PromptGenerator:
         return output_prompts
 
     """ Function for loading (including downloading from hugging face) the requested LLM for offline generations. """
-    def llamacpp_load_checkpoint(self):
+    def llamacpp_load_checkpoint(self, local_files_only: bool = False):
         # model to pick up from the hugging face (should have .gguf extension to run with llama)
         hf_model_repo = self.__config_data["llamacpp_hugging_face_repo"]
         self.__logger.info(f" Hugging Face repository: {colorama.Fore.GREEN}{hf_model_repo}{colorama.Style.RESET_ALL}")
@@ -312,10 +312,8 @@ class PromptGenerator:
         os.makedirs(cache_folder, exist_ok=True)
         self.__logger.info(f" LLM model will be stored here: {colorama.Fore.GREEN}{cache_folder}{colorama.Style.RESET_ALL}")
 
-        model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=True)
-        self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{model_path}{colorama.Style.RESET_ALL} \n")
-
-        return model_path
+        self.__llamacpp_model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=local_files_only)
+        self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{self.__llamacpp_model_path}{colorama.Style.RESET_ALL} \n")
 
     """ Function for post processing of the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
     :param prompt_list: a list with strings (generated prompts)
