@@ -165,7 +165,7 @@ class PromptGenerator:
         self.__logger.info("*" * 40)
         self.__logger.info(f"\n")
 
-        model_path = self._load_offline_model()
+        model_path = self.llamacpp_load_checkpoint()
 
         # init the llm model using Llama pipeline
         self.__logger.info(" Preparing model.")
@@ -201,6 +201,7 @@ class PromptGenerator:
         # generate prompts using the provided object categories
         self.__logger.info(" Started prompt generation.")
         t1 = time()
+        output_prompts = []
         for i in range(self.__config_data["iteration_num"]):
             self.__logger.info(f"\n")
             self.__logger.info(f" Iteration: {colorama.Fore.GREEN}{i}{colorama.Style.RESET_ALL}")
@@ -222,12 +223,18 @@ class PromptGenerator:
 
                 # extracting the response of the llm model: generated prompts
                 output_prompt = output['choices'][0]['text']
+                output_list.append(output_prompt)
+
+            processed_prompts = self.post_process_prompts(output_list)
+            output_prompts += processed_prompts
 
         t2 = time()
         duration = (t2 - t1) / 60.0
         self.__logger.info(f" It took: {colorama.Fore.GREEN}{duration}{colorama.Style.RESET_ALL} min.")
         self.__logger.info(" Done.")
         self.__logger.info(f"\n")
+
+        return output_prompts
 
     """ Transformers version of the pipeline for generating prompt dataset """
     def transformers_generator(self):
@@ -291,13 +298,13 @@ class PromptGenerator:
         return output_prompts
 
     """ Function for loading (including downloading from hugging face) the requested LLM for offline generations. """
-    def _load_offline_model(self):
+    def llamacpp_load_checkpoint(self):
         # model to pick up from the hugging face (should have .gguf extension to run with llama)
-        hf_model_repo = self.__config_data["hugging_face_repo"]
+        hf_model_repo = self.__config_data["llamacpp_hugging_face_repo"]
         self.__logger.info(f" Hugging Face repository: {colorama.Fore.GREEN}{hf_model_repo}{colorama.Style.RESET_ALL}")
 
         # the name of the file to be downloaded
-        model_file_name = self.__config_data["llm_model_file_name"]
+        model_file_name = self.__config_data["llamacpp_model_file_name"]
         self.__logger.info(f" LLM model to load: {colorama.Fore.GREEN}{model_file_name}{colorama.Style.RESET_ALL}")
 
         # cache folder where you want to store the downloaded model
