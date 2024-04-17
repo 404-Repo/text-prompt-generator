@@ -1,15 +1,19 @@
 import re
+import os
 import sys
 import tqdm
 import logging
 import colorama
+import random
 
 import torch
 import transformers
 import groq
+import llama_cpp
 
 from time import time
 from huggingface_hub import login
+from huggingface_hub import hf_hub_download
 from symspellpy import SymSpell
 import pkg_resources
 
@@ -45,6 +49,25 @@ class PromptChecker:
             login(token=self.__config_data["hugging_face_api_key"])
         self.__pipeline = None
 
+        self.__llamacpp_model_path = ""
+
+        self.__prompt_for_correction = (f"Perform semantic analysis check of the input prompt. "
+                                        f"Perform contextual analysis check of the input prompt. "
+                                        f"Remove all digits from the corrected prompt. "
+                                        f"On the basis of those checks correct input prompt so it will pass them with the highest score. "
+                                        f"Corrected prompt should contain no more than five or six words. "
+                                        f"You must always output only corrected prompt and nothing else. ")
+
+        self.__prompt_for_checking = (f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
+                                      f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
+                                      f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
+                                      f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
+                                      f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
+                                      f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
+                                      f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
+                                      f"You must keep answers short and concise. "
+                                      f"You must always output only a single float digit. ")
+
     """ Initializing custom logger """
     @staticmethod
     def _init_logger():
@@ -60,33 +83,15 @@ class PromptChecker:
     :param prompt: a string with prompt that will be checked.
     :return a float value between 0 and 1 that will be used for filtering of the prompt. 
     """
-    def groq_check_prompt(self, prompt: str):
+    def groq_check_prompt(self, prompt: str, temperature: float = 0.5):
 
         object_categories = self.__config_data['obj_categories']
 
-        prompt_in = (f"input prompt: '{prompt}'. "
-                     f"This prompt might describe an object from one of these categories: {object_categories}. "
-                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
-                     f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
-                     f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
-                     f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
-                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
-                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
-                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
-                     f"You must keep answers short and concise. "
-                     f"You must always output only a single float digit. ")
+        prompt_in = ((f"input prompt: '{prompt}'. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. ") +
+                     self.__prompt_for_checking)
 
-        client = groq.Groq(api_key=self.__config_data["groq_api_key"])
-        output = client.chat.completions.create(messages=[{
-            "role": "user",
-            "content": prompt_in
-        }],
-            model="gemma-7b-it",
-            seed=self.__config_data['llm_model']['seed'],
-            temperature=0.5,
-            top_p=1,
-            max_tokens=100)
-        result = output.choices[0].message.content
+        result = self._groq_process_prompt(prompt_in, 100, temperature)
         score = re.findall("\d+\.\d+", result)
 
         return score[0]
@@ -100,30 +105,32 @@ class PromptChecker:
         object_categories = self.__config_data['obj_categories']
         filter_words = self.__config_data["filter_prompts_with_words"]
 
-        prompt_in = (f"input prompt: {prompt}. "
-                     f"This prompt might describe an object from one of these categories: {object_categories}. "
-                     f"Avoid using words from the list: {filter_words}. "
-                     f"Perform semantic analysis check of the input prompt. "
-                     f"Perform contextual analysis check of the input prompt. "
-                     f"Remove all digits from the corrected prompt. "
-                     f"On the basis of those checks correct input prompt so it will pass them with the highest score. "
-                     f"Corrected prompt should contain no more than five or six words. "
-                     f"You must always output only corrected prompt and nothing else. ")
+        prompt_in = ((f"input prompt: {prompt}. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. "
+                      f"Avoid using words from the list: {filter_words}. ") +
+                     self.__prompt_for_correction)
 
+        result = self._groq_process_prompt(prompt_in, 500, temperature)
+        result = result.split("\n")
+        result = result[0].replace("**Corrected Prompt:**", "").strip()
+        result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**", "")
+        return result
+
+    """
+    """
+    def _groq_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
         output = client.chat.completions.create(messages=[{
                                                             "role": "user",
-                                                            "content": prompt_in
-                                                          }],
-                                                model="gemma-7b-it",
-                                                seed=self.__config_data['llm_model']['seed'],
-                                                temperature=temperature,
-                                                top_p=1,
-                                                max_tokens=500)
+                                                            "content": prompt
+                                                         }],
+                                               model="gemma-7b-it",
+                                               seed=self.__config_data['llm_model']['seed'],
+                                               temperature=temperature,
+                                               top_p=1,
+                                               max_tokens=max_tokens)
         result = output.choices[0].message.content
-
-        result = result.split("\n")
-        result = result[0].replace("**Corrected Prompt:**", "").strip()
 
         return result
 
@@ -154,37 +161,17 @@ class PromptChecker:
     :param prompt: a string with prompt that will be checked.
     :return a float value between 0 and 1 that will be used for filtering of the prompt. 
     """
-    def transformers_check_prompt(self, prompt: str):
+    def transformers_check_prompt(self, prompt: str, temperature: float = 0.5):
         if self.__pipeline is None:
             raise ValueError("Transformers pipeline was not initialized by calling transformers_load_checkpoint() function. Abort!")
 
         object_categories = self.__config_data['obj_categories']
 
-        prompt_in = (f"input prompt: '{prompt}'. "
-                     f"This prompt might describe an object from one of these categories: {object_categories}. "
-                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
-                     f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
-                     f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
-                     f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
-                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
-                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
-                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
-                     f"You must keep answers short and concise. "
-                     f"You must always output only a single float digit. ")
+        prompt_in = ((f"input prompt: '{prompt}'. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. ") +
+                     self.__prompt_for_checking)
 
-        prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=[{
-                                                                                "role": "user",
-                                                                                "content": prompt_in
-                                                                            }],
-                                                               tokenize=False,
-                                                               add_generation_prompt=True)
-        outputs = self.__pipeline(prompt,
-                                  max_new_tokens=100,
-                                  do_sample=True,
-                                  temperature=0.5,
-                                  top_k=1)
-
-        result = outputs[0]["generated_text"][len(prompt):]
+        result = self._transformers_process_prompt(prompt_in, 100, temperature)
         score = re.findall("\d+\.\d+", result)
 
         return score[0]
@@ -197,32 +184,104 @@ class PromptChecker:
         object_categories = self.__config_data['obj_categories']
         filter_words = self.__config_data["filter_prompts_with_words"]
 
-        prompt_in = (f"input prompt: {prompt}. "
-                     f"This prompt might describe an object from one of these categories: {object_categories}. "
-                     f"Avoid using words from the list: {filter_words}. "
-                     f"Perform semantic analysis check of the input prompt. "
-                     f"Perform contextual analysis check of the input prompt. "
-                     f"Remove all digits from the corrected prompt. "
-                     f"On the basis of those checks correct input prompt so it will pass them with the highest score. "
-                     f"Corrected prompt should contain no more than five or six words. "
-                     f"You must always output only corrected prompt and nothing else. ")
+        prompt_in = ((f"input prompt: {prompt}. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. "
+                      f"Avoid using words from the list: {filter_words}. ") +
+                     self.__prompt_for_correction)
 
+        result = self._transformers_process_prompt(prompt_in, 500, temperature)
+        result = result.split("\n")
+        result = result[0].replace("**Corrected Prompt:**", "").strip()
+        result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**", "")
+
+        return result
+
+    """
+    """
+    def _transformers_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
         prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=[{
                                                                                 "role": "user",
-                                                                                "content": prompt_in
+                                                                                "content": prompt
                                                                             }],
                                                                tokenize=False,
                                                                add_generation_prompt=True)
         outputs = self.__pipeline(prompt,
-                                  max_new_tokens=500,
+                                  max_new_tokens=max_tokens,
                                   do_sample=True,
                                   temperature=temperature,
                                   top_k=1)
 
         result = outputs[0]["generated_text"][len(prompt):]
+        return result
+
+    """  """
+    def llamacpp_load_checkpoint(self, local_files_only:bool = False):
+        # model to pick up from the hugging face (should have .gguf extension to run with llama)
+        hf_model_repo = self.__config_data["llamacpp_hugging_face_repo_prompt_checker"]
+        self.__logger.info(f" Hugging Face repository: {colorama.Fore.GREEN}{hf_model_repo}{colorama.Style.RESET_ALL}")
+
+        # the name of the file to be downloaded
+        model_file_name = self.__config_data["llamacpp_model_file_name_prompt_checker"]
+        self.__logger.info(f" LLM model to load: {colorama.Fore.GREEN}{model_file_name}{colorama.Style.RESET_ALL}")
+
+        # cache folder where you want to store the downloaded model
+        cache_folder = self.__config_data["cache_folder"]
+        os.makedirs(cache_folder, exist_ok=True)
+        self.__logger.info(f" LLM model will be stored here: {colorama.Fore.GREEN}{cache_folder}{colorama.Style.RESET_ALL}")
+
+        self.__llamacpp_model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=local_files_only)
+        self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{self.__llamacpp_model_path}{colorama.Style.RESET_ALL} \n")
+
+    """  """
+    def llamacpp_check_prompt(self, prompt: str, temperature: float = 0.5):
+        object_categories = self.__config_data['obj_categories']
+
+        prompt_in = ((f"input prompt: '{prompt}'. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. ") +
+                     self.__prompt_for_checking)
+
+        result = self._llamacpp_process_prompt(prompt_in, 100, temperature)
+        score = re.findall("\d+\.\d+", result)
+
+        return score
+
+    """
+    """
+    def llamacpp_correct_prompt(self, prompt: str, temperature: float = 0.5):
+        object_categories = self.__config_data['obj_categories']
+        filter_words = self.__config_data["filter_prompts_with_words"]
+
+        prompt_in = ((f"input prompt: {prompt}. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. "
+                      f"Avoid using words from the list: {filter_words}. ") +
+                     self.__prompt_for_correction)
+
+        result = self._llamacpp_process_prompt(prompt_in, 500, temperature)
         result = result.split("\n")
         result = result[0].replace("**Corrected Prompt:**", "").strip()
         result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**", "")
+
+        return result
+
+    """
+    """
+    def _llamacpp_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
+        model_path = self.llamacpp_load_checkpoint()
+
+        llm_model = llama_cpp.Llama(model_path=model_path,
+                                    n_ctx=self.__config_data['llm_model']['n_ctx'],
+                                    last_n_tokens_size=self.__config_data['llm_model']['last_n_tokens_size'],
+                                    n_threads=self.__config_data['llm_model']['n_threads'],
+                                    n_gpu_layers=self.__config_data['llm_model']['n_gpu_layers'],
+                                    verbose=self.__config_data['llm_model']['verbose'])
+
+        output = llm_model.create_completion(prompt=prompt,
+                                             max_tokens=max_tokens,
+                                             echo=False,
+                                             temperature=temperature)
+        result = output['choices'][0]['text']
 
         return result
 
