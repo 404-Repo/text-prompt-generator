@@ -1,9 +1,7 @@
 import tqdm
-import re
-
+import argparse
 import PromptGenerator
 import PromptChecker
-import argparse
 
 
 def postprocess_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: list):
@@ -18,14 +16,19 @@ def postprocess_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: li
     return prompts_out
 
 
-def check_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: list, model_name: str, mode: str):
+def check_prompts(prompt_checker: PromptChecker.PromptChecker,
+                  prompts: list,
+                  model_name: str,
+                  mode: str,
+                  file_name: str = "correct_prompts.txt"):
     """ Function for checking the quality of the prompts using another LLM. It also corrects/reformulates prompts.
     :param prompt_checker: object that provides access to the PromptChecker methods
     :param prompts: list with input prompts
     :param model_name: the name of the LLM that will be used
     :param mode: can be 'online' or 'offline'
+    :param file_name: the name of the file where the suitable prompts will be output after filtering (optional), default "correct_prompts.txt"
     """
-    for p, _ in zip(prompts[76000:], tqdm.trange(len(prompts[76000:]))):
+    for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):  #76000 :
         if mode == "offline":
             score = prompt_checker.transformers_check_prompt(p)
         elif mode == "online":
@@ -40,9 +43,11 @@ def check_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: list, mo
                 else:
                     p = prompt_checker.groq_correct_prompt(p)
 
+            p = p.strip()
             p += "\n"
-            PromptGenerator.save_prompts("correct_prompts.txt", [p], "a")
+            PromptGenerator.save_prompts(file_name, [p], "a")
         else:
+            p = p.strip()
             p += ", [ " + score + " ]\n"
             PromptGenerator.save_prompts("wrong_prompts.txt", [p], "a")
 
@@ -59,16 +64,16 @@ if __name__ == '__main__':
     prompt_checker = PromptChecker.PromptChecker(config_data)
 
     if args.mode == "online":
-        prompt_checker.transformers_load_checkpoint()
         prompts = prompt_generator.groq_generator()
         prompts = postprocess_prompts(prompt_checker, prompts)
-        check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "offline")
+        prompt_checker.transformers_load_checkpoint()
+        check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "offline", config_data["prompts_output_file"])
 
     elif args.mode == "offline":
-        prompt_checker.transformers_load_checkpoint()
         prompts = prompt_generator.transformers_generator()
         prompts = postprocess_prompts(prompt_checker, prompts)
-        check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "offline")
+        prompt_checker.transformers_load_checkpoint()
+        check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "offline", config_data["prompts_output_file"])
 
     elif args.mode == "filter_unique_prompts":
         prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
