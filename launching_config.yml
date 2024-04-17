@@ -1,8 +1,13 @@
-# relative path to the repository on the hugging face portal
-hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
+# relative path to the repository on the hugging face portal:
+# model for prompt generation
+llamacpp_hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.2-GGUF"
+# model for prompt checking and correction
+llamacpp_hugging_face_repo_prompt_checker: "google/gemma-1.1-7b-it-GGUF"
+
 
 # the file with model that will be downloaded from the hugging face (note on file format: llama-cpp support .gguf only)
-llm_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
+llamacpp_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
+llamacpp_model_file_name_prompt_checker: "7b_it_v1p1.gguf"
 
 # one of the models supported by groq platform: llama2-70b-4096, mixtral-8x7b-32768, gemma-7b-it
 groq_llm_model: "mixtral-8x7b-32768"
@@ -79,7 +84,7 @@ llm_model:
     n_threads: 16
 
     # Number of layers to offload to GPU (-ngl). If -1, all layers are offloaded. [llama-cpp]
-    n_gpu_layers: 35
+    n_gpu_layers: -1
 
     # The maximum number of tokens to generate. If max_tokens <= 0 or None, the maximum number of tokens to generate is unlimited and depends on n_ctx.
     # [llama-cpp & Groq]
