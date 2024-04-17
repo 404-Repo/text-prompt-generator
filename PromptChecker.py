@@ -226,11 +226,14 @@ class PromptChecker:
 
         return result
 
-    """ Function for filtering the prompts: removing prompts with certain words and prompts of certain length. """
-    def filter_prompts(self, prompts):
+    """ Function for filtering all duplicates from the input prompt list
+    :param prompts: a list with input prompts
+    :return a list with unique prompts 
+    """
+    def filter_unique_prompts(self, prompts: list):
         self.__logger.info(f"\n")
         self.__logger.info("*" * 40)
-        self.__logger.info(" *** Prompt Dataset Cleaner ***")
+        self.__logger.info(" *** Prompt Dataset Cleaner: unique prompts. ***")
         self.__logger.info("*" * 40)
         self.__logger.info(f"\n")
 
@@ -242,9 +245,29 @@ class PromptChecker:
         articles = ["a", "the", "an"]
         prompts = [' '.join(word for word in sentence.split() if word.lower() not in articles) for sentence in prompts]
         prompts = list(set(prompts))
+        prompts = [l + "\n" if "\n" not in l else l for l in prompts]
+
+        self.__logger.info(f" Total lines in the dataset after: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
+        self.__logger.info(" Done.")
+        self.__logger.info(f"\n")
+
+        return prompts
+
+    """ Function that filters prompts with undesired words and prompts of certain length that might contain LLM bot output.
+    :param prompts: a list with input prompts
+    :return list with filtered prompts
+    """
+    def filter_prompts_with_words(self, prompts: list):
+        self.__logger.info(f"\n")
+        self.__logger.info("*" * 40)
+        self.__logger.info(" *** Prompt Dataset Cleaner: filter prompts with undesired words. ***")
+        self.__logger.info("*" * 40)
+        self.__logger.info(f"\n")
+
+        self.__logger.info(f" Total lines in the dataset before: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
+
         prompts = list(filter(lambda sentence: 5 <= len(sentence) <= 100, prompts))
         prompts = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(self.__config_data["filter_prompts_with_words"]), prompts))
-        prompts = [p for p in prompts if p not in self.__config_data["filter_colors"]]
         prompts = [l + "\n" if "\n" not in l else l for l in prompts]
 
         self.__logger.info(f" Total lines in the dataset after: {colorama.Fore.GREEN}{len(prompts)}{colorama.Style.RESET_ALL}")
