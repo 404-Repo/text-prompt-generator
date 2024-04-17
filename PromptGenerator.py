@@ -115,8 +115,7 @@ class PromptGenerator:
 
             output_list = []
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
-                temperature = random.uniform(0.45, 0.65)
-                # print(f"[INFO] Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
+                temperature = random.uniform(0.4, 0.5)
 
                 # find 'member' in the input string and replace it with category
                 prompt_in = prompt_in.replace("member_placeholder", category)
@@ -209,8 +208,7 @@ class PromptGenerator:
 
             output_list = []
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
-                temperature = random.uniform(0.45, 0.65)
-                # self.__logger(f" Current temperature: {colorama.Fore.GREEN}{temperature}{colorama.Style.RESET_ALL}")
+                temperature = random.uniform(0.4, 0.5)
 
                 # find 'member' in the input string and replace it with category
                 prompt = prompt.replace("member_placeholder", category)
@@ -265,7 +263,7 @@ class PromptGenerator:
 
             output_list = []
             for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
-                temperature = random.uniform(0.45, 0.65)
+                temperature = random.uniform(0.4, 0.5)
 
                 # find 'member' in the input string and replace it with category
                 prompt_in = prompt.replace("member_placeholder", category)
