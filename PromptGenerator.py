@@ -13,6 +13,7 @@ import groq
 import transformers
 import torch
 
+from llama_cpp import llama_model_quantize_params
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, pipeline
 from huggingface_hub import hf_hub_download
 from huggingface_hub import login
@@ -363,3 +364,13 @@ class PromptGenerator:
         self.__logger.info(f"{colorama.Fore.GREEN}{prompt_printing}{colorama.Style.RESET_ALL}")
 
         return prompt
+
+    def llamacpp_quantize_model(self, qtype: int = 1):
+        assert self.__llamacpp_model_path != ""
+
+        directory = os.path.dirname(self.__llamacpp_model_path)
+        model_name = self.__config_data["llamacpp_model_file_name"]
+        quantized_model_path = f"{directory}/qtype_{qtype}_{model_name}"
+        result = llama_cpp.llama_model_quantize(self.__llamacpp_model_path.encode("utf-8"), quantized_model_path.encode("utf-8"),
+                                                llama_model_quantize_params(0, qtype))
+        self.__logger.info(f" {colorama.Fore.GREEN}{result}{colorama.Style.RESET_ALL}")
