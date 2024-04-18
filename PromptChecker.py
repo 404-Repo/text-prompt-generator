@@ -4,12 +4,12 @@ import sys
 import tqdm
 import logging
 import colorama
-import random
 
 import torch
 import transformers
 import groq
 import llama_cpp
+from llama_cpp import llama_model_quantize_params
 
 from time import time
 from huggingface_hub import login
@@ -47,8 +47,9 @@ class PromptChecker:
             self.__logger.setLevel(logging.INFO)
         else:
             login(token=self.__config_data["hugging_face_api_key"])
-        self.__pipeline = None
 
+        self.__pipeline = None
+        self.__llama_model = None
         self.__llamacpp_model_path = ""
 
         self.__prompt_for_correction = (f"Perform semantic analysis check of the input prompt. "
@@ -114,6 +115,7 @@ class PromptChecker:
         result = result.split("\n")
         result = result[0].replace("**Corrected Prompt:**", "").strip()
         result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**Corrected prompt:", "")
         result = result.replace("**", "")
         return result
 
@@ -193,6 +195,7 @@ class PromptChecker:
         result = result.split("\n")
         result = result[0].replace("**Corrected Prompt:**", "").strip()
         result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**Corrected prompt:", "")
         result = result.replace("**", "")
 
         return result
@@ -233,6 +236,25 @@ class PromptChecker:
         self.__llamacpp_model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=local_files_only)
         self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{self.__llamacpp_model_path}{colorama.Style.RESET_ALL} \n")
 
+    def llamacpp_load_model(self):
+        self.__llama_model = llama_cpp.Llama(model_path=self.__llamacpp_model_path,
+                                             n_ctx=self.__config_data['llm_model']['n_ctx'],
+                                             last_n_tokens_size=self.__config_data['llm_model']['last_n_tokens_size'],
+                                             n_threads=self.__config_data['llm_model']['n_threads'],
+                                             n_gpu_layers=self.__config_data['llm_model']['n_gpu_layers'],
+                                             verbose=self.__config_data['llm_model']['verbose'],
+                                             use_mmap=True)
+
+    def llamacpp_quantize_model(self, qtype: int = 1):
+        assert self.__llamacpp_model_path != ""
+
+        directory = os.path.dirname(self.__llamacpp_model_path)
+        model_name = self.__config_data["llamacpp_model_file_name_prompt_checker"]
+        quantized_model_path = f"{directory}/qtype_{qtype}_{model_name}"
+        result = llama_cpp.llama_model_quantize(self.__llamacpp_model_path.encode("utf-8"), quantized_model_path.encode("utf-8"),
+                                                llama_model_quantize_params(0, qtype))
+        self.__logger.info(f" {colorama.Fore.GREEN}{result}{colorama.Style.RESET_ALL}")
+
     """  """
     def llamacpp_check_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self.__config_data['obj_categories']
@@ -241,10 +263,14 @@ class PromptChecker:
                       f"This prompt might describe an object from one of these categories: {object_categories}. ") +
                      self.__prompt_for_checking)
 
-        result = self._llamacpp_process_prompt(prompt_in, 100, temperature)
-        score = re.findall("\d+\.\d+", result)
+        grammar = llama_cpp.LlamaGrammar.from_string(r'''root ::= "0" Fraction | "0" | "1" | "0." Digit+
+                                                             Fraction ::= "." Digit+
+                                                             Digit ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" 
+                                                             ws ::= [\t\n]*
+                                                          ''', verbose=self.__config_data['llm_model']['verbose'])
 
-        return score
+        result = self._llamacpp_process_prompt(prompt_in, 256, temperature, grammar, False)
+        return result
 
     """
     """
@@ -257,33 +283,40 @@ class PromptChecker:
                       f"Avoid using words from the list: {filter_words}. ") +
                      self.__prompt_for_correction)
 
-        result = self._llamacpp_process_prompt(prompt_in, 500, temperature)
-        result = result.split("\n")
-        result = result[0].replace("**Corrected Prompt:**", "").strip()
+        result = self._llamacpp_process_prompt(prompt_in, 256, temperature, None, False)
+
+        result = result.split("\n")[-1]
+        result = result.replace("**Corrected Prompt:**", "").strip()
         result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**Corrected prompt:", "")
         result = result.replace("**", "")
+        result = result.replace("```", "")
 
         return result
 
     """
     """
-    def _llamacpp_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
-        model_path = self.llamacpp_load_checkpoint()
-
-        llm_model = llama_cpp.Llama(model_path=self.__llamacpp_model_path,
-                                    n_ctx=self.__config_data['llm_model']['n_ctx'],
-                                    last_n_tokens_size=self.__config_data['llm_model']['last_n_tokens_size'],
-                                    n_threads=self.__config_data['llm_model']['n_threads'],
-                                    n_gpu_layers=self.__config_data['llm_model']['n_gpu_layers'],
-                                    verbose=self.__config_data['llm_model']['verbose'])
-
-        output = llm_model.create_completion(prompt=prompt,
-                                             max_tokens=max_tokens,
-                                             echo=False,
-                                             temperature=temperature)
-        result = output['choices'][0]['text']
-
-        return result
+    def _llamacpp_process_prompt(self, prompt: str, max_tokens: int, temperature: float, grammar, chat_completion: bool = False):
+        if chat_completion:
+            output = self.__llama_model.create_chat_completion(messages=[{
+                                                                            "role": "user",
+                                                                            "content": prompt
+                                                                        }],
+                                                               max_tokens=max_tokens,
+                                                               grammar=grammar,
+                                                               top_k=1,
+                                                               temperature=temperature)
+            result = output['choices'][0]['message']["content"]
+            return result
+        else:
+            output = self.__llama_model.create_completion(prompt=prompt,
+                                                          max_tokens=max_tokens,
+                                                          echo=False,
+                                                          temperature=temperature,
+                                                          grammar=grammar,
+                                                          top_k=1)
+            result = output['choices'][0]["text"]
+            return result
 
     """ Function for filtering all duplicates from the input prompt list
     :param prompts: a list with input prompts
