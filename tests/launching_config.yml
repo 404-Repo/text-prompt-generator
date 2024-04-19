@@ -1,13 +1,8 @@
-# relative path to the repository on the hugging face portal:
-# model for prompt generation
-llamacpp_hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
-
-# model for prompt checking and correction
-llamacpp_hugging_face_repo_prompt_checker: "google/gemma-1.1-7b-it-GGUF"
+# relative path to the repository on the hugging face portal
+hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
 
 # the file with model that will be downloaded from the hugging face (note on file format: llama-cpp support .gguf only)
-llamacpp_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
-llamacpp_model_file_name_prompt_checker: "7b_it_v1p1.gguf" # 7b_it_v1p1.gguf
+llm_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
 
 # one of the models supported by groq platform: llama2-70b-4096, mixtral-8x7b-32768, gemma-7b-it
 groq_llm_model: "mixtral-8x7b-32768"
@@ -19,11 +14,11 @@ transformers_llm_model: "mistralai/Mistral-7B-Instruct-v0.2"
 transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
 
 # put here token generated at https://console.groq.com/keys
-groq_api_key: ""
+groq_api_key: "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"
 
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
-hugging_face_api_key: ""
+hugging_face_api_key: "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"
 
 # path to where download the LLM model
 cache_folder: "./model"
@@ -33,13 +28,22 @@ cache_folder: "./model"
 # prompts_num will be replaced with prompts_num from this config;
 # member_placeholder will be replaced with one of the strings stored in obj_categories list.
 prompt: "Generate a prompt dataset for generating 3D models. 
-         Each prompt should define a single 3D object that can be generated as a 3D mesh. 
-         The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
-         Each object should be different and must be strictly picked from the member_placeholder category. 
-         Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden, water, sun, moon. 
-         Generate a single unique finished prompt on the new line with no more than five or six words.
-         Prompt examples: a red gorilla with green eyes, a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium. 
+         Each prompt should be meaningful and define a single 3D object that can be generated in 3D with no more than five words. 
+         The object description should contain one or two distinctive features such as color, shape, or pose of the generating object. 
+         Make all prompts simple, e.g. a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium.  
+         Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden.
+         Every prompt must be unique and remove repetitions.
+         Each object should be different and must be strictly picked up from the member_placeholder category. 
          Generate prompts_num prompts. "
+
+prompt_groq: "Generate a prompt dataset for generating 3D models. 
+              Each prompt should define a single 3D object that can be generated as a 3D mesh. 
+              The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
+              Each object should be different and must be strictly picked from the member_placeholder category. 
+              Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden, water, sun, moon. 
+              Generate a single unique finished prompt on the new line with no more than five or six words.
+              Prompt examples: a red gorilla with green eyes, a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium. 
+              Generate prompts_num prompts. "
 
 
 # Categories of objects from where the LLM model could sample the data.
@@ -53,15 +57,17 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
                             "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
                             "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
-                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
-                            "orbit", "hope", "melody", "animate"
+                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance", "texture"
                             ]
+
+# prompts with colours which will be filtered out if the prompt is as follows: "green", "black" etc.
+filter_colors: ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
 
 # amount of prompts to generate per category.
 prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
-iteration_num: 100
+iteration_num: 1
 
 # file where to output the prompts (.txt file)
 prompts_output_file: "prompt_dataset.txt"
@@ -84,7 +90,7 @@ llm_model:
     n_threads: 16
 
     # Number of layers to offload to GPU (-ngl). If -1, all layers are offloaded. [llama-cpp]
-    n_gpu_layers: -1
+    n_gpu_layers: 35
 
     # The maximum number of tokens to generate. If max_tokens <= 0 or None, the maximum number of tokens to generate is unlimited and depends on n_ctx.
     # [llama-cpp & Groq]

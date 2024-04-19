@@ -1,9 +1,10 @@
 import pytest
-from textblob import TextBlob
 
 from symspellpy import SymSpell
 import pkg_resources
-from itertools import islice
+
+import PromptChecker
+from PromptGenerator import load_config_file
 
 
 def test_list_to_set():
@@ -153,3 +154,55 @@ def test_grammar_check():
                    "squirrel with purple fur and red tail"]
 
     assert ref_prompts == corrected_prompts
+
+
+def test_prompt_quality_check():
+    prompts = ["white fan shaped bird of paradise flower",
+               "a brown bear",
+               "super duper spider man",
+               "sleeping cat on the bed"]
+
+    data_config = load_config_file()
+    prompt_checker = PromptChecker.PromptChecker(data_config)
+    prompt_checker.transformers_load_checkpoint()
+
+    wrong_prompts = []
+    correct_prompts = []
+    for p in prompts:
+        score = prompt_checker.transformers_check_prompt(p)
+
+        if float(score) >= 0.5:
+            correct_prompts.append(p)
+        else:
+            wrong_prompts.append(p)
+
+    assert "a brown bear" in correct_prompts
+    assert "sleeping cat on the bed" in correct_prompts
+    assert "super duper spider man" in wrong_prompts
+    assert "white fan shaped bird of paradise flower" in wrong_prompts
+
+
+def test_prompt_correction():
+    prompts = ["white fan shaped bird of paradise flower",
+               "a brown bear",
+               "super duper spider man",
+               "sleeping cat on the bed"]
+
+    data_config = load_config_file()
+    prompt_checker = PromptChecker.PromptChecker(data_config)
+    prompt_checker.transformers_load_checkpoint()
+
+    corrected_prompts = []
+    for p in prompts:
+        score = prompt_checker.transformers_check_prompt(p)
+
+        if float(score) >= 0.5:
+            corrected_prompts.append(p)
+        else:
+            prompt = prompt_checker.transformers_correct_prompt(p)
+            corrected_prompts.append(prompt)
+
+    assert prompts[0] != corrected_prompts[0]
+    assert prompts[1] == corrected_prompts[1]
+    assert prompts[2] != corrected_prompts[2]
+    assert prompts[3] == corrected_prompts[3]
