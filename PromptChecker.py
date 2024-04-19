@@ -119,7 +119,11 @@ class PromptChecker:
         result = result.replace("**", "")
         return result
 
-    """
+    """ Function that process the input prompt-instruction
+    :param prompt: a string with prompt that will be checked and potentially rewritten
+    :param max_tokens: the maximum amount of tokens that will limit the output prompt
+    :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+    :return generated prompt
     """
     def _groq_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
         client = groq.Groq(api_key=self.__config_data["groq_api_key"])
@@ -127,11 +131,11 @@ class PromptChecker:
                                                             "role": "user",
                                                             "content": prompt
                                                          }],
-                                               model="gemma-7b-it",
-                                               seed=self.__config_data['llm_model']['seed'],
-                                               temperature=temperature,
-                                               top_p=1,
-                                               max_tokens=max_tokens)
+                                                model="gemma-7b-it",
+                                                seed=self.__config_data['llm_model']['seed'],
+                                                temperature=temperature,
+                                                top_p=1,
+                                                max_tokens=max_tokens)
         result = output.choices[0].message.content
 
         return result
@@ -178,7 +182,7 @@ class PromptChecker:
 
         return score[0]
 
-    """  Function for correcting the input prompt in case if it does not satisfy provided conditions.
+    """ Function for correcting the input prompt in case if it does not satisfy provided conditions.
     :param prompt: a string with prompt that will be checked and potentially rewritten.
     :return a rewritten prompt as a python string. 
     """
@@ -200,7 +204,11 @@ class PromptChecker:
 
         return result
 
-    """
+    """ Function for processing prompts according to the passed prompt instruction.
+    :param prompt: a string with prompt that will be checked and potentially rewritten
+    :param max_tokens: the maximum amount of tokens that will limit the output prompt
+    :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+    :return generated prompt
     """
     def _transformers_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
         prompt = self.__pipeline.tokenizer.apply_chat_template(conversation=[{
@@ -218,8 +226,10 @@ class PromptChecker:
         result = outputs[0]["generated_text"][len(prompt):]
         return result
 
-    """  """
-    def llamacpp_load_checkpoint(self, local_files_only:bool = False):
+    """  Function for downloading the LLM and returning the path to where it is stored.
+    :param local_files_only: a boolean parameter, if False - download and preload the model, else return the path to the downloaded model
+    """
+    def llamacpp_load_checkpoint(self, local_files_only: bool = True):
         # model to pick up from the hugging face (should have .gguf extension to run with llama)
         hf_model_repo = self.__config_data["llamacpp_hugging_face_repo_prompt_checker"]
         self.__logger.info(f" Hugging Face repository: {colorama.Fore.GREEN}{hf_model_repo}{colorama.Style.RESET_ALL}")
@@ -236,6 +246,7 @@ class PromptChecker:
         self.__llamacpp_model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=local_files_only)
         self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{self.__llamacpp_model_path}{colorama.Style.RESET_ALL} \n")
 
+    """ Function for loading the llamacpp model """
     def llamacpp_load_model(self):
         self.__llama_model = llama_cpp.Llama(model_path=self.__llamacpp_model_path,
                                              n_ctx=self.__config_data['llm_model']['n_ctx'],
@@ -245,6 +256,9 @@ class PromptChecker:
                                              verbose=self.__config_data['llm_model']['verbose'],
                                              use_mmap=True)
 
+    """ Function for quantizing llamacpp model and saving it in .gguf file format.
+    :param qtype: integer paramter that defines the quantizing type, 1-3
+    """
     def llamacpp_quantize_model(self, qtype: int = 1):
         assert self.__llamacpp_model_path != ""
 
@@ -255,7 +269,10 @@ class PromptChecker:
                                                 llama_model_quantize_params(0, qtype))
         self.__logger.info(f" {colorama.Fore.GREEN}{result}{colorama.Style.RESET_ALL}")
 
-    """  """
+    """ Function for checking the prompt using llamacpp LLM 
+    :param prompt: string with input prompt that will be checked
+    :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+    """
     def llamacpp_check_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self.__config_data['obj_categories']
 
@@ -272,7 +289,9 @@ class PromptChecker:
         result = self._llamacpp_process_prompt(prompt_in, 256, temperature, grammar, False)
         return result
 
-    """
+    """ Function for correcting the input prompts (enhancing it's quality)
+    :param prompt: string with input prompt that will be corrected
+    :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
     """
     def llamacpp_correct_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self.__config_data['obj_categories']
@@ -294,7 +313,12 @@ class PromptChecker:
 
         return result
 
-    """
+    """ Function that process the input prompt-instruction
+    :param prompt: a string with prompt-instruction
+    :param max_tokens: the maximum amount of tokens that will limit the output prompt
+    :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+    :param grammar: a parameter that defines the grammar for the output, can be set to None
+    :param chat_completion: the output format for the llamacpp
     """
     def _llamacpp_process_prompt(self, prompt: str, max_tokens: int, temperature: float, grammar, chat_completion: bool = False):
         if chat_completion:
