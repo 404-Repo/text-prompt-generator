@@ -145,16 +145,36 @@ sh install_env.sh
 
 ### Running tool:
 ```commandline
-python prompt_generator_tool.py --mode online --preload_llm True (run once, default False)
+python prompt_generator_tool.py --mode 'prompt_generation, groq'
 ```
-"mode" option can be set to the following values:
+**"mode"** option can be set to the following values:
 
-- 'groq' - running Groq API
-- 'transformers' - running transformers API
-- 'llamacpp' - running llama-cpp API
+- 'prompt_generation, groq' - running Groq API
+- 'prompt_generation, transformers' - running transformers API
+- 'prompt_generation, llamacpp' - running llama-cpp API
 - 'grammar' - check the grammar of the generated prompts if it has not been done before
 - 'filter_unique_prompts' - find and return all unique prompts within provided prompts list
 - 'filter_prompts' - filter the generated prompts if it has not been done before
-- 'semantic_check_groq' - checking & correcting the prompts using groq API
-- 'semantic_check_transformers' - checking & correcting the prompts using transformers API
-- 'semantic_check_llamacpp' - checking & correcting the prompts using llamacpp API
+- 'semantic_check, groq' - checking & correcting the prompts using groq API
+- 'semantic_check, transformers' - checking & correcting the prompts using transformers API
+- 'semantic_check, llamacpp' - checking & correcting the prompts using llamacpp API
+
+To preload LLM you can run the following command:
+```commandline
+python prompt_generator_tool.py --preload_llm 'prompt_generation, transformers'
+```
+**"preload_llm"** option can be set to the following values:
+
+- 'prompt_generation, transformers' - pre-loading LLM using transformers API for prompt generation
+- 'prompt_checking, transformers' - pre-loading LLM using transformers API for prompt checking
+- 'prompt_generation, llamacpp' - pre-loading LLM using llamacpp API for prompt generation
+- 'prompt_checking, llamacpp' - pre-loading LLM using llamacpp API for prompt checking **(Not quite working yet)**
+
+To quantize llamacpp LLM you can run the following command:
+```commandline
+python prompt_generator_tool.py --quantize_llamacpp 'prompt_generation, 1'
+```
+**"quantize_llamacpp"** option can be set to the following values:
+
+- 'prompt_generation, digit' - quantizing llamacpp LLM for prompt generation, digit should be 1, 2, or 3
+- 'prompt_checking, digit' - quantizing llamacpp LLM for prompt checking, digit should be 1, 2, or 3
