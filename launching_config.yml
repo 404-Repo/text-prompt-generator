@@ -1,13 +1,13 @@
 # relative path to the repository on the hugging face portal:
 # model for prompt generation
-llamacpp_hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.2-GGUF"
+llamacpp_hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
+
 # model for prompt checking and correction
 llamacpp_hugging_face_repo_prompt_checker: "google/gemma-1.1-7b-it-GGUF"
 
-
 # the file with model that will be downloaded from the hugging face (note on file format: llama-cpp support .gguf only)
 llamacpp_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
-llamacpp_model_file_name_prompt_checker: "7b_it_v1p1.gguf"
+llamacpp_model_file_name_prompt_checker: "7b_it_v1p1.gguf" # 7b_it_v1p1.gguf
 
 # one of the models supported by groq platform: llama2-70b-4096, mixtral-8x7b-32768, gemma-7b-it
 groq_llm_model: "mixtral-8x7b-32768"
@@ -61,10 +61,10 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
 prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
-iteration_num: 1
+iteration_num: 100
 
 # file where to output the prompts (.txt file)
-prompts_output_file: "prompts_dataset.txt"
+prompts_output_file: "prompt_dataset.txt"
 
 # parameters for the llama-cpp loader
 llm_model:
