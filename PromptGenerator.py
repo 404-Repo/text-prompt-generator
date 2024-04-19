@@ -237,23 +237,27 @@ class PromptGenerator:
 
         return output_prompts
 
+    """ Function for loading (including downloading from hugging face) the requested LLM for offline generations. """
+    def llamacpp_load_checkpoint(self, local_files_only: bool = True):
+        # model to pick up from the hugging face (should have .gguf extension to run with llama)
+        hf_model_repo = self.__config_data["llamacpp_hugging_face_repo"]
+        self.__logger.info(f" Hugging Face repository: {colorama.Fore.GREEN}{hf_model_repo}{colorama.Style.RESET_ALL}")
+
+        # the name of the file to be downloaded
+        model_file_name = self.__config_data["llamacpp_model_file_name"]
+        self.__logger.info(f" LLM model to load: {colorama.Fore.GREEN}{model_file_name}{colorama.Style.RESET_ALL}")
+
+        # cache folder where you want to store the downloaded model
+        cache_folder = self.__config_data["cache_folder"]
+        os.makedirs(cache_folder, exist_ok=True)
+        self.__logger.info(f" LLM model will be stored here: {colorama.Fore.GREEN}{cache_folder}{colorama.Style.RESET_ALL}")
+
+        self.__llamacpp_model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=local_files_only)
+        self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{self.__llamacpp_model_path}{colorama.Style.RESET_ALL} \n")
+
     """ Transformers version of the pipeline for generating prompt dataset """
     def transformers_generator(self):
-        model_name = self.__config_data["transformers_llm_model"]
-
-        bnb_config = BitsAndBytesConfig(load_in_4bit=True, load_in_8bit=False, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True)
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForCausalLM.from_pretrained(model_name,
-                                                     quantization_config=bnb_config,
-                                                     torch_dtype=torch.bfloat16,
-                                                     device_map="auto",
-                                                     trust_remote_code=True)
-
-        self.__pipeline = transformers.pipeline("text-generation",
-                                                model=model,
-                                                tokenizer=tokenizer,
-                                                torch_dtype=torch.bfloat16,
-                                                device_map="auto")
+        assert self.__pipeline is not None
 
         prompt = self._load_input_prompt()
         object_categories = self.__config_data['obj_categories']
@@ -298,23 +302,41 @@ class PromptGenerator:
 
         return output_prompts
 
-    """ Function for loading (including downloading from hugging face) the requested LLM for offline generations. """
-    def llamacpp_load_checkpoint(self, local_files_only: bool = False):
-        # model to pick up from the hugging face (should have .gguf extension to run with llama)
-        hf_model_repo = self.__config_data["llamacpp_hugging_face_repo"]
-        self.__logger.info(f" Hugging Face repository: {colorama.Fore.GREEN}{hf_model_repo}{colorama.Style.RESET_ALL}")
+    """ Function for pre-loading checkpoints for the requested models using transformers.
+    :param load_in_4bit: a boolean parameter that controls whether the model will be loaded using 4 bit quantization (VRAM used ~ 9 Gb).
+    :param load_in_8bit: a boolean parameter that controls whether the model will be loaded using 8 bit quantization (VRAM used ~ 18 Gb).
+    :param bnb_4bit_quant_type: string parameter that defines the quantization type for 4 bit quantization
+    :param bnb_4bit_use_double_quant: boolean parameter that defines whether to use or not double quantization
+    """
+    def transformers_load_checkpoint(self, load_in_4bit: bool = True,
+                                     load_in_8bit: bool = False,
+                                     bnb_4bit_quant_type: str = "nf4",
+                                     bnb_4bit_use_double_quant: bool = True):
+        if load_in_4bit:
+            load_in_8bit = False
+        elif load_in_8bit:
+            load_in_4bit = False
+        else:
+            load_in_4bit = True
+            load_in_8bit = False
 
-        # the name of the file to be downloaded
-        model_file_name = self.__config_data["llamacpp_model_file_name"]
-        self.__logger.info(f" LLM model to load: {colorama.Fore.GREEN}{model_file_name}{colorama.Style.RESET_ALL}")
+        model_name = self.__config_data["transformers_llm_model"]
+        bnb_config = BitsAndBytesConfig(load_in_4bit=load_in_4bit,
+                                        load_in_8bit=load_in_8bit,
+                                        bnb_4bit_quant_type=bnb_4bit_quant_type,
+                                        bnb_4bit_use_double_quant=bnb_4bit_use_double_quant)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name,
+                                                     quantization_config=bnb_config,
+                                                     torch_dtype=torch.bfloat16,
+                                                     device_map="auto",
+                                                     trust_remote_code=True)
 
-        # cache folder where you want to store the downloaded model
-        cache_folder = self.__config_data["cache_folder"]
-        os.makedirs(cache_folder, exist_ok=True)
-        self.__logger.info(f" LLM model will be stored here: {colorama.Fore.GREEN}{cache_folder}{colorama.Style.RESET_ALL}")
-
-        self.__llamacpp_model_path = hf_hub_download(repo_id=hf_model_repo, filename=model_file_name, cache_dir=cache_folder, local_files_only=local_files_only)
-        self.__logger.info(f" Downloaded model stored in: {colorama.Fore.GREEN}{self.__llamacpp_model_path}{colorama.Style.RESET_ALL} \n")
+        self.__pipeline = transformers.pipeline("text-generation",
+                                                model=model,
+                                                tokenizer=tokenizer,
+                                                torch_dtype=torch.bfloat16,
+                                                device_map="auto")
 
     """ Function for post processing of the generated prompts. The LLM output is filtered from punctuation symbols and all non alphabetic characters.
     :param prompt_list: a list with strings (generated prompts)
@@ -348,9 +370,8 @@ class PromptGenerator:
         return modified_text
 
     """Function for loading input prompt-instruction for the LLM. It will be used for generating prompts.
-       :return loaded prompt as a string from the config file.
-       """
-
+    :return loaded prompt as a string from the config file.
+    """
     def _load_input_prompt(self):
         # prompt for dataset generation
         prompt = self.__config_data["prompt"]
@@ -365,6 +386,10 @@ class PromptGenerator:
 
         return prompt
 
+    """ Function for checking the prompt using llamacpp LLM 
+    :param prompt: string with input prompt that will be checked
+    :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+    """
     def llamacpp_quantize_model(self, qtype: int = 1):
         assert self.__llamacpp_model_path != ""
 
