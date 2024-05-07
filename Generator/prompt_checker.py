@@ -8,8 +8,10 @@ import colorama
 import torch
 import transformers
 import groq
+import openai
 import llama_cpp
 from llama_cpp import llama_model_quantize_params
+from loguru import logger
 
 from time import time
 from huggingface_hub import login
