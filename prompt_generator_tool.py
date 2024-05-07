@@ -1,10 +1,14 @@
 import tqdm
 import argparse
-import PromptGenerator
-import PromptChecker
+
+from Generator.prompt_generator import (PromptGenerator,
+                                        load_config_file,
+                                        load_file_with_prompts,
+                                        save_prompts)
+from Generator.prompt_checker import PromptChecker
 
 
-def postprocess_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: list):
+def postprocess_prompts(prompt_checker: PromptChecker, prompts: list):
     """ Function for post-processing input prompts: grammar check and filtering
     :param prompt_checker: object that provides access to the PromptChecker methods
     :param prompts: list with input prompts
@@ -16,7 +20,7 @@ def postprocess_prompts(prompt_checker: PromptChecker.PromptChecker, prompts: li
     return prompts_out
 
 
-def check_prompts(prompt_checker: PromptChecker.PromptChecker,
+def check_prompts(prompt_checker: PromptChecker,
                   prompts: list,
                   model_name: str,
                   mode: str,
@@ -28,7 +32,7 @@ def check_prompts(prompt_checker: PromptChecker.PromptChecker,
     :param mode: can be 'online' or 'offline'
     :param file_name: the name of the file where the suitable prompts will be output after filtering (optional), default "correct_prompts.txt"
     """
-    for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):  #107000 :
+    for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):  #179000 - 184000 :
         if mode == "transformers":
             score = prompt_checker.transformers_check_prompt(p)
         elif mode == "llamacpp":
@@ -49,11 +53,11 @@ def check_prompts(prompt_checker: PromptChecker.PromptChecker,
 
             p = p.strip()
             p += "\n"
-            PromptGenerator.save_prompts(file_name, [p], "a")
+            save_prompts(file_name, [p], "a")
         else:
             p = p.strip()
             p += ", [ " + score + " ]\n"
-            PromptGenerator.save_prompts("wrong_prompts.txt", [p], "a")
+            save_prompts("wrong_prompts.txt", [p], "a")
 
 
 def console_args():
@@ -101,9 +105,9 @@ def console_args():
 
 
 if __name__ == '__main__':
-    config_data = PromptGenerator.load_config_file()
-    prompt_generator = PromptGenerator.PromptGenerator(config_data)
-    prompt_checker = PromptChecker.PromptChecker(config_data)
+    config_data = load_config_file()
+    prompt_generator = PromptGenerator(config_data)
+    prompt_checker = PromptChecker(config_data)
 
     proc_mode, proc_mode_option, load_llm_mode, load_llm_option, quant_llm_mode, quant_llm_option = console_args()
 
@@ -113,6 +117,11 @@ if __name__ == '__main__':
             prompts = postprocess_prompts(prompt_checker, prompts)
             prompt_checker.transformers_load_checkpoint()
             check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "transformers", config_data["prompts_output_file"])
+
+        elif proc_mode_option == "openai":
+            prompts = prompt_generator.openai_generator()
+            prompts = postprocess_prompts(prompt_checker, prompts)
+            save_prompts("chatgpt.txt", prompts)
 
         elif proc_mode_option == "transformers":
             prompt_generator.transformers_load_checkpoint()
@@ -132,32 +141,32 @@ if __name__ == '__main__':
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
 
     elif proc_mode == "filter_unique_prompts":
-        prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
+        prompts = load_file_with_prompts(config_data["prompts_output_file"])
         prompts = prompt_checker.filter_unique_prompts(prompts)
-        PromptGenerator.save_prompts(config_data["prompts_output_file"], prompts, "w")
+        save_prompts(config_data["prompts_output_file"], prompts, "w")
 
     elif proc_mode == "filter_prompts":
-        prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
+        prompts = load_file_with_prompts(config_data["prompts_output_file"])
         prompts = prompt_checker.filter_prompts_with_words(prompts)
-        PromptGenerator.save_prompts(config_data["prompts_output_file"], prompts, "w")
+        save_prompts(config_data["prompts_output_file"], prompts, "w")
 
     elif proc_mode == "grammar":
-        prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
+        prompts = load_file_with_prompts(config_data["prompts_output_file"])
         prompts = prompt_checker.check_grammar(prompts)
-        PromptGenerator.save_prompts(config_data["prompts_output_file"], prompts, "w")
+        save_prompts(config_data["prompts_output_file"], prompts, "w")
 
     elif proc_mode == "semantic_check":
         if proc_mode_option == "groq":
-            prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
+            prompts = load_file_with_prompts(config_data["prompts_output_file"])
             check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "groq")
         elif proc_mode_option == "transformers":
             prompt_checker.transformers_load_checkpoint()
-            prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
+            prompts = load_file_with_prompts(config_data["prompts_output_file"])
             check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "transformers")
         elif proc_mode_option == "llamacpp":
             prompt_checker.llamacpp_load_checkpoint()
             prompt_checker.llamacpp_load_model()
-            prompts = PromptGenerator.load_file_with_prompts(config_data["prompts_output_file"])
+            prompts = load_file_with_prompts(config_data["prompts_output_file"])
             check_prompts(prompt_checker, prompts, config_data["llamacpp_model_file_name"], "llamacpp")
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
