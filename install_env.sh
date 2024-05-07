@@ -15,10 +15,8 @@ source "${CONDA_BASE}/etc/profile.d/conda.sh"
 
 # Create environment and activate it
 conda env create -f environment.yml
-conda activate three_gen_prompt_generator
+conda activate three-gen-prompt-generator
 conda info --env
-
-python -m textblob.download_corpora
 
 # LLAMA-CPP backends, uncomment one option and comment out the rest
 # CUDA support for llama-cpp
