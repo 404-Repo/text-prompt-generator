@@ -12,11 +12,11 @@ transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
 vllm_llm_model: "casperhansen/llama-3-8b-instruct-awq"
 
 # put here token generated at https://console.groq.com/keys
-groq_api_key: "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"
+groq_api_key: ""
 
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
-hugging_face_api_key: "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"
+hugging_face_api_key: ""
 
 # the prompt that will be used for generating the dataset.
 # NOTE: member_placeholder and prompts_num are mandatory placeholders.
