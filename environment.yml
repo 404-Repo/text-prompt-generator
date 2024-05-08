@@ -1,4 +1,4 @@
-name: three_gen_prompt_generator
+name: three-gen-prompt-generator
 channels:
   - defaults
   - conda-forge
@@ -9,17 +9,19 @@ dependencies:
   - pip
   - cuda-toolkit=12.1.1
   - pip:
-    - numpy==1.23.0
+    - numpy==1.*
     - torch==2.1.1
     - torchvision
     - "--extra-index-url https://download.pytorch.org/whl/cu121"
-    - huggingface_hub>=0.19.4
-    - transformers>=4.38.2
-    - protobuf>=4.21.0,<5.0.0
-    - colorama
+    - huggingface_hub==0.*
+    - transformers==4.*
+    - protobuf==4.40.*
     - tqdm
     - pytest
     - groq
     - symspellpy
     - accelerate
     - bitsandbytes
+    - loguru==0.*
+    - vllm
+    - langchain
