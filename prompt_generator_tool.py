@@ -35,8 +35,6 @@ def check_prompts(prompt_checker: PromptChecker,
     for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):  #179000 - 184000 :
         if mode == "transformers":
             score = prompt_checker.transformers_check_prompt(p)
-        elif mode == "llamacpp":
-            score = prompt_checker.llamacpp_check_prompt(p)
         elif mode == "groq":
             score = prompt_checker.groq_check_prompt(p)
         else:
@@ -46,8 +44,6 @@ def check_prompts(prompt_checker: PromptChecker,
             if "gemma" not in model_name:
                 if mode == "transformers":
                     p = prompt_checker.transformers_correct_prompt(p)
-                elif mode == "llamacpp":
-                    p = prompt_checker.llamacpp_correct_prompt(p)
                 else:
                     p = prompt_checker.groq_correct_prompt(p)
 
@@ -118,11 +114,6 @@ if __name__ == '__main__':
             prompt_checker.transformers_load_checkpoint()
             check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "transformers", config_data["prompts_output_file"])
 
-        elif proc_mode_option == "openai":
-            prompts = prompt_generator.openai_generator()
-            prompts = postprocess_prompts(prompt_checker, prompts)
-            save_prompts("chatgpt.txt", prompts)
-
         elif proc_mode_option == "transformers":
             prompt_generator.transformers_load_checkpoint()
             prompts = prompt_generator.transformers_generator()
@@ -130,13 +121,6 @@ if __name__ == '__main__':
             prompt_checker.transformers_load_checkpoint()
             check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "transformers", config_data["prompts_output_file"])
 
-        elif proc_mode_option == "llamacpp":
-            prompt_generator.llamacpp_load_checkpoint()
-            prompts = prompt_generator.llamacpp_generator()
-            prompts = postprocess_prompts(prompt_checker, prompts)
-            prompt_checker.llamacpp_load_checkpoint()
-            prompt_checker.llamacpp_load_model()
-            check_prompts(prompt_checker, prompts, config_data["llamacpp_model_file_name_prompt_checker"], "llamacpp", config_data["prompts_output_file"])
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
 
@@ -163,11 +147,6 @@ if __name__ == '__main__':
             prompt_checker.transformers_load_checkpoint()
             prompts = load_file_with_prompts(config_data["prompts_output_file"])
             check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "transformers")
-        elif proc_mode_option == "llamacpp":
-            prompt_checker.llamacpp_load_checkpoint()
-            prompt_checker.llamacpp_load_model()
-            prompts = load_file_with_prompts(config_data["prompts_output_file"])
-            check_prompts(prompt_checker, prompts, config_data["llamacpp_model_file_name"], "llamacpp")
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
 
@@ -177,26 +156,14 @@ if __name__ == '__main__':
                                                           load_in_8bit=False,
                                                           bnb_4bit_quant_type="nf4",
                                                           bnb_4bit_use_double_quant=True)
-        elif load_llm_option == "llamacpp":
-            prompt_generator.llamacpp_load_checkpoint(local_files_only=False)
         else:
             raise UserWarning("No option was specified in the form: --preload_llm prompt_generation, transformers. Nothing to be done.")
 
     elif load_llm_mode == "prompt_checking":
         if load_llm_option == "transformers":
             prompt_checker.transformers_load_checkpoint(load_in_4bit=True, load_in_8bit=False)
-        elif load_llm_option == "llamacpp":
-            prompt_checker.llamacpp_load_checkpoint(local_files_only=False)
         else:
             raise UserWarning("No option was specified in the form: --preload_llm prompt_checking, transformers. Nothing to be done.")
-
-    elif quant_llm_mode == "prompt_checking":
-        prompt_checker.llamacpp_load_checkpoint()
-        prompt_checker.llamacpp_quantize_model(quant_llm_option)
-
-    elif quant_llm_mode == "prompt_generation":
-        prompt_generator.llamacpp_load_checkpoint()
-        prompt_generator.llamacpp_quantize_model(quant_llm_option)
 
     else:
         raise ValueError("Unknown mode was specified. Check supported modes using -h option.")
