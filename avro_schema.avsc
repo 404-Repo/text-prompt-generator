@@ -1,0 +1,11 @@
+{
+  "type": "record",
+  "name": "SimpleTextData",
+  "namespace": "example.avro",
+  "fields": [
+    {
+      "name": "text",
+      "type": "string"
+    }
+  ]
+}
