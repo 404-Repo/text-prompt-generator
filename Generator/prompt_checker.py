@@ -7,6 +7,7 @@ import torch
 from loguru import logger
 from huggingface_hub import login
 from vllm import LLM, SamplingParams
+from vllm.distributed.parallel_state import destroy_model_parallel
 
 
 class PromptChecker:
@@ -165,11 +166,14 @@ class PromptChecker:
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
+        destroy_model_parallel()
+        del self._generator.llm_engine.model_executor.driver_worker
         del self._generator
         self._generator = None
         gc.collect()
         torch.cuda.empty_cache()
-        torch.distributed.destroy_process_group()
+        import ray
+        ray.shutdown()
 
     def filter_unique_prompts(self, prompts: list):
         """ Function for filtering all duplicates from the input prompt list

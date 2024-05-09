@@ -3,6 +3,7 @@ import re
 import gc
 import copy
 import random
+import contextlib
 from time import time
 from typing import Optional
 
@@ -10,6 +11,7 @@ import tqdm
 import torch
 import groq
 from vllm import LLM, SamplingParams
+from vllm.distributed.parallel_state import destroy_model_parallel
 from loguru import logger
 
 from huggingface_hub import login
@@ -28,6 +30,8 @@ class PromptGenerator:
         self._config_data = config_file_data
         self._logger = logger
         self._generator = None
+        self._instruction_prompt = ""
+        self._object_categories = []
 
         if self._config_data["groq_api_key"] == "":
             self._logger.warning(f"Groq Api Access Token was not specified. "
@@ -39,6 +43,8 @@ class PromptGenerator:
                                  f"You will not be able to download Gemma model.")
         else:
             login(token=self._config_data["hugging_face_api_key"])
+
+        self._preload_input_data()
 
     def groq_generator(self):
         """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
@@ -102,25 +108,20 @@ class PromptGenerator:
     def vllm_generator(self):
         """ Function that calls vLLM API for generating prompts. """
 
-        prompt = self._load_input_prompt()
-        object_categories = self._config_data['obj_categories']
-
-        self._logger.info(f" Object categories: {object_categories}")
-
         # generate prompts using the provided object categories
         self._logger.info(" Started prompt generation.")
         t1 = time()
 
         output_list = []
-        for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
+        for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
             temperature = random.uniform(0.4, 0.6)
 
             # find 'member' in the input string and replace it with category
-            prompt_in = prompt.replace("member_placeholder", category)
+            prompt_in = self._instruction_prompt.replace("member_placeholder", category)
             sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["llm_model"]["max_tokens"])
             outputs = self._generator.generate([prompt_in], sampling_params)
 
-            prompt = prompt.replace(category, "member_placeholder")
+            prompt = self._instruction_prompt.replace(category, "member_placeholder")
             output_list.append(outputs[0].outputs[0].text)
 
         processed_prompts = self.post_process_prompts(output_list)
@@ -140,17 +141,33 @@ class PromptGenerator:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
 
-        self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
+        self._generator = LLM(model=self._config_data["vllm_llm_model"],
                               trust_remote_code=True,
                               quantization=quantization)
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
+        logger.info("Deleting model in use.")
+        destroy_model_parallel()
+        del self._generator.llm_engine
         del self._generator
-        self._generator = None
+
         gc.collect()
         torch.cuda.empty_cache()
-        torch.distributed.destroy_process_group()
+        with contextlib.suppress(AssertionError):
+            torch.distributed.destroy_process_group()
+
+        self._generator = None
+
+        logger.info(f"GPU cached memory in use: {torch.cuda.memory_cached()/1000} Gb")
+        logger.info(f"GPU allocated memory: {torch.cuda.memory_allocated()/1000} Gb\n")
+
+    def _preload_input_data(self):
+        """ Function for preloading input data """
+        self._instruction_prompt = self._load_input_prompt()
+        self._object_categories = self._config_data['obj_categories']
+        self._logger.info(f" Object categories: {self._object_categories}")
+
 
     @staticmethod
     def post_process_prompts(prompts_list: list):
