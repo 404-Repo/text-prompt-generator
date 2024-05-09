@@ -1,14 +1,10 @@
 import re
-import tqdm
-import torch
-import transformers
-import groq
-import pkg_resources
+from typing import Optional
 
+import groq
 from loguru import logger
-from time import time
 from huggingface_hub import login
-from symspellpy import SymSpell
+from vllm import LLM, SamplingParams
 
 
 class PromptChecker:
@@ -22,8 +18,6 @@ class PromptChecker:
         """
 
         self._logger = logger_
-
-        transformers.logging.set_verbosity_error()
         self._config_data = config_file_data
 
         if self._config_data["groq_api_key"] == "":
@@ -37,9 +31,7 @@ class PromptChecker:
         else:
             login(token=self._config_data["hugging_face_api_key"])
 
-        self._pipeline = None
-        self._llama_model = None
-        self._llamacpp_model_path = ""
+        self._generator = None
 
         self._prompt_for_correction = (f"Perform semantic analysis check of the input prompt. "
                                        f"Perform contextual analysis check of the input prompt. "
@@ -126,57 +118,18 @@ class PromptChecker:
 
         return result
 
-    def transformers_load_checkpoint(self, load_in_4bit: bool = True, load_in_8bit: bool = False):
-        """ Function for pre-loading checkpoints for the requested models using transformers.
-
-        :param load_in_4bit: a boolean parameter that controls whether the model will be loaded using 4 bit quantization (VRAM used ~ 9 Gb).
-        :param load_in_8bit: a boolean parameter that controls whether the model will be loaded using 8 bit quantization (VRAM used ~ 18 Gb).
-        """
-        if load_in_4bit:
-            load_in_8bit = False
-        elif load_in_8bit:
-            load_in_4bit = False
-        else:
-            load_in_4bit = True
-            load_in_8bit = False
-
-        model = self._config_data["transformers_llm_model_prompt_checker"]
-        self._pipeline = transformers.pipeline("text-generation",
-                                               model=model,
-                                               model_kwargs={
-                                                    "torch_dtype": torch.bfloat16,
-                                                    "quantization_config": {"load_in_4bit": load_in_4bit, "load_in_8bit": load_in_8bit}
-                                               })
-
-    def transformers_check_prompt(self, prompt: str, temperature: float = 0.5):
-        """ Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
-
-       :param prompt: a string with prompt that will be checked.
-       :param temperature:
-       :return a float value between 0 and 1 that will be used for filtering of the prompt.
-       """
-        if self._pipeline is None:
-            raise ValueError("Transformers pipeline was not initialized by calling transformers_load_checkpoint() function. Abort!")
-
+    def vllm_check_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self._config_data['obj_categories']
 
         prompt_in = ((f"input prompt: '{prompt}'. "
                       f"This prompt might describe an object from one of these categories: {object_categories}. ") +
                      self._prompt_for_checking)
 
-        result = self._transformers_process_prompt(prompt_in, 100, temperature)
+        result = self._vllm_process_prompt(prompt_in, 100, temperature)
         score = re.findall("\d+\.\d+", result)
-
         return score[0]
 
-    def transformers_correct_prompt(self, prompt: str, temperature: float = 0.5):
-        """ Function for correcting the input prompt in case if it does not satisfy provided conditions.
-
-        :param prompt: a string with prompt that will be checked and potentially rewritten.
-        :param temperature:
-        :return a rewritten prompt as a python string.
-        """
-
+    def vllm_correct_prompt(self, prompt: str, temperature: float = 0.5):
         object_categories = self._config_data['obj_categories']
         filter_words = self._config_data["filter_prompts_with_words"]
 
@@ -184,38 +137,23 @@ class PromptChecker:
                       f"This prompt might describe an object from one of these categories: {object_categories}. "
                       f"Avoid using words from the list: {filter_words}. ") +
                      self._prompt_for_correction)
-
-        result = self._transformers_process_prompt(prompt_in, 500, temperature)
+        result = self._vllm_process_prompt(prompt_in, 150, temperature)
         result = result.split("\n")
         result = result[0].replace("**Corrected Prompt:**", "").strip()
         result = result.replace("**Corrected prompt:**", "")
         result = result.replace("**Corrected prompt:", "")
         result = result.replace("**", "")
-
         return result
 
-    def _transformers_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
-        """ Function for processing prompts according to the passed prompt instruction.
+    def _vllm_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
+        sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=max_tokens)
+        outputs = self._generator.generate([prompt], sampling_params)
+        return outputs[0].outputs[0].text
 
-       :param prompt: a string with prompt that will be checked and potentially rewritten
-       :param max_tokens: the maximum amount of tokens that will limit the output prompt
-       :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
-       :return generated prompt
-       """
-        prompt = self._pipeline.tokenizer.apply_chat_template(conversation=[{
-                                                                                "role": "user",
-                                                                                "content": prompt
-                                                                            }],
-                                                              tokenize=False,
-                                                              add_generation_prompt=True)
-        outputs = self._pipeline(prompt,
-                                 max_new_tokens=max_tokens,
-                                 do_sample=True,
-                                 temperature=temperature,
-                                 top_k=1)
-
-        result = outputs[0]["generated_text"][len(prompt):]
-        return result
+    def preload_vllm_model(self, quantization: Optional[str]=None):
+        self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
+                              trust_remote_code=True,
+                              quantization=quantization)
 
     def filter_unique_prompts(self, prompts: list):
         """ Function for filtering all duplicates from the input prompt list
@@ -269,41 +207,3 @@ class PromptChecker:
         self._logger.info(f"\n")
 
         return prompts
-
-    def check_grammar(self, prompts: list):
-        """ Function for checking the words in prompts for spelling errors
-
-        :param prompts: a list with strings (generated prompts)
-        :return a list with processed prompts stored as strings.
-        """
-
-        self._logger.info(" Performing spell check of the generated prompts.")
-        t1 = time()
-
-        sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
-        dictionary_path = pkg_resources.resource_filename(
-            "symspellpy", "frequency_dictionary_en_82_765.txt"
-        )
-        bigram_path = pkg_resources.resource_filename(
-            "symspellpy", "frequency_bigramdictionary_en_243_342.txt"
-        )
-
-        sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
-        sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
-
-        corrected_prompts = []
-        for i in tqdm.trange(len(prompts)):
-            terms = sym_spell.lookup_compound(prompts[i], max_edit_distance=2)
-            prompt = terms[0].term
-            if "\n" not in prompt:
-                prompt += "\n"
-            corrected_prompts.append(prompt)
-
-        t2 = time()
-        duration = (t2 - t1) / 60.0
-
-        self._logger.info(f" It took: {duration} min.")
-        self._logger.info(" Done.")
-        self._logger.info(f"\n")
-
-        return corrected_prompts
