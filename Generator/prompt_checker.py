@@ -1,7 +1,9 @@
 import re
+import gc
 from typing import Optional
 
 import groq
+import torch
 from loguru import logger
 from huggingface_hub import login
 from vllm import LLM, SamplingParams
@@ -160,6 +162,14 @@ class PromptChecker:
         self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
                               trust_remote_code=True,
                               quantization=quantization)
+
+    def unload_vllm_model(self):
+        """ Function for unloading the model """
+        del self._generator
+        self._generator = None
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.distributed.destroy_process_group()
 
     def filter_unique_prompts(self, prompts: list):
         """ Function for filtering all duplicates from the input prompt list

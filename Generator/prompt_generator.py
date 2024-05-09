@@ -1,11 +1,13 @@
 import sys
 import re
+import gc
 import copy
 import random
 from time import time
 from typing import Optional
 
 import tqdm
+import torch
 import groq
 from vllm import LLM, SamplingParams
 from loguru import logger
@@ -144,7 +146,11 @@ class PromptGenerator:
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
+        del self._generator
         self._generator = None
+        gc.collect()
+        torch.cuda.empty_cache()
+        torch.distributed.destroy_process_group()
 
     @staticmethod
     def post_process_prompts(prompts_list: list):
