@@ -3,13 +3,12 @@ import re
 import copy
 import random
 from time import time
+from typing import Optional
 
 import tqdm
 import groq
-
 from vllm import LLM, SamplingParams
 from loguru import logger
-
 from huggingface_hub import login
 
 
@@ -27,6 +26,7 @@ class PromptGenerator:
         """
         self._config_data = config_file_data
         self._logger = logger_
+        self._generator = None
 
         if self._config_data["groq_api_key"] == "":
             self._logger.warning(f"Groq Api Access Token was not specified. "
@@ -38,9 +38,6 @@ class PromptGenerator:
                                  f"You will not be able to download Gemma model.")
         else:
             login(token=self._config_data["hugging_face_api_key"])
-
-        self._pipeline = None
-        self._llamacpp_model_path = ""
 
     def groq_generator(self):
         """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
@@ -59,8 +56,13 @@ class PromptGenerator:
         t1 = time()
         client = groq.Groq(api_key=self._config_data["groq_api_key"])
 
+        if self._config_data["iteration_num"] > 0:
+            total_iters = range(self._config_data["iteration_num"])
+        else:
+            total_iters = iter(bool, True)
+
         output_prompts = []
-        for i in range(self._config_data["iteration_num"]):
+        for i in enumerate(total_iters):
             self._logger.info(f"\n")
             self._logger.info(f" Iteration: {i}")
             self._logger.info(f"\n")
@@ -114,9 +116,6 @@ class PromptGenerator:
     def vllm_generator(self):
         """  """
 
-        generator = LLM(model=self._config_data["vllm_llm_model"],
-                        trust_remote_code=True)
-
         prompt = self._load_input_prompt()
         object_categories = self._config_data['obj_categories']
 
@@ -126,8 +125,13 @@ class PromptGenerator:
         self._logger.info(" Started prompt generation.")
         t1 = time()
 
+        if self._config_data["iteration_num"] > -1:
+            total_iters = range(self._config_data["iteration_num"])
+        else:
+            total_iters = iter(bool, True)
+
         output_prompts = []
-        for i in range(self._config_data["iteration_num"]):
+        for i, _ in enumerate(total_iters):
             self._logger.info(f"\n")
             self._logger.info(f" Iteration: {i}")
             self._logger.info(f"\n")
@@ -139,7 +143,7 @@ class PromptGenerator:
                 # find 'member' in the input string and replace it with category
                 prompt_in = prompt.replace("member_placeholder", category)
                 sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["llm_model"]["max_tokens"])
-                outputs = generator.generate([prompt_in], sampling_params)
+                outputs = self._generator.generate([prompt_in], sampling_params)
 
                 prompt = prompt.replace(category, "member_placeholder")
                 output_list.append(outputs[0].outputs[0].text)
@@ -154,6 +158,11 @@ class PromptGenerator:
         self._logger.info(f"\n")
 
         return output_prompts
+
+    def preload_vllm_model(self, quantization: Optional[str]=None):
+        self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
+                              trust_remote_code=True,
+                              quantization=quantization)
 
     @staticmethod
     def post_process_prompts(prompts_list: list):
