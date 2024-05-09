@@ -42,3 +42,6 @@ async def generate_prompts(number: int = Form()):
 
     sample = np.array([random.randint(0, len(prompts)) for _ in range(total_number)])
     return prompts[sample]
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=args.port)
