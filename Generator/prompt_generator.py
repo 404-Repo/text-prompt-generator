@@ -9,6 +9,7 @@ import tqdm
 import groq
 from vllm import LLM, SamplingParams
 from loguru import logger
+
 from huggingface_hub import login
 
 
@@ -18,14 +19,12 @@ class PromptGenerator:
     1) Groq (online) - platform that provides access to three LLM models with quick inference
     2) Offline LLM - slower than Groq but any LLM model can be plugged in that is compatible with llama-cpp
     """
-    def __init__(self, config_file_data: dict, logger_: logger):
+    def __init__(self, config_file_data: dict):
         """
-
-        :param config_file_data:
-        :param logger_:
+        :param config_file_data: dictionary with config data
         """
         self._config_data = config_file_data
-        self._logger = logger_
+        self._logger = logger
         self._generator = None
 
         if self._config_data["groq_api_key"] == "":
@@ -54,56 +53,41 @@ class PromptGenerator:
         self._logger.info(" Started prompt generation.")
 
         t1 = time()
+
         client = groq.Groq(api_key=self._config_data["groq_api_key"])
+        prompt_in = copy.copy(prompt)
 
-        if self._config_data["iteration_num"] > 0:
-            total_iters = range(self._config_data["iteration_num"])
-        else:
-            total_iters = iter(bool, True)
+        output_list = []
+        for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
+            temperature = random.uniform(0.4, 0.6)
 
-        output_prompts = []
-        for i in enumerate(total_iters):
-            self._logger.info(f"\n")
-            self._logger.info(f" Iteration: {i}")
-            self._logger.info(f"\n")
+            # find 'member' in the input string and replace it with category
+            prompt_in = prompt_in.replace("member_placeholder", category)
 
-            prompt_in = copy.copy(prompt)
+            if self._config_data['llm_model']['seed'] < 0:
+                seed = random.randint(0, sys.maxsize)
+            else:
+                seed = self._config_data['llm_model']['seed']
 
-            output_list = []
-            for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
-                temperature = random.uniform(0.4, 0.6)
+            output = client.chat.completions.create(messages=[
+                                                                {
+                                                                    "role": "user",
+                                                                    "content": prompt_in
+                                                                }
+                                                             ],
+                                                    model=self._config_data["groq_llm_model"],
+                                                    temperature=temperature,
+                                                    seed=seed,
+                                                    top_p=1,
+                                                    max_tokens=self._config_data["llm_model"]["max_tokens"])
 
-                # find 'member' in the input string and replace it with category
-                prompt_in = prompt_in.replace("member_placeholder", category)
+            prompt_in = prompt_in.replace(category, "member_placeholder")
 
-                if self._config_data['llm_model']['seed'] < 0:
-                    seed = random.randint(0, sys.maxsize)
-                else:
-                    seed = self._config_data['llm_model']['seed']
+            # extracting the response of the llm model: generated prompts
+            output_prompt = output.choices[0].message.content
+            output_list.append(output_prompt)
 
-                output = client.chat.completions.create(messages=[
-                                                                    {
-                                                                        "role": "user",
-                                                                        "content": prompt_in
-                                                                    }
-                                                                 ],
-                                                        model=self._config_data["groq_llm_model"],
-                                                        temperature=temperature,
-                                                        seed=seed,
-                                                        top_p=1,
-                                                        max_tokens=self._config_data["llm_model"]["max_tokens"])
-
-                prompt_in = prompt_in.replace(category, "member_placeholder")
-
-                # extracting the response of the llm model: generated prompts
-                output_prompt = output.choices[0].message.content
-                output_list.append(output_prompt)
-
-            processed_prompts = self.post_process_prompts(output_list)
-            output_prompts += processed_prompts
-
-            self._logger.info(f" Done.")
-            self._logger.info(f"\n")
+        processed_prompts = self.post_process_prompts(output_list)
 
         t2 = time()
         duration = (t2 - t1) / 60.0
@@ -111,10 +95,10 @@ class PromptGenerator:
         self._logger.info(" Done.")
         self._logger.info(f"\n")
 
-        return output_prompts
+        return processed_prompts
 
     def vllm_generator(self):
-        """  """
+        """ Function that calls vLLM API for generating prompts. """
 
         prompt = self._load_input_prompt()
         object_categories = self._config_data['obj_categories']
@@ -125,31 +109,19 @@ class PromptGenerator:
         self._logger.info(" Started prompt generation.")
         t1 = time()
 
-        if self._config_data["iteration_num"] > -1:
-            total_iters = range(self._config_data["iteration_num"])
-        else:
-            total_iters = iter(bool, True)
+        output_list = []
+        for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
+            temperature = random.uniform(0.4, 0.6)
 
-        output_prompts = []
-        for i, _ in enumerate(total_iters):
-            self._logger.info(f"\n")
-            self._logger.info(f" Iteration: {i}")
-            self._logger.info(f"\n")
+            # find 'member' in the input string and replace it with category
+            prompt_in = prompt.replace("member_placeholder", category)
+            sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["llm_model"]["max_tokens"])
+            outputs = self._generator.generate([prompt_in], sampling_params)
 
-            output_list = []
-            for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
-                temperature = random.uniform(0.4, 0.6)
+            prompt = prompt.replace(category, "member_placeholder")
+            output_list.append(outputs[0].outputs[0].text)
 
-                # find 'member' in the input string and replace it with category
-                prompt_in = prompt.replace("member_placeholder", category)
-                sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["llm_model"]["max_tokens"])
-                outputs = self._generator.generate([prompt_in], sampling_params)
-
-                prompt = prompt.replace(category, "member_placeholder")
-                output_list.append(outputs[0].outputs[0].text)
-
-            processed_prompts = self.post_process_prompts(output_list)
-            output_prompts += processed_prompts
+        processed_prompts = self.post_process_prompts(output_list)
 
         t2 = time()
         duration = (t2 - t1) / 60.0
@@ -157,12 +129,22 @@ class PromptGenerator:
         self._logger.info(" Done.")
         self._logger.info(f"\n")
 
-        return output_prompts
+        return processed_prompts
 
-    def preload_vllm_model(self, quantization: Optional[str]=None):
+    def preload_vllm_model(self, quantization: Optional[str] = None):
+        """ Function for preloading LLM model in GPU memory
+
+        :param quantization: optional parameter that defines the quantizaton of the model:
+                             "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
+        """
+
         self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
                               trust_remote_code=True,
                               quantization=quantization)
+
+    def unload_vllm_model(self):
+        """ Function for unloading the model """
+        self._generator = None
 
     @staticmethod
     def post_process_prompts(prompts_list: list):
