@@ -1,15 +1,15 @@
 # one of the models supported by groq platform: llama3-70b-8192, mixtral-8x7b-32768, gemma-7b-it
 groq_llm_model: "llama3-8b-8192"
 
-# transformers model that will be used for generating prompt dataset in offline mode
-transformers_llm_model: "mistralai/Mistral-7B-Instruct-v0.2"
+groq_llm_model_prompt_checker: "gemma-7b-it"
 
 # the llm model that will be used for checking the quality of the prompts
-transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
+vllm_llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
 
 # the vllm model that will be used for the prompt generation
 # awq - quantization level of the model supported by the vllm
 vllm_llm_model: "casperhansen/llama-3-8b-instruct-awq"
+#vllm_llm_model: "TechxGenus/gemma-1.1-7b-it-AWQ"
 
 # put here token generated at https://console.groq.com/keys
 groq_api_key: ""
@@ -25,15 +25,15 @@ hugging_face_api_key: ""
 
 prompt: "Generate a prompt dataset for generating 3D models.
          Each prompt should define a single 3D object that can be generated as a 3D mesh.
+         The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
          Each object should be different and must be strictly picked from the member_placeholder category.
-         Each prompts should be on the new line with between three to ten words.
+         Each prompt should be unique, on the new line, consists of between three to ten words.
          Generate a numbered list of prompts_num prompts.
         "
 
 # Categories of objects from where the LLM model could sample the data.
 obj_categories: ["humanoids", "animals", "monsters", "robots", "buildings", "nature", "vehicles", "weapons and equipments",
-                 "food and drinks", "gadgets and electronics", "decorative elements", "furniture", "jewelry"
-                ]
+                 "food and drinks", "gadgets and electronics", "decorative elements", "furniture", "jewelry"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
 filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city", "accessories",
@@ -42,11 +42,10 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
                             "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
                             "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
-                            "orbit", "hope", "melody", "animate"
-                            ]
+                            "orbit", "hope", "melody", "animate", "vagina"]
 
 # amount of prompts to generate per category.
-prompts_num: "fifty"
+prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
 iteration_num: 1
