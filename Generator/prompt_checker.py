@@ -150,7 +150,13 @@ class PromptChecker:
         outputs = self._generator.generate([prompt], sampling_params)
         return outputs[0].outputs[0].text
 
-    def preload_vllm_model(self, quantization: Optional[str]=None):
+    def preload_vllm_model(self, quantization: Optional[str] = None):
+        """ Function for preloading LLM model in GPU memory
+
+        :param quantization: optional parameter that defines the quantizaton of the model:
+                             "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
+        """
+
         self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
                               trust_remote_code=True,
                               quantization=quantization)
