@@ -11,13 +11,13 @@ class PromptChecker:
     """
     Class that provides an implementation for different filtering & correction methods for generated prompts.
     """
-    def __init__(self, config_file_data: dict, logger_: logger):
+    def __init__(self, config_file_data: dict):
         """
         :param config_file_data: a dictionary with preloaded parameters for running the pipeline.
         :param logger_:
         """
 
-        self._logger = logger_
+        self._logger = logger
         self._config_data = config_file_data
 
         if self._config_data["groq_api_key"] == "":
