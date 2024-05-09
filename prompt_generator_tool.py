@@ -1,10 +1,12 @@
 import tqdm
 import argparse
 
-from Generator.prompt_generator import (PromptGenerator,
-                                        load_config_file,
-                                        load_file_with_prompts,
-                                        save_prompts)
+from loguru import logger
+
+from Generator.prompt_generator import PromptGenerator
+from Generator.utils import (load_config_file,
+                             load_file_with_prompts,
+                             save_prompts)
 from Generator.prompt_checker import PromptChecker
 
 
@@ -14,8 +16,7 @@ def postprocess_prompts(prompt_checker: PromptChecker, prompts: list):
     :param prompts: list with input prompts
     :return a list with processed prompts
     """
-    prompts_out = prompt_checker.check_grammar(prompts)
-    prompts_out = prompt_checker.filter_unique_prompts(prompts_out)
+    prompts_out = prompt_checker.filter_unique_prompts(prompts)
     prompts_out = prompt_checker.filter_prompts_with_words(prompts_out)
     return prompts_out
 
@@ -32,9 +33,12 @@ def check_prompts(prompt_checker: PromptChecker,
     :param mode: can be 'online' or 'offline'
     :param file_name: the name of the file where the suitable prompts will be output after filtering (optional), default "correct_prompts.txt"
     """
-    for p, _ in zip(prompts[:], tqdm.trange(len(prompts[:]))):  #179000 - 184000 :
-        if mode == "transformers":
-            score = prompt_checker.transformers_check_prompt(p)
+    start_batch = 179000
+    end_batch = 180000
+
+    for p, _ in zip(prompts[start_batch:end_batch], tqdm.trange(len(prompts[start_batch:end_batch]))):
+        if mode == "vllm":
+            score = prompt_checker.vllm_check_prompt(p)
         elif mode == "groq":
             score = prompt_checker.groq_check_prompt(p)
         else:
@@ -42,8 +46,8 @@ def check_prompts(prompt_checker: PromptChecker,
 
         if float(score) >= 0.5:
             if "gemma" not in model_name:
-                if mode == "transformers":
-                    p = prompt_checker.transformers_correct_prompt(p)
+                if mode == "vllm":
+                    p = prompt_checker.vllm_correct_prompt(p)
                 else:
                     p = prompt_checker.groq_correct_prompt(p)
 
@@ -61,12 +65,9 @@ def console_args():
     :return a list of parsed arguments with their values
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", required=False, help="options: 'prompt_generation, groq', 'prompt_generation, transformers', 'prompt_generation, llamacpp',"
+    parser.add_argument("--mode", required=False, help="options: 'prompt_generation, groq', 'prompt_generation, vllm',"
                                                        "'grammar', 'filter_unique_prompts', 'filter_prompts', "
-                                                       "'semantic_check, qroq', 'semantic_check, llamacpp', 'semantic_check, transformers'")
-    parser.add_argument("--preload_llm", required=False, help="'prompt_generation, transformers', 'prompt_generation, llamacpp', "
-                                                              "'prompt_checking, transformers', 'prompt_checking, llamacpp' - options for preloading offline models.")
-    parser.add_argument("--quantize_llamacpp", required=False, help="'prompt_generation, digit' or 'prompt_checking, digit', where digit 1-3.")
+                                                       "'semantic_check, qroq', 'semantic_check, vllm'")
     args = parser.parse_args()
 
     if args.mode is not None:
@@ -81,45 +82,27 @@ def console_args():
         proc_mode = ""
         proc_mode_option = ""
 
-    if args.preload_llm is not None:
-        inputs = args.preload_llm.split(",")
-        load_llm_mode = inputs[0].strip(" ")
-        load_llm_option = inputs[1].strip(" ")
-    else:
-        load_llm_mode = ""
-        load_llm_option = ""
-
-    if args.quantize_llamacpp is not None:
-        inputs = args.quantize_llamacpp.split(",")
-        quant_llm_mode = inputs[0].strip(" ")
-        quant_llm_option = int(inputs[1].strip(" "))
-    else:
-        quant_llm_mode = ""
-        quant_llm_option = ""
-
-    return proc_mode, proc_mode_option, load_llm_mode, load_llm_option, quant_llm_mode, quant_llm_option
+    return proc_mode, proc_mode_option
 
 
 if __name__ == '__main__':
     config_data = load_config_file()
-    prompt_generator = PromptGenerator(config_data)
-    prompt_checker = PromptChecker(config_data)
+    prompt_generator = PromptGenerator(config_data, logger)
+    prompt_checker = PromptChecker(config_data, logger)
 
-    proc_mode, proc_mode_option, load_llm_mode, load_llm_option, quant_llm_mode, quant_llm_option = console_args()
+    proc_mode, proc_mode_option = console_args()
 
     if proc_mode == "prompt_generation":
         if proc_mode_option == "groq":
             prompts = prompt_generator.groq_generator()
             prompts = postprocess_prompts(prompt_checker, prompts)
-            prompt_checker.transformers_load_checkpoint()
-            check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "transformers", config_data["prompts_output_file"])
+            check_prompts(prompt_checker, prompts, config_data["groq_llm_model_prompt_checker"], "vllm", config_data["prompts_output_file"])
 
-        elif proc_mode_option == "transformers":
-            prompt_generator.transformers_load_checkpoint()
-            prompts = prompt_generator.transformers_generator()
+        elif proc_mode_option == "vllm":
+            prompt_generator.preload_vllm_model()
+            prompts = prompt_generator.vllm_generator()
             prompts = postprocess_prompts(prompt_checker, prompts)
-            prompt_checker.transformers_load_checkpoint()
-            check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "transformers", config_data["prompts_output_file"])
+            check_prompts(prompt_checker, prompts, config_data["vllm_llm_model_prompt_checker"], "vllm", config_data["prompts_output_file"])
 
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
@@ -134,36 +117,16 @@ if __name__ == '__main__':
         prompts = prompt_checker.filter_prompts_with_words(prompts)
         save_prompts(config_data["prompts_output_file"], prompts, "w")
 
-    elif proc_mode == "grammar":
-        prompts = load_file_with_prompts(config_data["prompts_output_file"])
-        prompts = prompt_checker.check_grammar(prompts)
-        save_prompts(config_data["prompts_output_file"], prompts, "w")
-
     elif proc_mode == "semantic_check":
         if proc_mode_option == "groq":
             prompts = load_file_with_prompts(config_data["prompts_output_file"])
-            check_prompts(prompt_checker, prompts, config_data["groq_llm_model"], "groq")
-        elif proc_mode_option == "transformers":
-            prompt_checker.transformers_load_checkpoint()
+            check_prompts(prompt_checker, prompts, config_data["groq_llm_model_prompt_checker"], "groq")
+        elif proc_mode_option == "vllm":
             prompts = load_file_with_prompts(config_data["prompts_output_file"])
-            check_prompts(prompt_checker, prompts, config_data["transformers_llm_model"], "transformers")
+            prompt_generator.preload_vllm_model()
+            check_prompts(prompt_checker, prompts, config_data["vllm_llm_model_prompt_checker"], "vllm")
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
-
-    elif load_llm_mode == "prompt_generation":
-        if load_llm_option == "transformers":
-            prompt_generator.transformers_load_checkpoint(load_in_4bit=True,
-                                                          load_in_8bit=False,
-                                                          bnb_4bit_quant_type="nf4",
-                                                          bnb_4bit_use_double_quant=True)
-        else:
-            raise UserWarning("No option was specified in the form: --preload_llm prompt_generation, transformers. Nothing to be done.")
-
-    elif load_llm_mode == "prompt_checking":
-        if load_llm_option == "transformers":
-            prompt_checker.transformers_load_checkpoint(load_in_4bit=True, load_in_8bit=False)
-        else:
-            raise UserWarning("No option was specified in the form: --preload_llm prompt_checking, transformers. Nothing to be done.")
 
     else:
         raise ValueError("Unknown mode was specified. Check supported modes using -h option.")
