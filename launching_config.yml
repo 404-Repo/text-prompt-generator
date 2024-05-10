@@ -1,18 +1,45 @@
-# one of the models supported by groq platform: llama3-70b-8192, mixtral-8x7b-32768, gemma-7b-it
-groq_llm_model: "llama3-8b-8192"
+# api server parameters:
+server:
+    # api key to get access to the server
+    api_key_prompt_server: ""
 
-groq_llm_model_prompt_checker: "gemma-7b-it"
+    # server address
+    api_prompt_server_url: ""
 
-# the llm model that will be used for checking the quality of the prompts
-vllm_llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
+    # maximum amount of retries accessing the server before continue prompt generation
+    server_max_retries_number: 5
 
-# the vllm model that will be used for the prompt generation
-# awq - quantization level of the model supported by the vllm
-vllm_llm_model: "casperhansen/llama-3-8b-instruct-awq"
-#vllm_llm_model: "TechxGenus/gemma-1.1-7b-it-AWQ"
+    # wait time in seconds before reattempting to send the data to the server
+    server_retry_delay: 1
 
-# put here token generated at https://console.groq.com/keys
-groq_api_key: ""
+# parameters for running Groq API
+groq_api:
+    # put here token generated at https://console.groq.com/keys
+    api_key: ""
+
+    # one of the models supported by groq platform: llama3-70b-8192, mixtral-8x7b-32768, gemma-7b-it
+    llm_model: "llama3-8b-8192"
+
+    # llm model for checking prompts
+    llm_model_prompt_checker: "gemma-7b-it"
+
+    # max tokens for prompt generation
+    max_tokens: 256
+
+    # random seed
+    seed: -1
+
+# parameters for running vLLM api
+vllm_api:
+    # the vllm model that will be used for the prompt generation
+    # awq - quantization level of the model supported by the vllm
+    llm_model: "casperhansen/llama-3-8b-instruct-awq"
+
+    # the llm model that will be used for checking the quality of the prompts
+    llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
+
+    # max tokens for prompt generation
+    max_tokens: 256
 
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
@@ -39,7 +66,7 @@ obj_categories: ["humanoids", "animals", "monsters", "robots", "buildings", "nat
 filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city", "accessories",
                             "jungle", "forest", "space", "pool", "pond", "I", "i", "fields", "horizon", "oops", "hillside", "underwater",
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "copy",
                             "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
                             "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
                             "orbit", "hope", "melody", "animate", "vagina"]
@@ -48,16 +75,8 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
 prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
-iteration_num: 1
+iteration_num: -1
 
 # file where to output the prompts (.txt file)
 #prompts_output_file: "prompt_dataset.txt"
-prompts_output_file: "prompt_dataset.txt"
-
-# parameters for the llama-cpp loader
-llm_model:
-    # RNG seed, -1 for random [llama-cpp & Groq]
-    seed: -1
-
-    # The maximum number of tokens to generate prompts
-    max_tokens: 256
+prompts_output_file: "test_dataset.txt"
