@@ -26,10 +26,10 @@ CONDA_INTERPRETER_PATH=$(which python)
 cat <<EOF > generation.config.js
 module.exports = {
   apps : [{
-    name: 'generation',
-    script: 'serve.py',
+    name: 'prompts_generator',
+    script: 'prompts_generator_server.py',
     interpreter: '${CONDA_INTERPRETER_PATH}',
-    args: '--port 8093'
+    args: '--port 8888'
   }]
 };
 EOF
