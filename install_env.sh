@@ -27,7 +27,7 @@ cat <<EOF > generation.config.js
 module.exports = {
   apps : [{
     name: 'prompts_generator',
-    script: 'prompts_generator_server.py',
+    script: 'prompt_generator_server.py',
     interpreter: '${CONDA_INTERPRETER_PATH}',
     args: '--port 8888'
   }]
