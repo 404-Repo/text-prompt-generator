@@ -1,8 +1,8 @@
 import yaml
 
-import avro.schema as schema
-from avro.datafile import DataFileReader, DataFileWriter
-from avro.io import DatumReader, DatumWriter
+# import avro.schema as schema
+# from avro.datafile import DataFileReader, DataFileWriter
+# from avro.io import DatumReader, DatumWriter
 
 
 def load_config_file():
@@ -35,17 +35,17 @@ def save_prompts(file_name: str, prompts_list: list, mode: str = "a"):
             file.write("%s" % p)
 
 
-def load_prompts_avro(file_name: str):
-    avro_reader = DataFileReader(open(file_name, "rb"), DatumReader())
-    data = [d for d in avro_reader]
-    avro_reader.close()
-    return data
-
-
-def save_prompts_avro(prompts: list, file_name: str, schema_file: str = "../avro_schema.avsc"):
-    avro_schema = schema.parse(open(schema_file, "rb").read())
-    avro_writer = DataFileWriter(open(file_name, "wb"), DatumWriter(), avro_schema)
-    for p in prompts:
-        avro_writer.append({"name": p})
-    avro_writer.close()
+# def load_prompts_avro(file_name: str):
+#     avro_reader = DataFileReader(open(file_name, "rb"), DatumReader())
+#     data = [d for d in avro_reader]
+#     avro_reader.close()
+#     return data
+#
+#
+# def save_prompts_avro(prompts: list, file_name: str, schema_file: str = "../avro_schema.avsc"):
+#     avro_schema = schema.parse(open(schema_file, "rb").read())
+#     avro_writer = DataFileWriter(open(file_name, "wb"), DatumWriter(), avro_schema)
+#     for p in prompts:
+#         avro_writer.append({"name": p})
+#     avro_writer.close()
 

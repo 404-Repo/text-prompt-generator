@@ -17,3 +17,4 @@ source "${CONDA_BASE}/etc/profile.d/conda.sh"
 conda env create -f environment.yml
 conda activate three-gen-prompt-generator
 conda info --env
+pip install flash-attn
