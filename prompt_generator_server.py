@@ -1,6 +1,5 @@
 import argparse
 import requests
-import json
 import time
 from time import time
 
@@ -36,11 +35,12 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
     """
     logger.info("Sending the data to the server.")
 
-    prompts_to_json = json.dumps(prompts_list)
+    prompts_to_dict = {"prompts": prompts_list}
+
     for attempt in tqdm.trange(1, config_data["server"]["server_max_retries_number"] + 1):
         try:
             response = requests.post(config_data["server"]["api_prompt_server_url"],
-                                     data=prompts_to_json,
+                                     data=prompts_to_dict,
                                      headers=headers)
 
             if response.status_code == 200:
