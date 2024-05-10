@@ -109,7 +109,7 @@ class PromptGenerator:
             prompt_in = prompt_in.replace("member_placeholder", category)
 
             sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["vllm_api"]["max_tokens"])
-            outputs = self._generator.generate([prompt_in], sampling_params)
+            outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "member_placeholder")
             output_list.append(outputs[0].outputs[0].text)
@@ -130,10 +130,15 @@ class PromptGenerator:
         :param quantization: optional parameter that defines the quantizaton of the model:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
+        if self._config_data["vllm_api"]['seed'] < 0:
+            seed = random.randint(0, int(1e+5))
+        else:
+            seed = self._config_data["vllm_api"]['seed']
 
         self._generator = LLM(model=self._config_data["vllm_api"]["llm_model"],
                               trust_remote_code=True,
-                              quantization=quantization)
+                              quantization=quantization,
+                              seed=seed)
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
