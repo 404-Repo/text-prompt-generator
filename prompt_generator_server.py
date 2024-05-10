@@ -52,9 +52,9 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
         except requests.RequestException as e:
             logger.warning(f"Error sending data [attempt: {attempt}]: {e}")
 
-        if attempt < config_data["server_max_retries_number"]:
+        if attempt < config_data["server"]["server_max_retries_number"]:
             logger.info(f'Retrying in {config_data["server"]["server_retry_delay"]}seconds.')
-            time.sleep(config_data["server_retry_delay"])
+            time.sleep(config_data["server"]["server_retry_delay"])
 
     logger.warning("Max retries reached. Failed to send data. Continue generating prompts.")
     return False
@@ -64,14 +64,18 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
 async def generate_prompts():
     """ Server function for running the prompt generation """
 
-    logger.info("Start prompt generation.")
+    logger.info(f"\n")
+    logger.info("*" * 35)
+    logger.info(" *** Prompt Dataset Generator ***")
+    logger.info("*" * 35)
+    logger.info(f"\n")
 
     config_data = load_config_file()
     prompt_generator = PromptGenerator(config_data)
     prompt_generator.preload_vllm_model()
     prompt_checker = PromptChecker(config_data)
 
-    headers = {'Authentication': f'Bearer {config_data["api_key_prompt_server"]}'}
+    headers = {'Authentication': f'Bearer {config_data["server"]["api_key_prompt_server"]}'}
 
     # defines whether we will have an infinite loop or not
     if config_data["iteration_num"] > -1:
@@ -87,7 +91,7 @@ async def generate_prompts():
     for i, _ in enumerate(total_iters):
         t1_local = time()
 
-        logger.info(f"\nGeneration Iteration: {i}\n")
+        logger.info(f"Generation Iteration: {i}\n")
         prompts = prompt_generator.vllm_generator()
 
         prompts_out = prompt_checker.filter_unique_prompts(prompts)
