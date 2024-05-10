@@ -6,7 +6,7 @@ set -e
 apt update
 apt install nano
 apt install vim npm -y
-apt install pm2 -g
+npm install pm2 -g
 
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /opt/miniconda-installer.sh
 bash /opt/miniconda-installer.sh
