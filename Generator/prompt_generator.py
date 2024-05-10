@@ -33,7 +33,7 @@ class PromptGenerator:
         self._instruction_prompt = ""
         self._object_categories = []
 
-        if self._config_data["groq_api_key"] == "":
+        if self._config_data["groq_api"]["api_key"] == "":
             self._logger.warning(f"Groq Api Access Token was not specified. "
                                  f"You will not be able to use Groq API without it.")
 
@@ -50,20 +50,19 @@ class PromptGenerator:
         """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
 
         self._logger.info(f"\n")
-        self._logger.info("*" * 40)
+        self._logger.info("*" * 70)
         self._logger.info(" *** Prompt Dataset Generator ***")
-        self._logger.info("*" * 40)
+        self._logger.info("*" * 70)
         self._logger.info(f"\n")
 
-        prompt = self._load_input_prompt()
         object_categories = self._config_data['obj_categories']
         self._logger.info(f" Object categories: {object_categories}")
         self._logger.info(" Started prompt generation.")
 
         t1 = time()
 
-        client = groq.Groq(api_key=self._config_data["groq_api_key"])
-        prompt_in = copy.copy(prompt)
+        client = groq.Groq(api_key=self._config_data["groq_api"]["api_key"])
+        prompt_in = copy.copy(self._instruction_prompt)
 
         output_list = []
         for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
@@ -72,10 +71,10 @@ class PromptGenerator:
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("member_placeholder", category)
 
-            if self._config_data['llm_model']['seed'] < 0:
+            if self._config_data["groq_api"]['seed'] < 0:
                 seed = random.randint(0, sys.maxsize)
             else:
-                seed = self._config_data['llm_model']['seed']
+                seed = self._config_data["groq_api"]['seed']
 
             output = client.chat.completions.create(messages=[
                                                                 {
@@ -83,11 +82,11 @@ class PromptGenerator:
                                                                     "content": prompt_in
                                                                 }
                                                              ],
-                                                    model=self._config_data["groq_llm_model"],
+                                                    model=self._config_data["groq_api"]["llm_model"],
                                                     temperature=temperature,
                                                     seed=seed,
                                                     top_p=1,
-                                                    max_tokens=self._config_data["llm_model"]["max_tokens"])
+                                                    max_tokens=self._config_data["groq_api"]["max_tokens"])
 
             prompt_in = prompt_in.replace(category, "member_placeholder")
 
@@ -109,7 +108,13 @@ class PromptGenerator:
         """ Function that calls vLLM API for generating prompts. """
 
         # generate prompts using the provided object categories
-        self._logger.info(" Started prompt generation.")
+        self._logger.info(f"\n")
+        self._logger.info("*" * 70)
+        self._logger.info(" *** Prompt Dataset Generator ***")
+        self._logger.info("*" * 70)
+        self._logger.info(f"\n")
+
+        prompt_in = copy.copy(self._instruction_prompt)
         t1 = time()
 
         output_list = []
@@ -117,11 +122,12 @@ class PromptGenerator:
             temperature = random.uniform(0.4, 0.6)
 
             # find 'member' in the input string and replace it with category
-            prompt_in = self._instruction_prompt.replace("member_placeholder", category)
-            sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["llm_model"]["max_tokens"])
+            prompt_in = prompt_in.replace("member_placeholder", category)
+
+            sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["vllm_api"]["max_tokens"])
             outputs = self._generator.generate([prompt_in], sampling_params)
 
-            prompt = self._instruction_prompt.replace(category, "member_placeholder")
+            prompt_in = prompt_in.replace(category, "member_placeholder")
             output_list.append(outputs[0].outputs[0].text)
 
         processed_prompts = self.post_process_prompts(output_list)
@@ -141,7 +147,7 @@ class PromptGenerator:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
 
-        self._generator = LLM(model=self._config_data["vllm_llm_model"],
+        self._generator = LLM(model=self._config_data["vllm_api"]["llm_model"],
                               trust_remote_code=True,
                               quantization=quantization)
 

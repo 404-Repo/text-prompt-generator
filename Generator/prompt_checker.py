@@ -23,7 +23,7 @@ class PromptChecker:
         self._logger = logger
         self._config_data = config_file_data
 
-        if self._config_data["groq_api_key"] == "":
+        if self._config_data["groq_api"]["api_key"] == "":
             self._logger.warning(f" Groq Api Access Token was not specified. "
                                  f"You will not be able to use Groq API without it.")
 
@@ -107,13 +107,13 @@ class PromptChecker:
         :return generated prompt
         """
 
-        client = groq.Groq(api_key=self._config_data["groq_api_key"])
+        client = groq.Groq(api_key=self._config_data["groq_api"]["api_key"])
         output = client.chat.completions.create(messages=[{
                                                             "role": "user",
                                                             "content": prompt
                                                          }],
-                                                model="gemma-7b-it",
-                                                seed=self._config_data['llm_model']['seed'],
+                                                model=self._config_data["groq_api"]["llm_model_prompt_checker"],
+                                                seed=self._config_data['groq_api']['seed'],
                                                 temperature=temperature,
                                                 top_p=1,
                                                 max_tokens=max_tokens)
@@ -160,7 +160,7 @@ class PromptChecker:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
 
-        self._generator = LLM(model=self._config_data["vllm_llm_model_prompt_checker"],
+        self._generator = LLM(model=self._config_data["vllm_api"]["llm_model_prompt_checker"],
                               trust_remote_code=True,
                               quantization=quantization)
 
