@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Stop the script on any error
+set -e
+
+apt update
+apt install nano
+apt install vim npm -y
+apt install pm2 -g
+
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /opt/miniconda-installer.sh
+bash /opt/miniconda-installer.sh
+
+./opt/miniconda3/bin/conda init
+
+cd /home
+git clone https://github.com/404-Repo/text-prompt-generator.git --branch LLM1_online_prompt_generator
