@@ -18,3 +18,20 @@ conda env create -f environment.yml
 conda activate three-gen-prompt-generator
 conda info --env
 pip install flash-attn
+
+# Store the path of the Conda interpreter
+CONDA_INTERPRETER_PATH=$(which python)
+
+# Generate the generation.config.js file for PM2 with specified configurations
+cat <<EOF > generation.config.js
+module.exports = {
+  apps : [{
+    name: 'generation',
+    script: 'serve.py',
+    interpreter: '${CONDA_INTERPRETER_PATH}',
+    args: '--port 8093'
+  }]
+};
+EOF
+
+echo -e "\n\n[INFO] generation.config.js generated for PM2."
