@@ -17,7 +17,7 @@ source "${CONDA_BASE}/etc/profile.d/conda.sh"
 conda env create -f environment.yml
 conda activate three-gen-prompt-generator
 conda info --env
-pip install flash-attn
+pip install flash-attn nvitop
 
 # Store the path of the Conda interpreter
 CONDA_INTERPRETER_PATH=$(which python)
