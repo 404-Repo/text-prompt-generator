@@ -13,6 +13,3 @@ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /o
 bash /opt/miniconda-installer.sh
 
 ./opt/miniconda3/bin/conda init
-
-cd /home
-git clone https://github.com/404-Repo/text-prompt-generator.git --branch LLM1_online_prompt_generator
