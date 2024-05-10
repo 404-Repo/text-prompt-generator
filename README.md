@@ -128,9 +128,19 @@ prompts_output_file: "prompt_dataset.txt"
 ```
 
 ### Installing packages
+
+For installing Conda environment only:
 ```commandline
-sh install_env.sh
+bash install_env.sh
 ```
+
+For [Runpod](https://www.runpod.io/) platform run the following commands:
+```commandline
+bash install_runpod_env.sh
+bash install_env.sh
+```
+
+**install_env.sh** will generate **generation.config.js** that can be used with pm2 process.
 
 ### Running tool:
 ```commandline
@@ -147,12 +157,23 @@ python prompt_generator_tool.py --mode 'prompt_generation, groq'
 
 ### Running server:
 
-Initialising the server:
+Initialising the server (locally for testing):
 ```commandline
 python prompt_generator_server.py
 ```
 
-Start generation:
+Start generation (locally):
 ```commandline
 curl POST http://0.0.0.0:10006/generate_prompts/
 ```
+
+Initialising the server as a separate process (Runpod and similar):
+```commandline
+pm2 start generation.config.js
+```
+
+Start generation:
+```commandline
+curl POST http://0.0.0.0:8888/generate_prompts/
+```
+
