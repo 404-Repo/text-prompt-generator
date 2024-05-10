@@ -17,16 +17,3 @@ source "${CONDA_BASE}/etc/profile.d/conda.sh"
 conda env create -f environment.yml
 conda activate three-gen-prompt-generator
 conda info --env
-
-# LLAMA-CPP backends, uncomment one option and comment out the rest
-# CUDA support for llama-cpp
-CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-
-# If you want to use metal api uncomment this
-# CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-
-# if you have amd gpu, uncomment this
-# CMAKE_ARGS="-DLLAMA_CLBLAST=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-
-# if you want to use Vulkan API, uncomment this
-# CMAKE_ARGS="-DLLAMA_VULKAN=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
