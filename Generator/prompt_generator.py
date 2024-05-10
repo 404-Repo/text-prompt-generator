@@ -49,23 +49,13 @@ class PromptGenerator:
     def groq_generator(self):
         """ Function that calls Groq api for generating requested output. All supported by Groq models are supported. """
 
-        self._logger.info(f"\n")
-        self._logger.info("*" * 70)
-        self._logger.info(" *** Prompt Dataset Generator ***")
-        self._logger.info("*" * 70)
-        self._logger.info(f"\n")
-
-        object_categories = self._config_data['obj_categories']
-        self._logger.info(f" Object categories: {object_categories}")
-        self._logger.info(" Started prompt generation.")
-
         t1 = time()
 
         client = groq.Groq(api_key=self._config_data["groq_api"]["api_key"])
         prompt_in = copy.copy(self._instruction_prompt)
 
         output_list = []
-        for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
+        for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
             temperature = random.uniform(0.4, 0.6)
 
             # find 'member' in the input string and replace it with category
@@ -108,12 +98,6 @@ class PromptGenerator:
         """ Function that calls vLLM API for generating prompts. """
 
         # generate prompts using the provided object categories
-        self._logger.info(f"\n")
-        self._logger.info("*" * 70)
-        self._logger.info(" *** Prompt Dataset Generator ***")
-        self._logger.info("*" * 70)
-        self._logger.info(f"\n")
-
         prompt_in = copy.copy(self._instruction_prompt)
         t1 = time()
 
