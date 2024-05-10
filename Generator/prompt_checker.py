@@ -1,5 +1,6 @@
 import re
 import gc
+import random
 from typing import Optional
 
 import groq
@@ -159,10 +160,15 @@ class PromptChecker:
         :param quantization: optional parameter that defines the quantizaton of the model:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
+        if self._config_data["vllm_api"]['seed'] < 0:
+            seed = random.randint(0, int(1e+5))
+        else:
+            seed = self._config_data["vllm_api"]['seed']
 
         self._generator = LLM(model=self._config_data["vllm_api"]["llm_model_prompt_checker"],
                               trust_remote_code=True,
-                              quantization=quantization)
+                              quantization=quantization,
+                              seed=seed)
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
