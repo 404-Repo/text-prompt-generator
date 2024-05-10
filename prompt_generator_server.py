@@ -1,7 +1,8 @@
 import argparse
 import requests
-import time
-from time import time
+import json
+import http.client as client
+from time import (time, sleep)
 
 import tqdm
 from loguru import logger
@@ -35,12 +36,12 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
     """
     logger.info("Sending the data to the server.")
 
-    prompts_to_dict = {"prompts": prompts_list}
+    prompts_to_json = json.dumps({"prompts": prompts_list})
 
     for attempt in tqdm.trange(1, config_data["server"]["server_max_retries_number"] + 1):
         try:
             response = requests.post(config_data["server"]["api_prompt_server_url"],
-                                     data=prompts_to_dict,
+                                     data=prompts_to_json,
                                      headers=headers)
 
             if response.status_code == 200:
@@ -54,7 +55,8 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
 
         if attempt < config_data["server"]["server_max_retries_number"]:
             logger.info(f'Retrying in {config_data["server"]["server_retry_delay"]}seconds.')
-            time.sleep(config_data["server"]["server_retry_delay"])
+            retry_delay = int(config_data["server"]["server_retry_delay"])
+            sleep(retry_delay)
 
     logger.warning("Max retries reached. Failed to send data. Continue generating prompts.")
     return False
@@ -75,7 +77,8 @@ async def generate_prompts():
     prompt_generator.preload_vllm_model()
     prompt_checker = PromptChecker(config_data)
 
-    headers = {'Authentication': f'Bearer {config_data["server"]["api_key_prompt_server"]}'}
+    headers = {'Content-Type': 'application/json',
+               'X-Api-Key': f'{config_data["server"]["api_key_prompt_server"]}'}
 
     # defines whether we will have an infinite loop or not
     if config_data["iteration_num"] > -1:

@@ -41,6 +41,9 @@ vllm_api:
     # max tokens for prompt generation
     max_tokens: 256
 
+    # random seed
+    seed: 0
+
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
 hugging_face_api_key: ""
