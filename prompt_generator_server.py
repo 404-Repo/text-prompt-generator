@@ -37,9 +37,9 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
     logger.info("Sending the data to the server.")
 
     prompts_to_json = json.dumps(prompts_list)
-    for attempt in tqdm.trange(1, config_data["server_max_retries_number"] + 1):
+    for attempt in tqdm.trange(1, config_data["server"]["server_max_retries_number"] + 1):
         try:
-            response = requests.post(config_data["api_prompt_server_url"],
+            response = requests.post(config_data["server"]["api_prompt_server_url"],
                                      data=prompts_to_json,
                                      headers=headers)
 
@@ -53,7 +53,7 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
             logger.warning(f"Error sending data [attempt: {attempt}]: {e}")
 
         if attempt < config_data["server_max_retries_number"]:
-            logger.info(f'Retrying in {config_data["server_retry_delay"]}seconds.')
+            logger.info(f'Retrying in {config_data["server"]["server_retry_delay"]}seconds.')
             time.sleep(config_data["server_retry_delay"])
 
     logger.warning("Max retries reached. Failed to send data. Continue generating prompts.")
@@ -62,11 +62,7 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
 
 @app.post("/generate_prompts/")
 async def generate_prompts():
-    """ Server function for running the prompt generation
-
-    :param with_extra_llm_check: boolean variable that defines whether to perform extra
-           LLM based check of generated prompts or not
-    """
+    """ Server function for running the prompt generation """
 
     logger.info("Start prompt generation.")
 
