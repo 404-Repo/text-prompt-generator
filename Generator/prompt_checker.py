@@ -1,10 +1,14 @@
 import re
 import gc
 import random
-from typing import Optional
+import contextlib
+from typing import (Optional,
+                    List,
+                    Dict)
 
 import groq
 import torch
+import transformers
 from loguru import logger
 from huggingface_hub import login
 from vllm import LLM, SamplingParams
@@ -15,10 +19,9 @@ class PromptChecker:
     """
     Class that provides an implementation for different filtering & correction methods for generated prompts.
     """
-    def __init__(self, config_file_data: dict):
+    def __init__(self, config_file_data: Dict):
         """
         :param config_file_data: a dictionary with preloaded parameters for running the pipeline.
-        :param logger_:
         """
 
         self._logger = logger
@@ -123,17 +126,31 @@ class PromptChecker:
         return result
 
     def vllm_check_prompt(self, prompt: str, temperature: float = 0.5):
+        """
+
+        :param prompt:
+        :param temperature:
+        :return:
+        """
         object_categories = self._config_data['obj_categories']
 
         prompt_in = ((f"input prompt: '{prompt}'. "
-                      f"This prompt might describe an object from one of these categories: {object_categories}. ") +
+                      f"This prompt might describe an object from one of these categories: {object_categories}. "
+                      f"Be a strict quality judge. Provide single float value as an output. ") +
                      self._prompt_for_checking)
 
-        result = self._vllm_process_prompt(prompt_in, 100, temperature)
+        result = self._vllm_process_prompt(prompt_in, 20, temperature)
+        print(result)
         score = re.findall("\d+\.\d+", result)
         return score[0]
 
     def vllm_correct_prompt(self, prompt: str, temperature: float = 0.5):
+        """
+
+        :param prompt:
+        :param temperature:
+        :return:
+        """
         object_categories = self._config_data['obj_categories']
         filter_words = self._config_data["filter_prompts_with_words"]
 
@@ -150,6 +167,13 @@ class PromptChecker:
         return result
 
     def _vllm_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
+        """
+
+        :param prompt:
+        :param max_tokens:
+        :param temperature:
+        :return:
+        """
         sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=max_tokens)
         outputs = self._generator.generate([prompt], sampling_params)
         return outputs[0].outputs[0].text
@@ -172,14 +196,117 @@ class PromptChecker:
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
+        logger.info("Deleting model in use.")
         destroy_model_parallel()
-        del self._generator.llm_engine.model_executor.driver_worker
+        del self._generator.llm_engine
         del self._generator
-        self._generator = None
+
         gc.collect()
         torch.cuda.empty_cache()
-        import ray
-        ray.shutdown()
+        with contextlib.suppress(AssertionError):
+            torch.distributed.destroy_process_group()
+
+        self._generator = None
+
+        logger.info(f"GPU cached memory in use: {torch.cuda.memory_cached() / 1000} Gb")
+        logger.info(f"GPU allocated memory: {torch.cuda.memory_allocated() / 1000} Gb\n")
+        return torch.cuda.memory_cached(), torch.cuda.memory_allocated()
+
+    def transformers_load_checkpoint(self, load_in_4bit: bool = True, load_in_8bit: bool = False):
+        """ Function for pre-loading checkpoints for the requested models using transformers.
+        :param load_in_4bit: a boolean parameter that controls whether the model will be loaded using 4 bit quantization (VRAM used ~ 9 Gb).
+        :param load_in_8bit: a boolean parameter that controls whether the model will be loaded using 8 bit quantization (VRAM used ~ 18 Gb).
+        """
+
+        if load_in_4bit:
+            load_in_8bit = False
+        elif load_in_8bit:
+            load_in_4bit = False
+        else:
+            load_in_4bit = True
+            load_in_8bit = False
+
+        model = self._config_data["transformers_llm_model_prompt_checker"]
+        self._generator = transformers.pipeline("text-generation",
+                                                model=model,
+                                                model_kwargs={
+                                                    "torch_dtype": torch.bfloat16,
+                                                    "quantization_config": {
+                                                        "load_in_4bit": load_in_4bit,
+                                                        "load_in_8bit": load_in_8bit
+                                                        }
+                                                   }
+                                                )
+
+    def transformers_check_prompt(self, prompt: str, temperature: float = 0.5):
+        """ Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
+
+        :param prompt: a string with prompt that will be checked.
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+        :return a float value between 0 and 1 that will be used for filtering of the prompt.
+        """
+        if self._generator is None:
+            raise ValueError("Transformers pipeline was not initialized by calling transformers_load_checkpoint() function. Abort!")
+
+        object_categories = self._config_data['obj_categories']
+
+        prompt_in = ((f"input prompt: '{prompt}'. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. ") +
+                     self._prompt_for_checking)
+
+        result = self._transformers_process_prompt(prompt_in, 100, temperature)
+        score = re.findall("\d+\.\d+", result)
+
+        return score[0]
+
+    def transformers_correct_prompt(self, prompt: str, temperature: float = 0.5):
+        """ Function for correcting the input prompt in case if it does not satisfy provided conditions.
+
+        :param prompt: a string with prompt that will be checked and potentially rewritten.
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+        :return a rewritten prompt as a python string.
+        """
+
+        object_categories = self._config_data['obj_categories']
+        filter_words = self._config_data["filter_prompts_with_words"]
+
+        prompt_in = ((f"input prompt: {prompt}. "
+                      f"This prompt might describe an object from one of these categories: {object_categories}. "
+                      f"Avoid using words from the list: {filter_words}. ") +
+                     self._prompt_for_correction)
+
+        result = self._transformers_process_prompt(prompt_in, 500, temperature)
+        result = result.split("\n")
+        result = result[0].replace("**Corrected Prompt:**", "").strip()
+        result = result.replace("**Corrected prompt:**", "")
+        result = result.replace("**Corrected prompt:", "")
+        result = result.replace("**", "")
+
+        return result
+
+    def _transformers_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
+        """ Function for processing prompts according to the passed prompt instruction.
+
+        :param prompt: a string with prompt that will be checked and potentially rewritten
+        :param max_tokens: the maximum amount of tokens that will limit the output prompt
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+        :return generated prompt
+        """
+
+        prompt = self._generator.tokenizer.apply_chat_template(conversation=[{
+                                                                    "role": "user",
+                                                                    "content": prompt
+                                                               }],
+                                                               tokenize=False,
+                                                               add_generation_prompt=False)
+        outputs = self._generator(prompt,
+                                  max_new_tokens=max_tokens,
+                                  do_sample=True,
+                                  temperature=temperature,
+                                  top_k=1)
+
+        result = outputs[0]["generated_text"][len(prompt):]
+        return result
 
     def filter_unique_prompts(self, prompts: list):
         """ Function for filtering all duplicates from the input prompt list
@@ -209,10 +336,11 @@ class PromptChecker:
 
         return prompts
 
-    def filter_prompts_with_words(self, prompts: list):
+    def filter_prompts_with_words(self, prompts: List[str], words_to_filter: List[str]):
         """ Function that filters prompts with undesired words and prompts of certain length that might contain LLM bot output.
 
         :param prompts: a list with input prompts
+        :param words_to_filter: a list with words that will be used for filtering input prompts
         :return list with filtered prompts
         """
 
@@ -225,7 +353,7 @@ class PromptChecker:
         self._logger.info(f" Total lines in the dataset before: {len(prompts)}")
 
         prompts = list(filter(lambda sentence: 5 <= len(sentence) <= 100, prompts))
-        prompts = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(self._config_data["filter_prompts_with_words"]), prompts))
+        prompts = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(words_to_filter), prompts))
         prompts = [l + "\n" if "\n" not in l else l for l in prompts]
 
         self._logger.info(f" Total lines in the dataset after: {len(prompts)}")
