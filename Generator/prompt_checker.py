@@ -42,27 +42,28 @@ class PromptChecker:
 
         self._prompt_for_correction = (f"Perform semantic analysis check of the input prompt. "
                                        f"Perform contextual analysis check of the input prompt. "
+                                       f"Check if the input prompt has a logic between the words. "
                                        f"Remove all digits from the corrected prompt. "
                                        f"On the basis of those checks correct input prompt so it will pass them with the highest score. "
                                        f"Corrected prompt should contain no more than five or six words. "
                                        f"You must always output only corrected prompt and nothing else. ")
 
-        self._prompt_for_checking = (f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
+        self._prompt_for_checking = (f"Evaluate input prompt and give it a score between 0 (all checks are failed) and 1 (all checks passed). "
+                                     f"Use the following checks as a criteria for prompt evaluation. "
+                                     f"Perform semantic analysis check of the input prompt. If failed, score it the lowest. "
                                      f"Perform contextual analysis check of the input prompt. If failed, score it the lowest. "
                                      f"Check if all the words in the input prompt makes sense together and describe an object. If failed, score it the lowest. "
                                      f"Check if the input prompt has a logic between the words. If failed, score it the lowest. "
-                                     f"Check if the input prompt is finished and has an object or subject in it. If not, score it the lowest and ignore other checks. "
-                                     f"Check if all words in the prompt can be found in a dictionary. If not, score it the lowest. "
-                                     f"Use performed checks to score the input prompt between 0 (all checks are failed) and 1 (all checks passed). "
-                                     f"You must keep answers short and concise. "
-                                     f"You must always output only a single float digit. ")
+                                     f"Check if the input prompt is finished and has an object or subject in it. If failed, score it the lowest and ignore other checks. "
+                                     f"Check if all words in the prompt can be found in a dictionary. If failed, score it the lowest. "
+                                     f"You must keep answers short and concise. ")
 
     def groq_check_prompt(self, prompt: str, temperature: float = 0.5):
         """ Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
         This uses online groq api. Keep in mind that with time the performance will degenerate.
 
         :param prompt: a string with prompt that will be checked.
-        :param temperature:
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
         :return a float value between 0 and 1 that will be used for filtering of the prompt.
         """
 
@@ -82,7 +83,7 @@ class PromptChecker:
         This uses online groq api. Keep in mind that with time the performance will degenerate.
 
         :param prompt: a string with prompt that will be checked and potentially rewritten.
-        :param temperature:
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
         :return a rewritten prompt as a python string.
         """
 
@@ -126,11 +127,12 @@ class PromptChecker:
         return result
 
     def vllm_check_prompt(self, prompt: str, temperature: float = 0.5):
-        """
+        """  Function for checking the quality of the prompt and outputs the score between 0 and 1 according to the provided checks.
+        This uses online groq api. Keep in mind that with time the performance will degenerate.
 
-        :param prompt:
-        :param temperature:
-        :return:
+        :param prompt: a string with prompt that will be checked.
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+        :return: the evaluation made by the LLM
         """
         object_categories = self._config_data['obj_categories']
 
@@ -140,16 +142,17 @@ class PromptChecker:
                      self._prompt_for_checking)
 
         result = self._vllm_process_prompt(prompt_in, 20, temperature)
-        print(result)
+
         score = re.findall("\d+\.\d+", result)
         return score[0]
 
     def vllm_correct_prompt(self, prompt: str, temperature: float = 0.5):
-        """
+        """ Function for correcting the input prompt in case if it does not satisfy provided conditions.
+        This uses online groq api. Keep in mind that with time the performance will degenerate.
 
-        :param prompt:
-        :param temperature:
-        :return:
+        :param prompt: a string with prompt that will be checked and potentially rewritten.
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+        :return: corrected prompt as a string
         """
         object_categories = self._config_data['obj_categories']
         filter_words = self._config_data["filter_prompts_with_words"]
@@ -159,20 +162,19 @@ class PromptChecker:
                       f"Avoid using words from the list: {filter_words}. ") +
                      self._prompt_for_correction)
         result = self._vllm_process_prompt(prompt_in, 150, temperature)
-        result = result.split("\n")
-        result = result[0].replace("**Corrected Prompt:**", "").strip()
+        result = result[0].replace("**Corrected Prompt:**", "")
         result = result.replace("**Corrected prompt:**", "")
         result = result.replace("**Corrected prompt:", "")
         result = result.replace("**", "")
         return result
 
     def _vllm_process_prompt(self, prompt: str, max_tokens: int, temperature: float):
-        """
+        """  Function for processing prompts according to the passed prompt instruction.
 
-        :param prompt:
-        :param max_tokens:
-        :param temperature:
-        :return:
+        :param prompt: a string with prompt that will be checked and potentially rewritten
+        :param max_tokens: the maximum amount of tokens that will limit the output prompt
+        :param temperature: value between 0 and 1 that defines how 'inventive' will be the llm
+        :return: processed prompt as a string
         """
         sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=max_tokens)
         outputs = self._generator.generate([prompt], sampling_params)
@@ -189,7 +191,7 @@ class PromptChecker:
         else:
             seed = self._config_data["vllm_api"]['seed']
 
-        self._generator = LLM(model=self._config_data["vllm_api"]["llm_model_prompt_checker"],
+        self._generator = LLM(model="./model/gemma-1.1-7b-awq", #model=self._config_data["vllm_api"]["llm_model_prompt_checker"],
                               trust_remote_code=True,
                               quantization=quantization,
                               seed=seed)
@@ -198,22 +200,19 @@ class PromptChecker:
         """ Function for unloading the model """
         logger.info("Deleting model in use.")
         destroy_model_parallel()
-        del self._generator.llm_engine
-        del self._generator
+        del self._generator.llm_engine.model_executor.driver_worker
 
         gc.collect()
         torch.cuda.empty_cache()
-        with contextlib.suppress(AssertionError):
-            torch.distributed.destroy_process_group()
 
         self._generator = None
 
-        logger.info(f"GPU cached memory in use: {torch.cuda.memory_cached() / 1000} Gb")
-        logger.info(f"GPU allocated memory: {torch.cuda.memory_allocated() / 1000} Gb\n")
+        logger.info(f"GPU allocated memory: {torch.cuda.memory_allocated() / 10000000} Gb\n")
         return torch.cuda.memory_cached(), torch.cuda.memory_allocated()
 
     def transformers_load_checkpoint(self, load_in_4bit: bool = True, load_in_8bit: bool = False):
         """ Function for pre-loading checkpoints for the requested models using transformers.
+
         :param load_in_4bit: a boolean parameter that controls whether the model will be loaded using 4 bit quantization (VRAM used ~ 9 Gb).
         :param load_in_8bit: a boolean parameter that controls whether the model will be loaded using 8 bit quantization (VRAM used ~ 18 Gb).
         """
