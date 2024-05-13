@@ -23,3 +23,5 @@ dependencies:
     - loguru
     - vllm
     - avro
+    - autoawq
+    - bitsandbytes
