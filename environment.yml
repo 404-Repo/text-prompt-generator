@@ -25,3 +25,4 @@ dependencies:
     - avro
     - autoawq
     - bitsandbytes
+    - tensorizer
