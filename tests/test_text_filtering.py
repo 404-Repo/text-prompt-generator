@@ -54,15 +54,16 @@ def test_filter_prompts_with_words():
     assert ref_lines == res_lines
 
 
+data_config = load_config_file()
+checker = PromptChecker(data_config)
+checker.preload_vllm_model()
+
+
 def test_prompt_quality_check():
     prompts = ["white fan shaped bird of paradise flower",
                "a brown bear",
                "super spider shaped flower in vacuum",
                "sleeping cat on the bed"]
-
-    data_config = load_config_file()
-    checker = PromptChecker(data_config)
-    checker.preload_vllm_model()
 
     wrong_prompts = []
     correct_prompts = []
@@ -85,10 +86,6 @@ def test_prompt_correction():
                "a brown bear",
                "super spider shaped flower in vacuum",
                "sleeping cat on the bed"]
-
-    data_config = load_config_file()
-    checker = PromptChecker(data_config)
-    checker.preload_vllm_model()
 
     corrected_prompts = []
     for p in prompts:
