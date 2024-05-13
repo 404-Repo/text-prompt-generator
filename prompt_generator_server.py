@@ -98,7 +98,7 @@ async def generate_prompts():
         prompts = prompt_generator.vllm_generator()
 
         prompts_out = prompt_checker.filter_unique_prompts(prompts)
-        prompts_out = prompt_checker.filter_prompts_with_words(prompts_out)
+        prompts_out = prompt_checker.filter_prompts_with_words(prompts_out, config_data["filter_prompts_with_words"])
 
         prompts_to_send += prompts_out
         prompts_to_send = prompt_checker.filter_unique_prompts(prompts_to_send)
