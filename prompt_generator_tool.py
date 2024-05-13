@@ -1,5 +1,6 @@
 import tqdm
 import argparse
+from typing import List
 
 from Generator.prompt_generator import PromptGenerator
 from Generator.utils import (load_config_file,
@@ -8,14 +9,15 @@ from Generator.utils import (load_config_file,
 from Generator.prompt_checker import PromptChecker
 
 
-def postprocess_prompts(prompt_checker: PromptChecker, prompts: list):
+def postprocess_prompts(prompt_checker: PromptChecker, prompts: List[str], words_to_filter: List[str]):
     """ Function for post-processing input prompts: grammar check and filtering
     :param prompt_checker: object that provides access to the PromptChecker methods
     :param prompts: list with input prompts
+    :param words_to_filter: a list with words that will be used for filtering input prompts
     :return a list with processed prompts
     """
     prompts_out = prompt_checker.filter_unique_prompts(prompts)
-    prompts_out = prompt_checker.filter_prompts_with_words(prompts_out)
+    prompts_out = prompt_checker.filter_prompts_with_words(prompts_out, words_to_filter)
     return prompts_out
 
 
@@ -99,14 +101,14 @@ if __name__ == '__main__':
         if proc_mode_option == "groq":
             for i, _ in enumerate(total_iters):
                 prompts = prompt_generator.groq_generator()
-                prompts = postprocess_prompts(prompt_checker, prompts)
+                prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
                 check_prompts(prompt_checker, prompts, config_data["groq_llm_model_prompt_checker"], "vllm", config_data["prompts_output_file"])
 
         elif proc_mode_option == "vllm":
             prompt_generator.preload_vllm_model()
             for i, _ in enumerate(total_iters):
                 prompts = prompt_generator.vllm_generator()
-                prompts = postprocess_prompts(prompt_checker, prompts)
+                prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
                 check_prompts(prompt_checker, prompts, config_data["vllm_llm_model_prompt_checker"], "vllm", config_data["prompts_output_file"])
 
         else:
@@ -119,7 +121,7 @@ if __name__ == '__main__':
 
     elif proc_mode == "filter_prompts":
         prompts = load_file_with_prompts(config_data["prompts_output_file"])
-        prompts = prompt_checker.filter_prompts_with_words(prompts)
+        prompts = prompt_checker.filter_prompts_with_words(prompts, config_data["filter_prompts_with_words"])
         save_prompts(config_data["prompts_output_file"], prompts, "w")
 
     elif proc_mode == "semantic_check":
