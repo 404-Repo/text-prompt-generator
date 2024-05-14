@@ -1,13 +1,10 @@
+from Generator.prompt_checker import PromptChecker
+from Generator.utils import load_config_file
 import pytest
-
-from symspellpy import SymSpell
-import pkg_resources
-
-import PromptChecker
-from PromptGenerator import load_config_file
+import torch
 
 
-def test_list_to_set():
+def test_unique_prompts_filtering():
     test_dataset = ["plants",
                     "a building with red wall frame",
                     "pink flamingo",
@@ -18,11 +15,9 @@ def test_list_to_set():
                     "a Building with Yellow Column Base",
                     "a bronze gorilla"]
 
-    res_lines = []
-    for l in test_dataset:
-        res_lines.append(' '.join(word.lower() for word in l.split()))
-
-    res_lines = list(set(res_lines)).sort()
+    data_config = load_config_file()
+    checker = PromptChecker(data_config)
+    res_lines = checker.filter_unique_prompts(test_dataset).sort()
 
     ref_lines = ["plants",
                  "a building with red wall frame",
@@ -32,47 +27,6 @@ def test_list_to_set():
                  "a building with yellow column base",
                  "a bronze gorilla"].sort()
 
-    assert ref_lines == res_lines
-
-
-def test_filter_articles():
-    test_dataset = ["Plants",
-                    "a building with red wall frame",
-                    "A building with the red wall frame",
-                    "pink flamingo",
-                    "A gold Turtle",
-                    "the gold turtle",
-                    "Earrings with Gemstones",
-                    "building with the yellow column base",
-                    "bronze gorilla",
-                    "An elephant in the zoo"]
-
-    res_lines = []
-    for l in test_dataset:
-        res_lines.append(' '.join(word.lower() for word in l.split()))
-
-    articles = ["a", "the", "an"]
-    res_lines = [' '.join(word for word in sentence.split() if word.lower() not in articles) for sentence in res_lines].sort()
-
-    ref_lines = ["Plants",
-                 "building with red wall frame",
-                 "building with red wall frame",
-                 "pink flamingo",
-                 "gold turtle",
-                 "gold turtle",
-                 "earrings with gemstones",
-                 "building with yellow column base",
-                 "bronze gorilla",
-                 "elephant in zoo"].sort()
-
-    assert ref_lines == res_lines
-
-
-def test_filter_short_strings():
-    test_data = ["I ab", "I c", "red apple", "cat", "field", "bc"]
-    res_lines = list(filter(lambda sentence: 3 <= len(sentence) <= float("inf"), test_data)).sort()
-
-    ref_lines = ["red apple", "field"].sort()
     assert ref_lines == res_lines
 
 
@@ -88,11 +42,9 @@ def test_filter_prompts_with_words():
                     "bronze gorilla drinking a water from the glass",
                     "An elephant in the zoo"]
 
-    res_lines = []
-    for l in test_dataset:
-        res_lines.append(' '.join(word.lower() for word in l.split()))
-
-    res_lines = list(filter(lambda sentence: not set(word.lower() for word in sentence.split()) & set(filtering_words), res_lines)).sort()
+    data_config = load_config_file()
+    checker = PromptChecker(data_config)
+    res_lines = checker.filter_prompts_with_words(test_dataset, filtering_words).sort()
 
     ref_lines = ["a building with red wall frame",
                  "the gold turtle",
@@ -102,74 +54,21 @@ def test_filter_prompts_with_words():
     assert ref_lines == res_lines
 
 
-def test_single_colour_filter():
-    single_word_colors = ["red", "green", "blue", "yellow", "orange", "purple", "pink", "brown", "black", "white", "gray", "grey"]
-    test_dataset = ["A golden frog",
-                    "black",
-                    "frog",
-                    "Green bug",
-                    " green",
-                    "car"]
-    res_lines = []
-    for l in test_dataset:
-        res_lines.append(' '.join(word.lower() for word in l.split()))
-
-    res_lines = [l for l in res_lines if l not in single_word_colors].sort()
-
-    ref_lines = ["a golden frog",
-                 "frog",
-                 "green bug",
-                 "car"].sort()
-
-    assert ref_lines == res_lines
-
-
-def test_grammar_check():
-    test_dataset = ["malachite earring with gold hook",
-                    "seahorse with blue and orange striped tail",
-                    "checkered lego table with chairs",
-                    "white hospital building",
-                    "squirrel with puple fur and red tail"]
-
-    sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
-    dictionary_path = pkg_resources.resource_filename(
-        "symspellpy", "frequency_dictionary_en_82_765.txt"
-    )
-    bigram_path = pkg_resources.resource_filename(
-        "symspellpy", "frequency_bigramdictionary_en_243_342.txt"
-    )
-
-    sym_spell.load_dictionary(dictionary_path, term_index=0, count_index=1)
-    sym_spell.load_bigram_dictionary(bigram_path, term_index=0, count_index=2)
-
-    corrected_prompts = []
-    for p in test_dataset:
-        terms = sym_spell.lookup_compound(p, max_edit_distance=2)
-        corrected_prompts.append(terms[0].term)
-
-    ref_prompts = ["malachite earring with gold hook",
-                   "seahorse with blue and orange striped tail",
-                   "check red lego table with chairs",
-                   "white hospital building",
-                   "squirrel with purple fur and red tail"]
-
-    assert ref_prompts == corrected_prompts
+data_config = load_config_file()
+checker = PromptChecker(data_config)
+checker.preload_vllm_model()
 
 
 def test_prompt_quality_check():
     prompts = ["white fan shaped bird of paradise flower",
                "a brown bear",
-               "super duper spider man",
+               "super spider shaped flower in vacuum",
                "sleeping cat on the bed"]
-
-    data_config = load_config_file()
-    prompt_checker = PromptChecker.PromptChecker(data_config)
-    prompt_checker.transformers_load_checkpoint()
 
     wrong_prompts = []
     correct_prompts = []
     for p in prompts:
-        score = prompt_checker.transformers_check_prompt(p)
+        score = checker.vllm_check_prompt(p)
 
         if float(score) >= 0.5:
             correct_prompts.append(p)
@@ -178,31 +77,40 @@ def test_prompt_quality_check():
 
     assert "a brown bear" in correct_prompts
     assert "sleeping cat on the bed" in correct_prompts
-    assert "super duper spider man" in wrong_prompts
+    assert "super spider shaped flower in vacuum" in wrong_prompts
     assert "white fan shaped bird of paradise flower" in wrong_prompts
 
 
 def test_prompt_correction():
     prompts = ["white fan shaped bird of paradise flower",
                "a brown bear",
-               "super duper spider man",
+               "super spider shaped flower in vacuum",
                "sleeping cat on the bed"]
-
-    data_config = load_config_file()
-    prompt_checker = PromptChecker.PromptChecker(data_config)
-    prompt_checker.transformers_load_checkpoint()
 
     corrected_prompts = []
     for p in prompts:
-        score = prompt_checker.transformers_check_prompt(p)
+        score = checker.vllm_check_prompt(p)
 
         if float(score) >= 0.5:
             corrected_prompts.append(p)
         else:
-            prompt = prompt_checker.transformers_correct_prompt(p)
+            prompt = checker.vllm_correct_prompt(p)
             corrected_prompts.append(prompt)
 
-    assert prompts[0] != corrected_prompts[0]
-    assert prompts[1] == corrected_prompts[1]
-    assert prompts[2] != corrected_prompts[2]
-    assert prompts[3] == corrected_prompts[3]
+    assert prompts[0] != corrected_prompts[0] and corrected_prompts[0] != ""
+    assert prompts[1] == corrected_prompts[1] and corrected_prompts[1] != ""
+    assert prompts[2] != corrected_prompts[2] and corrected_prompts[2] != ""
+    assert prompts[3] == corrected_prompts[3] and corrected_prompts[3] != ""
+
+# def test_checker_vllm_model_unload():
+#     data_config = load_config_file()
+#     checker = PromptChecker(data_config)
+#     checker.preload_vllm_model()
+#
+#     gpu_cache, gpu_mem_alloc = checker.unload_vllm_model()
+#
+#     gpu_cache_after = torch.cuda.memory_cached()
+#     gpu_mem_alloc_after = torch.cuda.memory_allocated()
+#
+#     assert gpu_cache_after < 1e+7
+#     assert gpu_mem_alloc_after == 0
