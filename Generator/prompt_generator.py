@@ -21,7 +21,9 @@ class PromptGenerator:
     """ Class that implements a text prompt generator for creating prompts for generating 3D models.
     It provides access to two different LLM APIs:
     1) Groq (online) - platform that provides access to three LLM models with quick inference
-    2) Offline LLM - slower than Groq but any LLM model can be plugged in that is compatible with llama-cpp
+    2) Offline LLM - slower than Groq but any LLM model can be plugged in that is compatible with vLLM inference engine;
+                     non-quantized models can be directly used from hugging face;
+                     for quantized models check: https://docs.vllm.ai/en/latest/quantization/auto_awq.html
     """
     def __init__(self, config_file_data: dict):
         """
