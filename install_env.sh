@@ -15,20 +15,23 @@ source "${CONDA_BASE}/etc/profile.d/conda.sh"
 
 # Create environment and activate it
 conda env create -f environment.yml
-conda activate three_gen_prompt_generator
+conda activate three-gen-prompt-generator
 conda info --env
+pip install flash-attn nvitop
 
-python -m textblob.download_corpora
+# Store the path of the Conda interpreter
+CONDA_INTERPRETER_PATH=$(which python)
 
-# LLAMA-CPP backends, uncomment one option and comment out the rest
-# CUDA support for llama-cpp
-CMAKE_ARGS="-DLLAMA_CUDA=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+# Generate the generation.config.js file for PM2 with specified configurations
+cat <<EOF > generation.config.js
+module.exports = {
+  apps : [{
+    name: 'prompts_generator',
+    script: 'prompt_generator_server.py',
+    interpreter: '${CONDA_INTERPRETER_PATH}',
+    args: '--port 8888'
+  }]
+};
+EOF
 
-# If you want to use metal api uncomment this
-# CMAKE_ARGS="-DLLAMA_METAL=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-
-# if you have amd gpu, uncomment this
-# CMAKE_ARGS="-DLLAMA_CLBLAST=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
-
-# if you want to use Vulkan API, uncomment this
-# CMAKE_ARGS="-DLLAMA_VULKAN=on" pip install llama-cpp-python --upgrade --force-reinstall --no-cache-dir
+echo -e "\n\n[INFO] generation.config.js generated for PM2."

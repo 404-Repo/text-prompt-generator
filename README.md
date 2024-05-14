@@ -12,136 +12,137 @@ Hardware (offline mode):
 
 - 16 GB of RAM or more
 - CPU with 8+ Cores (preferable)
-- Nvidia GPU with at least 8 GB of VRAM or more
+- Nvidia GPU with at least 16 GB (quantized model) or 24 GB (non-quantized model) of VRAM or more 
 - At least 15 GB of free space (depending on the LLM model)
 
 ### Project description
-This projects consists of a set of methods for generating and post-processing the output of the LLM: 
-
-**Tool to run:**
-
-**prompt_generation_tool.py** - this tool allows the used to generate prompts either by using online [Groq](https://groq.com/) API
-or by using offline API that relies on [llama-cpp](https://github.com/abetlen/llama-cpp-python).
+This project allows to run the server for continuous generation of the prompts according to the specified rules 
+in the **launching_config.yml** file.
 
 #### Offline LLM requirements
  
 - The requested LLM should be stored on Hugging face;
 - The requested LLM should have a permission for a commercial use;
-- The requested LLM should be compatible with llama-cpp input, 
-i.e. stored or converted to *.gguf* file format or transformers.
+- The requested LLM should be compatible with [vLLM](https://docs.vllm.ai/en/latest/models/supported_models.html) input, 
+i.e. for quantized models search models on hugging face with [AWQ](https://huggingface.co/models?sort=trending&search=awq) in the name.
+- You will need to generate huggingface [API Token](https://huggingface.co/docs/hub/en/security-tokens) and store it in the provided **launching_config.yml**.
 
-The default LLM for offline mode is [mixtral-8x7b-instruct](https://huggingface.co/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF).
+The default LLM for offline mode is [llama3-8B-instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct).
 
 
 #### Groq usage, preparation steps.
 
 - An account should be registered at their [webpage](https://groq.com/). Log in the system of their web-page.
-- To get access to their online API you will need to generate [API key](https://console.groq.com/keys). Copy this key
-and paste it in the corresponding field "groq_api_key" in the launching_config.yml.
+- To get access to their online API you will need to generate [API Key](https://console.groq.com/keys) and store it in the provided **launching_config.yml**.
 - Groq [documentation](https://console.groq.com/docs/quickstart)
 - Groq supported LLM [models](https://console.groq.com/docs/models) 
 - NOTE: on 25/03/2024 it is free to run Groq, but there are some [limitations](https://console.groq.com/docs/rate-limits) in place.
 
+The default LLM for online mode is [llama3-8B](https://console.groq.com/docs/models).
 
 #### Configuration file description (launching_config.yml):
-```shell
-# relative path to the repository on the hugging face portal:
-# model for prompt generation
-llamacpp_hugging_face_repo: "TheBloke/Mixtral-8x7B-Instruct-v0.2-GGUF"
-# model for prompt checking and correction
-llamacpp_hugging_face_repo_prompt_checker: "google/gemma-1.1-7b-it-GGUF"
+```yaml
+# api server parameters:
+server:
+    # api key to get access to the server
+    api_key_prompt_server: ""
 
+    # server address
+    api_prompt_server_url: ""
 
-# the file with model that will be downloaded from the hugging face (note on file format: llama-cpp support .gguf only)
-llamacpp_model_file_name: "mixtral-8x7b-instruct-v0.1.Q2_K.gguf"
-llamacpp_model_file_name_prompt_checker: "7b_it_v1p1.gguf"
+    # maximum amount of retries accessing the server before continue prompt generation
+    server_max_retries_number: 5
 
-# one of the models supported by groq platform: llama2-70b-4096, mixtral-8x7b-32768, gemma-7b-it
-groq_llm_model: "mixtral-8x7b-32768"
+    # wait time in seconds before reattempting to send the data to the server
+    server_retry_delay: 1
 
-# transformers model that will be used for generating prompt dataset in offline mode
-transformers_llm_model: "mistralai/Mistral-7B-Instruct-v0.2"
+# parameters for running Groq API
+groq_api:
+    # put here token generated at https://console.groq.com/keys
+    api_key: "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"
 
-# the llm model that will be used for checking the quality of the prompts
+    # one of the models supported by groq platform: llama3-70b-8192, mixtral-8x7b-32768, gemma-7b-it
+    llm_model: "llama3-8b-8192"
+
+    # llm model for checking prompts
+    llm_model_prompt_checker: "gemma-7b-it"
+
+    # max tokens for prompt generation
+    max_tokens: 256
+
+    # random seed
+    seed: -1
+
+# parameters for running vLLM api
+vllm_api:
+    # the vllm model that will be used for the prompt generation
+    # awq - quantization level of the model supported by the vllm
+    llm_model: "casperhansen/llama-3-8b-instruct-awq"
+
+    # the llm model that will be used for checking the quality of the prompts
+    llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
+
+    # max tokens for prompt generation
+    max_tokens: 256
+    
 transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
-
-# put here token generated at https://console.groq.com/keys
-groq_api_key: ""
 
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
-hugging_face_api_key: ""
-
-# path to where download the LLM model
-cache_folder: "./model"
+hugging_face_api_key: "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"
 
 # the prompt that will be used for generating the dataset.
 # NOTE: member_placeholder and prompts_num are mandatory placeholders.
 # prompts_num will be replaced with prompts_num from this config;
 # member_placeholder will be replaced with one of the strings stored in obj_categories list.
-prompt: "Generate a prompt dataset for generating 3D models. 
-         Each prompt should define a single 3D object that can be generated as a 3D mesh. 
-         The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
-         Each object should be different and must be strictly picked from the member_placeholder category. 
-         Remove these words from prompts: clouds, river, sky, ocean, sea, wind, fields, jungles, forest, garden, water, sun, moon. 
-         Generate a single unique finished prompt on the new line with no more than five or six words.
-         Prompt examples: a red gorilla with green eyes, a purple parrot with orange eyes; a chair in a modern style; a laptop made from aluminium. 
-         Generate prompts_num prompts. "
 
+prompt: "Generate a prompt dataset for generating 3D models.
+         Each prompt should define a single 3D object that can be generated as a 3D mesh.
+         The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
+         Each object should be different and must be strictly picked from the member_placeholder category.
+         Each prompt should be unique, on the new line, consists of between three to ten words.
+         Generate a numbered list of prompts_num prompts.
+        "
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["animals", "furniture", "vehicles", "fantastic creatures", "weapons",
-                 "buildings", "trees", "plants", "jewelry", "rocks", "gadgets", "sea creatures",
-                 "lego", "instruments", "accessory", "food", "architecture"]
+obj_categories: ["humanoids", "animals", "monsters", "robots", "buildings", "nature", "vehicles", "weapons and equipments",
+                 "food and drinks", "gadgets and electronics", "decorative elements", "furniture", "jewelry"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
 filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city", "accessories",
                             "jungle", "forest", "space", "pool", "pond", "I", "i", "fields", "horizon", "oops", "hillside", "underwater",
                             "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "cave", "copy",
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "copy",
                             "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
                             "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
-                            "orbit", "hope", "melody", "animate"
-                            ]
+                            "orbit", "hope", "melody", "animate", "vagina"]
 
 # amount of prompts to generate per category.
 prompts_num: 30
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
-iteration_num: 1
+# if set to -1, the prompts will be generated infinitely
+iteration_num: -1
 
 # file where to output the prompts (.txt file)
-prompts_output_file: "prompts_dataset_test.txt"
+prompts_output_file: "prompt_dataset.txt"
 
-# parameters for the llama-cpp loader
-llm_model:
-    # RNG seed, -1 for random [llama-cpp & Groq]
-    seed: -1
-
-    # text context, should correspond to little_endian (2048) and big_endian (4096) [llama-cpp]
-    n_ctx: 2048
-
-    # enable/disable extra output from llama-cpp [llama-cpp]
-    verbose: false
-
-    # Maximum number of tokens to keep in the last_n_tokens deque [llama-cpp]
-    last_n_tokens_size: 128
-
-    #  Number of threads to use for generation [llama-cpp]
-    n_threads: 16
-
-    # Number of layers to offload to GPU (-ngl). If -1, all layers are offloaded. [llama-cpp]
-    n_gpu_layers: -1
-
-    # The maximum number of tokens to generate. If max_tokens <= 0 or None, the maximum number of tokens to generate is unlimited and depends on n_ctx.
-    # [llama-cpp & Groq]
-    max_tokens: 1024
 ```
 
 ### Installing packages
+
+For installing Conda environment only:
 ```commandline
-sh install_env.sh
+bash install_env.sh
 ```
+
+For [Runpod](https://www.runpod.io/) platform run the following commands:
+```commandline
+bash install_runpod_env.sh
+bash install_env.sh
+```
+
+**install_env.sh** will generate **generation.config.js** that can be used with pm2 process.
 
 ### Running tool:
 ```commandline
@@ -150,31 +151,31 @@ python prompt_generator_tool.py --mode 'prompt_generation, groq'
 **"mode"** option can be set to the following values:
 
 - 'prompt_generation, groq' - running Groq API
-- 'prompt_generation, transformers' - running transformers API
-- 'prompt_generation, llamacpp' - running llama-cpp API
-- 'grammar' - check the grammar of the generated prompts if it has not been done before
+- 'prompt_generation, vllm' - running llama-cpp API
 - 'filter_unique_prompts' - find and return all unique prompts within provided prompts list
 - 'filter_prompts' - filter the generated prompts if it has not been done before
 - 'semantic_check, groq' - checking & correcting the prompts using groq API
-- 'semantic_check, transformers' - checking & correcting the prompts using transformers API
-- 'semantic_check, llamacpp' - checking & correcting the prompts using llamacpp API
+- 'semantic_check, vllm' - checking & correcting the prompts using llamacpp API
 
-To preload LLM you can run the following command:
+### Running server:
+
+Initialising the server (locally for testing):
 ```commandline
-python prompt_generator_tool.py --preload_llm 'prompt_generation, transformers'
+python prompt_generator_server.py
 ```
-**"preload_llm"** option can be set to the following values:
 
-- 'prompt_generation, transformers' - pre-loading LLM using transformers API for prompt generation
-- 'prompt_checking, transformers' - pre-loading LLM using transformers API for prompt checking
-- 'prompt_generation, llamacpp' - pre-loading LLM using llamacpp API for prompt generation
-- 'prompt_checking, llamacpp' - pre-loading LLM using llamacpp API for prompt checking **(Not quite working yet)**
-
-To quantize llamacpp LLM you can run the following command:
+Start generation (locally):
 ```commandline
-python prompt_generator_tool.py --quantize_llamacpp 'prompt_generation, 1'
+curl POST http://0.0.0.0:10006/generate_prompts/
 ```
-**"quantize_llamacpp"** option can be set to the following values:
 
-- 'prompt_generation, digit' - quantizing llamacpp LLM for prompt generation, digit should be 1, 2, or 3
-- 'prompt_checking, digit' - quantizing llamacpp LLM for prompt checking, digit should be 1, 2, or 3
+Initialising the server as a separate process (Runpod and similar):
+```commandline
+pm2 start generation.config.js
+```
+
+Start generation:
+```commandline
+curl POST http://0.0.0.0:8888/generate_prompts/
+```
+
