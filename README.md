@@ -84,6 +84,8 @@ vllm_api:
 
     # max tokens for prompt generation
     max_tokens: 256
+    
+transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
 
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
