@@ -151,11 +151,11 @@ python prompt_generator_tool.py --mode 'prompt_generation, groq'
 **"mode"** option can be set to the following values:
 
 - 'prompt_generation, groq' - running Groq API
-- 'prompt_generation, vllm' - running llama-cpp API
+- 'prompt_generation, vllm' - running vLLM API
 - 'filter_unique_prompts' - find and return all unique prompts within provided prompts list
 - 'filter_prompts' - filter the generated prompts if it has not been done before
 - 'semantic_check, groq' - checking & correcting the prompts using groq API
-- 'semantic_check, vllm' - checking & correcting the prompts using llamacpp API
+- 'semantic_check, vllm' - checking & correcting the prompts using vLLM API
 
 ### Running server:
 
