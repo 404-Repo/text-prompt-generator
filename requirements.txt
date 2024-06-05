@@ -1,0 +1,16 @@
+-i https://download.pytorch.org/whl/cu121
+numpy==1.*
+torch==2.*
+torchvision==0.*
+huggingface_hub==0.*
+transformers==4.*
+protobuf==5.*
+tqdm==4.*
+pytest==8.*
+groq==0.*
+accelerate==0.*
+loguru==0.*
+vllm==0.*
+autoawq==0.*
+bitsandbytes==0.*
+tensorizer==2.*
