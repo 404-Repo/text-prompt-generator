@@ -15,7 +15,7 @@ def test_unique_prompts_filtering():
                     "a Building with Yellow Column Base",
                     "a bronze gorilla"]
 
-    data_config = load_config_file()
+    data_config = load_config_file("../configs/launching_config.yml")
     checker = PromptChecker(data_config)
     res_lines = checker.filter_unique_prompts(test_dataset).sort()
 
@@ -42,7 +42,7 @@ def test_filter_prompts_with_words():
                     "bronze gorilla drinking a water from the glass",
                     "An elephant in the zoo"]
 
-    data_config = load_config_file()
+    data_config = load_config_file("../configs/launching_config.yml")
     checker = PromptChecker(data_config)
     res_lines = checker.filter_prompts_with_words(test_dataset, filtering_words).sort()
 
@@ -54,7 +54,7 @@ def test_filter_prompts_with_words():
     assert ref_lines == res_lines
 
 
-data_config = load_config_file()
+data_config = load_config_file("../configs/launching_config.yml")
 checker = PromptChecker(data_config)
 checker.preload_vllm_model()
 
