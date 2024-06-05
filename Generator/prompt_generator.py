@@ -58,7 +58,7 @@ class PromptGenerator:
 
         output_list = []
         for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
-            temperature = random.uniform(0.4, 0.6)
+            temperature = random.uniform(0.2, 0.5)
 
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("member_placeholder", category)
@@ -105,7 +105,7 @@ class PromptGenerator:
 
         output_list = []
         for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
-            temperature = random.uniform(0.4, 0.6)
+            temperature = random.uniform(0.2, 0.5)
 
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("member_placeholder", category)
