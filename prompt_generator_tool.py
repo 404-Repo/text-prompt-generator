@@ -33,8 +33,8 @@ def check_prompts(prompt_checker: PromptChecker,
     :param mode: can be 'online' or 'offline'
     :param file_name: the name of the file where the suitable prompts will be output after filtering (optional), default "correct_prompts.txt"
     """
-    start_batch = 180000
-    end_batch = 180100
+    start_batch = 0
+    end_batch = len(prompts)
 
     for p, _ in zip(prompts[start_batch:end_batch], tqdm.trange(len(prompts[start_batch:end_batch]))):
         if mode == "vllm":
@@ -86,7 +86,7 @@ def console_args():
 
 
 if __name__ == '__main__':
-    config_data = load_config_file()
+    config_data = load_config_file("./configs/launching_config.yml")
     prompt_generator = PromptGenerator(config_data)
     prompt_checker = PromptChecker(config_data)
 
