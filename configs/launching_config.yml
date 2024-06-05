@@ -62,6 +62,8 @@ prompt: "Generate a prompt dataset for generating 3D models.
          Each prompt should define a single 3D object that can be generated as a 3D mesh.
          The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
          Each object should be different and must be strictly picked from the member_placeholder category.
+         When objects from the architecture categories are picked up, avoid description of interiors.
+         Avoid descriptions of bodies of water, e.g lakes, seas, oceans, rivers and similar.
          Each prompt should be unique, on the new line, consists of between three to five words.
          Generate a numbered list of prompts_num prompts.
         "
