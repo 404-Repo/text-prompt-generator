@@ -191,7 +191,7 @@ class PromptChecker:
         else:
             seed = self._config_data["vllm_api"]['seed']
 
-        self._generator = LLM(model="./model/gemma-1.1-7b-awq", #model=self._config_data["vllm_api"]["llm_model_prompt_checker"],
+        self._generator = LLM(model=self._config_data["vllm_api"]["llm_model_prompt_checker"],
                               trust_remote_code=True,
                               quantization=quantization,
                               seed=seed)
