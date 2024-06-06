@@ -35,7 +35,7 @@ vllm_api:
     # awq - quantization level of the model supported by the vllm
     llm_model: "casperhansen/llama-3-8b-instruct-awq"
 #    llm_model: "casperhansen/llama-3-70b-instruct-awq"
-#    llm_model: "mistral-community/Mixtral-8x22B-v0.1-AWQ"
+#    llm_model: "doubledsbv/KafkaLM-Mixtral-8x7B-V0.2_DPO-AWQ"
 #    llm_model: "tiiuae/falcon-11B"
 
     # the llm model that will be used for checking the quality of the prompts
