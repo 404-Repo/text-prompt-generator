@@ -105,7 +105,7 @@ class PromptGenerator:
 
         output_list = []
         for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
-            temperature = random.uniform(0.2, 0.5)
+            temperature = random.uniform(0.25, 0.6)
 
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("member_placeholder", category)
@@ -145,6 +145,11 @@ class PromptGenerator:
     def unload_vllm_model(self):
         """ Function for unloading the model """
         logger.info("Deleting model in use.")
+
+        _, gpu_memory_total = torch.cuda.mem_get_info()
+        gpu_available_memory_before = gpu_memory_total - torch.cuda.memory_allocated()
+
+        logger.info(f"GPU available memory: {gpu_available_memory_before/1024 ** 3} Gb")
         destroy_model_parallel()
         del self._generator.llm_engine
         del self._generator
@@ -156,8 +161,9 @@ class PromptGenerator:
 
         self._generator = None
 
-        logger.info(f"GPU cached memory in use: {torch.cuda.memory_cached()/1000} Gb")
-        logger.info(f"GPU allocated memory: {torch.cuda.memory_allocated()/1000} Gb\n")
+        _, gpu_memory_total = torch.cuda.mem_get_info()
+        gpu_available_memory_after = gpu_memory_total - torch.cuda.memory_allocated()
+        logger.info(f"GPU allocated memory: {gpu_available_memory_after/1024 ** 3} Gb\n")
 
     def _preload_input_data(self):
         """ Function for preloading input data """
