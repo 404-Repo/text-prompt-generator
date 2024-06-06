@@ -1,7 +1,7 @@
 numpy==1.*
 torch==2.*
 torchvision==0.*
-huggingface_hub[cli, torch]==0.*
+huggingface_hub==0.*
 transformers==4.*
 protobuf==5.*
 tqdm==4.*
