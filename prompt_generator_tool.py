@@ -102,14 +102,22 @@ if __name__ == '__main__':
             for i, _ in enumerate(total_iters):
                 prompts = prompt_generator.groq_generator()
                 prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
-                check_prompts(prompt_checker, prompts, config_data["groq_llm_model_prompt_checker"], "vllm", config_data["prompts_output_file"])
+                check_prompts(prompt_checker,
+                              prompts,
+                              config_data["groq_api"]["llm_model_prompt_checker"],
+                              "vllm",
+                              config_data["prompts_output_file"])
 
         elif proc_mode_option == "vllm":
             prompt_generator.preload_vllm_model()
             for i, _ in enumerate(total_iters):
                 prompts = prompt_generator.vllm_generator()
                 prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
-                check_prompts(prompt_checker, prompts, config_data["vllm_llm_model_prompt_checker"], "vllm", config_data["prompts_output_file"])
+                check_prompts(prompt_checker,
+                              prompts,
+                              config_data["vllm_api"]["llm_model_prompt_checker"],
+                              "vllm",
+                              config_data["prompts_output_file"])
 
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
@@ -127,11 +135,19 @@ if __name__ == '__main__':
     elif proc_mode == "semantic_check":
         if proc_mode_option == "groq":
             prompts = load_file_with_prompts(config_data["prompts_output_file"])
-            check_prompts(prompt_checker, prompts, config_data["groq_llm_model_prompt_checker"], "groq")
+            check_prompts(prompt_checker,
+                          prompts,
+                          config_data["groq_api"]["llm_model_prompt_checker"],
+                          "groq")
+
         elif proc_mode_option == "vllm":
             prompts = load_file_with_prompts(config_data["prompts_output_file"])
             prompt_checker.preload_vllm_model()
-            check_prompts(prompt_checker, prompts, config_data["vllm_llm_model_prompt_checker"], "vllm")
+            check_prompts(prompt_checker,
+                          prompts,
+                          config_data["vllm_api"]["llm_model_prompt_checker"],
+                          "vllm")
+
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
 
