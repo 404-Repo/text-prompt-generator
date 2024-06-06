@@ -102,26 +102,14 @@ if __name__ == '__main__':
             for i, _ in enumerate(total_iters):
                 prompts = prompt_generator.groq_generator()
                 prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
-                check_prompts(prompt_checker,
-                              prompts,
-                              config_data["groq_api"]["llm_model_prompt_checker"],
-                              "vllm",
-                              config_data["prompts_output_file"])
+                save_prompts(config_data["prompts_output_file"], prompts, "a")
 
         elif proc_mode_option == "vllm":
+            prompt_generator.preload_vllm_model()
             for i, _ in enumerate(total_iters):
-                prompt_generator.preload_vllm_model()
                 prompts = prompt_generator.vllm_generator()
-                prompt_generator.unload_vllm_model()
-
-                prompt_checker.preload_vllm_model()
                 prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
-                check_prompts(prompt_checker,
-                              prompts,
-                              config_data["vllm_api"]["llm_model_prompt_checker"],
-                              "vllm",
-                              config_data["prompts_output_file"])
-                prompt_checker.unload_vllm_model()
+                save_prompts(config_data["prompts_output_file"], prompts, "a")
 
         else:
             raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
