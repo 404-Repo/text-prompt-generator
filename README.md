@@ -59,7 +59,7 @@ server:
 # parameters for running Groq API
 groq_api:
     # put here token generated at https://console.groq.com/keys
-    api_key: "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"
+    api_key: ""
 
     # one of the models supported by groq platform: llama3-70b-8192, mixtral-8x7b-32768, gemma-7b-it
     llm_model: "llama3-8b-8192"
@@ -89,7 +89,7 @@ transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
 
 # hugging face api token, can be generated within your account on the platform. Will be required
 # for downloading gemma LLM.
-hugging_face_api_key: "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"
+hugging_face_api_key: ""
 
 # the prompt that will be used for generating the dataset.
 # NOTE: member_placeholder and prompts_num are mandatory placeholders.
@@ -151,11 +151,11 @@ python prompt_generator_tool.py --mode 'prompt_generation, groq'
 **"mode"** option can be set to the following values:
 
 - 'prompt_generation, groq' - running Groq API
-- 'prompt_generation, vllm' - running llama-cpp API
+- 'prompt_generation, vllm' - running vLLM API
 - 'filter_unique_prompts' - find and return all unique prompts within provided prompts list
 - 'filter_prompts' - filter the generated prompts if it has not been done before
 - 'semantic_check, groq' - checking & correcting the prompts using groq API
-- 'semantic_check, vllm' - checking & correcting the prompts using llamacpp API
+- 'semantic_check, vllm' - checking & correcting the prompts using vLLM API
 
 ### Running server:
 

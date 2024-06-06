@@ -4,7 +4,7 @@ server:
     api_key_prompt_server: ""
 
     # server address
-    api_prompt_server_url: "http://35.222.204.141:9100/submit"
+    api_prompt_server_url: ""
 
     # maximum amount of retries accessing the server before continue prompt generation
     server_max_retries_number: 5
@@ -34,6 +34,9 @@ vllm_api:
     # the vllm model that will be used for the prompt generation
     # awq - quantization level of the model supported by the vllm
     llm_model: "casperhansen/llama-3-8b-instruct-awq"
+#    llm_model: "casperhansen/llama-3-70b-instruct-awq"
+#    llm_model: "mistral-community/Mixtral-8x22B-v0.1-AWQ"
+#    llm_model: "tiiuae/falcon-11B"
 
     # the llm model that will be used for checking the quality of the prompts
     llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
@@ -59,22 +62,27 @@ prompt: "Generate a prompt dataset for generating 3D models.
          Each prompt should define a single 3D object that can be generated as a 3D mesh.
          The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
          Each object should be different and must be strictly picked from the member_placeholder category.
-         Each prompt should be unique, on the new line, consists of between three to ten words.
+         When objects from the architecture categories are picked up, avoid description of interiors.
+         Avoid descriptions of bodies of water, e.g lakes, seas, oceans, rivers and similar.
+         Each prompt should be unique, on the new line, consists of between three to seven words.
          Generate a numbered list of prompts_num prompts.
         "
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["humanoids", "animals", "monsters", "robots", "buildings", "nature", "vehicles", "weapons and equipments",
+obj_categories: ["humanoids", "animals", "monsters", "robots", "architecture", "nature", "vehicles", "weapons and equipments",
                  "food and drinks", "gadgets and electronics", "decorative elements", "furniture", "jewelry"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
-filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city", "accessories",
-                            "jungle", "forest", "space", "pool", "pond", "I", "i", "fields", "horizon", "oops", "hillside", "underwater",
-                            "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "copy",
-                            "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
-                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
-                            "orbit", "hope", "melody", "animate", "vagina"]
+filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
+                            "tow", "city", "accessories", "jungle", "forest", "space", "pool", "pond", "I", "i",
+                            "fields", "horizon", "oops", "hillside", "underwater", "floor", "grass", "nature", "mist",
+                            "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word",
+                            "words", "money", "copy", "vacuum", "outdoor", "to", "us", "miami", "kidding", "time",
+                            "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
+                            "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
+                            "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
+                            "d", "classification", "tasks", "task"]
 
 # amount of prompts to generate per category.
 prompts_num: 30

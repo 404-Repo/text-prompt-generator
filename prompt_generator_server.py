@@ -1,7 +1,6 @@
 import argparse
 import requests
 import json
-import http.client as client
 from time import (time, sleep)
 
 import tqdm
@@ -12,6 +11,7 @@ import uvicorn
 from Generator.prompt_generator import PromptGenerator
 from Generator.prompt_checker import PromptChecker
 from Generator.utils import (save_prompts,
+                             load_file_with_prompts,
                              load_config_file)
 
 
@@ -72,7 +72,7 @@ async def generate_prompts():
     logger.info("*" * 35)
     logger.info(f"\n")
 
-    config_data = load_config_file()
+    config_data = load_config_file("./configs/launching_config.yml")
     prompt_generator = PromptGenerator(config_data)
     prompt_generator.preload_vllm_model()
     prompt_checker = PromptChecker(config_data)
@@ -114,6 +114,9 @@ async def generate_prompts():
         if len(prompts_to_send) >= 1000:
             result = send_data_with_retry(config_data, prompts_to_send, headers)
             if result:
+                prompts = load_file_with_prompts(config_data["prompts_output_file"])
+                prompts_filtered = prompt_checker.filter_unique_prompts(prompts)
+                save_prompts(config_data["prompts_output_file"], prompts_filtered)
                 prompts_to_send.clear()
 
     t2 = time()
