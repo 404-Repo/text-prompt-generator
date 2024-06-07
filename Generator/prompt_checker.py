@@ -198,7 +198,6 @@ class PromptChecker:
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
-        """ Function for unloading the model """
         logger.info("Deleting model in use.")
 
         _, gpu_memory_total = torch.cuda.mem_get_info()
