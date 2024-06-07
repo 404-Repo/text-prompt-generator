@@ -27,7 +27,7 @@ def test_checker_vllm_model_unload():
     gpu_available_memory_after = gpu_memory_total_after - torch.cuda.memory_allocated()
 
     assert gpu_available_memory_before != gpu_available_memory_after
-    assert gpu_available_memory_after <= gpu_memory_total_after
+    assert (gpu_memory_total_after - gpu_available_memory_after)/(1024**3) < 1
 
 
 def test_generator_vllm_model_unload():
@@ -44,7 +44,7 @@ def test_generator_vllm_model_unload():
     gpu_available_memory_after = gpu_memory_total_after - torch.cuda.memory_allocated()
 
     assert gpu_available_memory_before != gpu_available_memory_after
-    assert gpu_available_memory_after <= gpu_memory_total_after
+    assert (gpu_memory_total_after - gpu_available_memory_after)/(1024**3) < 1
 
 
 def test_unique_prompts_filtering():
