@@ -36,13 +36,6 @@ vllm_api:
     llm_model: "casperhansen/llama-3-8b-instruct-awq"
 #    llm_model: "casperhansen/llama-3-70b-instruct-awq"
 #    llm_model: "tiiuae/falcon-11B"
-#    llm_model: "tiiuae/falcon-40b-instruct"
-#    llm_model: "Qwen/Qwen2-7B-Instruct-AWQ"
-#    llm_model: "Qwen/Qwen2-57B-A14B-Instruct"
-#    llm_model: "Qwen/Qwen2-72B-Instruct-AWQ"
-#    llm_model: "TechxGenus/gemma-1.1-7b-it-AWQ"
-#    llm_model: "TheBloke/Mixtral-8x7B-Instruct-v0.1-AWQ"
-#    llm_model: "ybelkada/Mixtral-8x7B-Instruct-v0.1-AWQ"
 #    llm_model: "TheBloke/Mixtral_11Bx2_MoE_19B-AWQ"
 
     # the llm model that will be used for checking the quality of the prompts
@@ -89,7 +82,9 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
                             "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                             "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
-                            "d", "classification", "tasks", "task", "output", "here"]
+                            "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
+                            "avoid", "category"
+                          ]
 
 # amount of prompts to generate per category.
 prompts_num: 30
