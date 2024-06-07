@@ -149,7 +149,7 @@ class PromptGenerator:
         _, gpu_memory_total = torch.cuda.mem_get_info()
         gpu_available_memory_before = gpu_memory_total - torch.cuda.memory_allocated()
 
-        logger.info(f"GPU available memory: {gpu_available_memory_before/1024 ** 3} Gb")
+        logger.info(f"GPU available memory [before]: {gpu_available_memory_before/1024 ** 3} Gb")
         destroy_model_parallel()
         del self._generator.llm_engine
         del self._generator
@@ -163,7 +163,7 @@ class PromptGenerator:
 
         _, gpu_memory_total = torch.cuda.mem_get_info()
         gpu_available_memory_after = gpu_memory_total - torch.cuda.memory_allocated()
-        logger.info(f"GPU allocated memory: {gpu_available_memory_after/1024 ** 3} Gb\n")
+        logger.info(f"GPU available memory [after]: {gpu_available_memory_after/1024 ** 3} Gb\n")
 
     def _preload_input_data(self):
         """ Function for preloading input data """
@@ -187,6 +187,7 @@ class PromptGenerator:
                 line = re.sub(r'[^a-zA-Z`\s-]', '', lines[i])
                 line = re.sub(r'\d+', '', line)
                 line = line.replace(".", "")
+                line = line.replace("- ", "")
 
                 if len(line.split()) > 3:
                     if "\n" not in line:

@@ -198,13 +198,12 @@ class PromptChecker:
 
     def unload_vllm_model(self):
         """ Function for unloading the model """
-        """ Function for unloading the model """
         logger.info("Deleting model in use.")
 
         _, gpu_memory_total = torch.cuda.mem_get_info()
         gpu_available_memory_before = gpu_memory_total - torch.cuda.memory_allocated()
 
-        logger.info(f"GPU available memory: {gpu_available_memory_before / 1024 ** 3} Gb")
+        logger.info(f"GPU available memory [before]: {gpu_available_memory_before / 1024 ** 3} Gb")
         destroy_model_parallel()
         del self._generator.llm_engine
         del self._generator
@@ -218,7 +217,7 @@ class PromptChecker:
 
         _, gpu_memory_total = torch.cuda.mem_get_info()
         gpu_available_memory_after = gpu_memory_total - torch.cuda.memory_allocated()
-        logger.info(f"GPU allocated memory: {gpu_available_memory_after / 1024 ** 3} Gb\n")
+        logger.info(f"GPU available memory [after]: {gpu_available_memory_after / 1024 ** 3} Gb\n")
 
     def transformers_load_checkpoint(self, load_in_4bit: bool = True, load_in_8bit: bool = False):
         """ Function for pre-loading checkpoints for the requested models using transformers.

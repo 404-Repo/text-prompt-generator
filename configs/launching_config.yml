@@ -35,8 +35,8 @@ vllm_api:
     # awq - quantization level of the model supported by the vllm
     llm_model: "casperhansen/llama-3-8b-instruct-awq"
 #    llm_model: "casperhansen/llama-3-70b-instruct-awq"
-#    llm_model: "mistral-community/Mixtral-8x22B-v0.1-AWQ"
 #    llm_model: "tiiuae/falcon-11B"
+#    llm_model: "TheBloke/Mixtral_11Bx2_MoE_19B-AWQ"
 
     # the llm model that will be used for checking the quality of the prompts
     llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
@@ -82,7 +82,9 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
                             "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                             "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
-                            "d", "classification", "tasks", "task"]
+                            "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
+                            "avoid", "category"
+                          ]
 
 # amount of prompts to generate per category.
 prompts_num: 30
