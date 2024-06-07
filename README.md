@@ -133,16 +133,24 @@ prompts_output_file: "prompt_dataset.txt"
 
 For installing Conda environment only:
 ```commandline
+cd installation_scripts
 bash install_env.sh
 ```
 
 For [Runpod](https://www.runpod.io/) platform run the following commands:
 ```commandline
+cd installation_scripts
 bash install_runpod_env.sh
 bash install_env.sh
 ```
 
-**install_env.sh** will generate **generation.config.js** that can be used with pm2 process.
+For cleaning up the conda environment run the following command:
+```commandline
+cd installation_scripts
+bash cleanup_env.sh
+```
+
+**install_env.sh** will generate **generation.config.js** in the project root directory that can be used with pm2 process.
 
 ### Running tool:
 ```commandline
@@ -174,7 +182,7 @@ Initialising the server as a separate process (Runpod and similar):
 pm2 start generation.config.js
 ```
 
-Start generation:
+Start generation on Runpod:
 ```commandline
 curl POST http://0.0.0.0:8888/generate_prompts/
 ```
