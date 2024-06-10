@@ -66,7 +66,7 @@ def console_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", required=False, help="options: 'prompt_generation, groq', 'prompt_generation, vllm',"
-                                                       "'grammar', 'filter_unique_prompts', 'filter_prompts', "
+                                                       "'filter_unique_prompts', 'filter_prompts', "
                                                        "'semantic_check, qroq', 'semantic_check, vllm'")
     args = parser.parse_args()
 
