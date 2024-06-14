@@ -23,7 +23,7 @@ pip install flash-attn nvitop
 CONDA_INTERPRETER_PATH=$(which python)
 
 # Generate the generation.config.js file for PM2 with specified configurations
-cat <<EOF > generation.config.js
+cat <<EOF > ../generation.config.js
 module.exports = {
   apps : [{
     name: 'prompts_generator',

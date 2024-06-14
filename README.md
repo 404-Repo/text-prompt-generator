@@ -29,6 +29,10 @@ i.e. for quantized models search models on hugging face with [AWQ](https://huggi
 
 The default LLM for offline mode is [llama3-8B-instruct](https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct).
 
+<span style="color:orange">**NOTE**: Models that have around 7-8 billion parameters can be run on GPUs with 16-24 GB VRAM without any problems.
+Models that have around 10-25 Billion parameters can be run on GPUs with 48 GB VRAM 
+(You might came across some exceptions, e.g. llama3-70B-AWQ can be run on 48 GB VRAM GPU)</span>
+
 
 #### Groq usage, preparation steps.
 
@@ -96,26 +100,38 @@ hugging_face_api_key: ""
 # prompts_num will be replaced with prompts_num from this config;
 # member_placeholder will be replaced with one of the strings stored in obj_categories list.
 
+# the prompt that will be used for generating the dataset.
+# NOTE: member_placeholder and prompts_num are mandatory placeholders.
+# prompts_num will be replaced with prompts_num from this config;
+# member_placeholder will be replaced with one of the strings stored in obj_categories list.
+
 prompt: "Generate a prompt dataset for generating 3D models.
          Each prompt should define a single 3D object that can be generated as a 3D mesh.
          The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.  
          Each object should be different and must be strictly picked from the member_placeholder category.
-         Each prompt should be unique, on the new line, consists of between three to ten words.
+         When objects from the architecture categories are picked up, avoid description of interiors.
+         Avoid descriptions of bodies of water, e.g lakes, seas, oceans, rivers and similar.
+         Each prompt should be unique, on the new line, consists of between three to seven words.
          Generate a numbered list of prompts_num prompts.
         "
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["humanoids", "animals", "monsters", "robots", "buildings", "nature", "vehicles", "weapons and equipments",
+obj_categories: ["humanoids", "animals", "monsters", "robots", "architecture", "nature", "vehicles", "weapons and equipments",
                  "food and drinks", "gadgets and electronics", "decorative elements", "furniture", "jewelry"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
-filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family", "tow", "city", "accessories",
-                            "jungle", "forest", "space", "pool", "pond", "I", "i", "fields", "horizon", "oops", "hillside", "underwater",
-                            "floor", "grass", "nature", "mist", "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word", "words", "money", "copy",
-                            "vacuum", "outdoor", "to", "us", "miami", "kidding", "time", "sunken", "point", "like", "breathing", "whoops", "labyrinth",
-                            "village", "seaside", "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song", "ambiance",
-                            "orbit", "hope", "melody", "animate", "vagina"]
+filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
+                            "tow", "city", "accessories", "jungle", "forest", "space", "pool", "pond", "I", "i",
+                            "fields", "horizon", "oops", "hillside", "underwater", "floor", "grass", "nature", "mist",
+                            "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
+                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word",
+                            "words", "money", "copy", "vacuum", "outdoor", "to", "us", "miami", "kidding", "time",
+                            "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
+                            "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
+                            "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
+                            "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
+                            "avoid", "category", "choose", "ensure"
+                          ]
 
 # amount of prompts to generate per category.
 prompts_num: 30
@@ -133,16 +149,24 @@ prompts_output_file: "prompt_dataset.txt"
 
 For installing Conda environment only:
 ```commandline
+cd installation_scripts
 bash install_env.sh
 ```
 
 For [Runpod](https://www.runpod.io/) platform run the following commands:
 ```commandline
+cd installation_scripts
 bash install_runpod_env.sh
 bash install_env.sh
 ```
 
-**install_env.sh** will generate **generation.config.js** that can be used with pm2 process.
+For cleaning up the conda environment run the following command:
+```commandline
+cd installation_scripts
+bash cleanup_env.sh
+```
+
+**install_env.sh** will generate **generation.config.js** in the project root directory that can be used with pm2 process.
 
 ### Running tool:
 ```commandline
@@ -174,7 +198,7 @@ Initialising the server as a separate process (Runpod and similar):
 pm2 start generation.config.js
 ```
 
-Start generation:
+Start generation on Runpod:
 ```commandline
 curl POST http://0.0.0.0:8888/generate_prompts/
 ```
