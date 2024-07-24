@@ -1,3 +1,5 @@
+import os
+os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
 import tqdm
 import argparse
 from typing import List
@@ -18,6 +20,7 @@ def postprocess_prompts(prompt_checker: PromptChecker, prompts: List[str], words
     """
     prompts_out = prompt_checker.filter_unique_prompts(prompts)
     prompts_out = prompt_checker.filter_prompts_with_words(prompts_out, words_to_filter)
+    prompts_out = prompt_checker.correct_prompts(prompts_out)
     return prompts_out
 
 
