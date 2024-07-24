@@ -369,3 +369,16 @@ class PromptChecker:
         self._logger.info(f"\n")
 
         return prompts
+
+    @staticmethod
+    def correct_prompts(prompts: List[str]):
+        prepositions = [
+            'in', 'on', 'at', 'by', 'with', 'about', 'against', 'among', 'before',
+            'behind', 'between', 'during', 'for', 'from', 'of', 'to', 'over', 'under',
+            'through', 'into', 'upon', 'within', 'without', 'along', 'across', 'behind',
+            'beneath', 'beside', 'beyond', 'near', 'off', 'onto', 'towards', 'underneath'
+        ]
+        pattern = re.compile(r'\b(' + '|'.join(prepositions) + r')\b\s*$', re.IGNORECASE)
+
+        filtered_prompts = [re.sub(pattern, '', prompt).strip() for prompt in prompts]
+        return filtered_prompts
