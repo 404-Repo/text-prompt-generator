@@ -380,5 +380,5 @@ class PromptChecker:
         ]
         pattern = re.compile(r'\b(' + '|'.join(prepositions) + r')\b\s*$', re.IGNORECASE)
 
-        filtered_prompts = [re.sub(pattern, '', prompt).strip() for prompt in prompts]
+        filtered_prompts = [re.sub(pattern, '', prompt).strip()+"\n" for prompt in prompts]
         return filtered_prompts
