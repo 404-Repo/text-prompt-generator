@@ -1,3 +1,6 @@
+import os
+os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
+
 import argparse
 import requests
 import json
@@ -99,6 +102,7 @@ async def generate_prompts():
 
         prompts_out = prompt_checker.filter_unique_prompts(prompts)
         prompts_out = prompt_checker.filter_prompts_with_words(prompts_out, config_data["filter_prompts_with_words"])
+        prompts_out = prompt_checker.correct_prompts(prompts_out)
 
         prompts_to_send += prompts_out
         prompts_to_send = prompt_checker.filter_unique_prompts(prompts_to_send)

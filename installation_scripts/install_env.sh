@@ -17,7 +17,10 @@ source "${CONDA_BASE}/etc/profile.d/conda.sh"
 conda env create -f environment.yml
 conda activate three-gen-prompt-generator
 conda info --env
+
+CUDA_HOME=${CONDA_PREFIX}
 pip install flash-attn nvitop
+pip install flashinfer -i https://flashinfer.ai/whl/cu121/torch2.3
 
 # Store the path of the Conda interpreter
 CONDA_INTERPRETER_PATH=$(which python)
