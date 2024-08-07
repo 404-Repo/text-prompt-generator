@@ -24,7 +24,7 @@ class GroqGenerator:
 
         self._generator = groq.Groq(api_key=config_data["groq_api"]["api_key"])
 
-    def groq_generator(self):
+    def generate(self):
         """
         Function that calls Groq api for generating requested output. All supported by Groq models are supported.
 

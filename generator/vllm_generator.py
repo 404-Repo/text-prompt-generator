@@ -29,7 +29,7 @@ class VLLMGenerator:
 
         self._generator = None
 
-    def vllm_generator(self):
+    def generate(self):
         """
         Function that calls vLLM API for generating prompts.
         Returns
