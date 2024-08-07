@@ -4,11 +4,11 @@ import tqdm
 import argparse
 from typing import List
 
-from Generator.prompt_generator import PromptGenerator
-from Generator.utils import (load_config_file,
+from generator.prompt_generator import PromptGenerator
+from generator.utils import (load_config_file,
                              load_file_with_prompts,
                              save_prompts)
-from Generator.prompt_checker import PromptChecker
+from generator.prompt_checker import PromptChecker
 
 
 def postprocess_prompts(prompt_checker: PromptChecker, prompts: List[str], words_to_filter: List[str]):

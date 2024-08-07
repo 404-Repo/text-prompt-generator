@@ -3,9 +3,9 @@ import os
 import pytest
 import torch
 
-from Generator.prompt_checker import PromptChecker
-from Generator.prompt_generator import PromptGenerator
-from Generator.utils import load_config_file
+from generator.prompt_checker import PromptChecker
+from generator.prompt_generator import PromptGenerator
+from generator.utils import load_config_file
 
 
 cur_dir = os.getcwd()

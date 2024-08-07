@@ -11,9 +11,9 @@ from loguru import logger
 from fastapi import FastAPI
 import uvicorn
 
-from Generator.prompt_generator import PromptGenerator
-from Generator.prompt_checker import PromptChecker
-from Generator.utils import (save_prompts,
+from generator.prompt_generator import PromptGenerator
+from generator.prompt_checker import PromptChecker
+from generator.utils import (save_prompts,
                              load_file_with_prompts,
                              load_config_file)
 
@@ -71,7 +71,7 @@ async def generate_prompts():
 
     logger.info(f"\n")
     logger.info("*" * 35)
-    logger.info(" *** Prompt Dataset Generator ***")
+    logger.info(" *** Prompt Dataset generator ***")
     logger.info("*" * 35)
     logger.info(f"\n")
 
