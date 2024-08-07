@@ -24,7 +24,7 @@ groq_api:
     llm_model_prompt_checker: "gemma-7b-it"
 
     # max tokens for prompt generation
-    max_tokens: 256
+    max_tokens: 160
 
     # random seed
     seed: -1
@@ -33,16 +33,13 @@ groq_api:
 vllm_api:
     # the vllm model that will be used for the prompt generation
     # awq - quantization level of the model supported by the vllm
-    llm_model: "casperhansen/llama-3-8b-instruct-awq"
-#    llm_model: "casperhansen/llama-3-70b-instruct-awq"
-#    llm_model: "tiiuae/falcon-11B"
-#    llm_model: "TheBloke/Mixtral_11Bx2_MoE_19B-AWQ"
+    llm_model: "meta-llama/Meta-Llama-3.1-8B-Instruct"
 
     # the llm model that will be used for checking the quality of the prompts
     llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
 
     # max tokens for prompt generation
-    max_tokens: 256
+    max_tokens: 160
 
     # random seed
     seed: 0
@@ -64,7 +61,8 @@ prompt: "Generate a prompt dataset for generating 3D models.
          Each object should be different and must be strictly picked from the member_placeholder category.
          When objects from the architecture categories are picked up, avoid description of interiors.
          Avoid descriptions of bodies of water, e.g lakes, seas, oceans, rivers and similar.
-         Each prompt should be unique, on the new line, consists of between three to seven words.
+         Each prompt must be unique, on the new line, up to seven words, finished with a noun.
+         Ensure that last word of each prompt is a noun.
          Generate a numbered list of prompts_num prompts.
         "
 

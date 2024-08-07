@@ -140,6 +140,7 @@ class PromptGenerator:
         self._generator = LLM(model=self._config_data["vllm_api"]["llm_model"],
                               trust_remote_code=True,
                               quantization=quantization,
+                              max_model_len=1024,
                               seed=seed)
 
     def unload_vllm_model(self):
