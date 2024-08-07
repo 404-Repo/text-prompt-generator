@@ -1,8 +1,8 @@
 from loguru import logger
 from huggingface_hub import login
 
-from groq_generator import GroqGenerator
-from vllm_generator import VLLMGenerator
+from generator.backend_generators.groq_generator import GroqGenerator
+from generator.backend_generators.vllm_generator import VLLMGenerator
 
 
 class PromptGenerator:
