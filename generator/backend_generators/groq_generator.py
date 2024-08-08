@@ -2,6 +2,7 @@ import sys
 import copy
 import random
 from time import time
+from typing import List
 
 import tqdm
 import groq
@@ -16,17 +17,21 @@ class GroqGenerator:
         config_data: dictionary with generator configuration
         """
         self._instruction_prompt = config_data["prompt"]
-        self._object_categories = config_data["obj_categories"]
-        self._max_tokens = config_data["groq_api"]["max_tokens"]
-        self._seed = config_data["groq_api"]['seed']
+        self._max_tokens = config_data["max_tokens"]
+        self._seed = config_data['seed']
         self._model_name = ""
         self._temperature = [0.25, 0.6]
 
-        self._generator = groq.Groq(api_key=config_data["groq_api"]["api_key"])
+        self._generator = groq.Groq(api_key=config_data["api_key"])
 
-    def generate(self):
+    def generate(self, instruction_prompt: str, object_categories: List[str]):
         """
-        Function that calls Groq api for generating requested output. All supported by Groq models are supported.
+        Function that calls Groq api for generating requested output.
+
+        Parameters
+        ----------
+        instruction_prompt: a string with instruction prompt
+        object_categories: a list of strings with categories
 
         Returns
         -------
@@ -35,14 +40,14 @@ class GroqGenerator:
 
         t1 = time()
 
-        prompt_in = copy.copy(self._instruction_prompt)
+        prompt_in = copy.copy(instruction_prompt)
 
         output_prompts = []
-        for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
+        for category, _ in zip(object_categories, tqdm.trange(len(object_categories))):
             temperature = random.uniform(self._temperature[0], self._temperature[1])
 
             # find 'member' in the input string and replace it with category
-            prompt_in = prompt_in.replace("member_placeholder", category)
+            prompt_in = prompt_in.replace("[category_name]", category)
 
             if self._seed < 0:
                 seed = random.randint(0, sys.maxsize)
@@ -61,7 +66,7 @@ class GroqGenerator:
                 top_p=1,
                 max_tokens=self._max_tokens)
 
-            prompt_in = prompt_in.replace(category, "member_placeholder")
+            prompt_in = prompt_in.replace(category, "[category_name]")
 
             # extracting the response of the llm model: generated prompts
             output_prompt = output.choices[0].message.content
@@ -77,4 +82,11 @@ class GroqGenerator:
         return output_prompts
 
     def preload_model(self, model_name: str):
+        """
+        Function for assigning one of the supported by Groq platform LLM models to the generator.
+
+        Parameters
+        ----------
+        model_name: a string with model name in the format of the Groq platform
+        """
         self._model_name = model_name

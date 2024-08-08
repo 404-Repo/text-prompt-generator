@@ -34,8 +34,8 @@ class VLLMGenerator:
 
         Parameters
         ----------
-        instruction_prompt:
-        object_categories:
+        instruction_prompt: a string with instruction prompt
+        object_categories: a list of strings with categories
 
         Returns
         -------
@@ -51,12 +51,12 @@ class VLLMGenerator:
             temperature = random.uniform(self._temperature[0], self._temperature[1])
 
             # find 'member' in the input string and replace it with category
-            prompt_in = prompt_in.replace("member_placeholder", category)
+            prompt_in = prompt_in.replace("[category_name]", category)
 
             sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._max_tokens)
             outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
-            prompt_in = prompt_in.replace(category, "member_placeholder")
+            prompt_in = prompt_in.replace(category, "[category_name]")
             output_prompts.append(outputs[0].outputs[0].text)
 
         t2 = time()
@@ -90,7 +90,7 @@ class VLLMGenerator:
 
     def unload_model(self):
         """ Function for unloading the model """
-        logger.info("Deleting model in use.")
+        logger.info("Unloading model from GPU VRAM.")
 
         _, gpu_memory_total = torch.cuda.mem_get_info()
         gpu_available_memory_before = gpu_memory_total - torch.cuda.memory_allocated()
