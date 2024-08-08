@@ -24,12 +24,15 @@ class PromptGenerator:
                 self._generator = VLLMGenerator(config_data)
             else:
                 logger.error("Hugging Face API key was not specified.")
+        else:
+            logger.warning(f"Unknown generator type was specified: {generator_type}")
 
-    def load_model(self, quantization: str):
+    def load_model(self, model_name: str, quantization: str):
         """
 
         Parameters
         ----------
+        model_name
         quantization
 
         Returns
@@ -37,14 +40,16 @@ class PromptGenerator:
 
         """
         if self._generator_type == "vllm":
-            self._generator.preload_vllm_model(quantization)
+            self._generator.preload_model(model_name, quantization)
+        elif self._generator_type == "groq":
+            self._generator.preload_model(model_name)
         else:
-            logger.warning("Model preloading needed only for VLLM pipeline.")
+            logger.warning(f"Unknown generator type was specified: {self._generator_type}")
 
     def unload_model(self):
         """"""
         if self._generator_type == "vllm":
-            self._generator.unload_vllm_model()
+            self._generator.unload_model()
         else:
             logger.warning("Model unloading needed only for VLLM pipeline.")
 
