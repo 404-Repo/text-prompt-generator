@@ -1,50 +1,4 @@
-import os
-
-import pytest
-import torch
-
-from generator.prompt_checker import PromptChecker
-from generator.prompt_generator import PromptGenerator
-from generator.utils import load_config_file
-
-
-cur_dir = os.getcwd()
-# parent_dir = os.path.abspath(os.path.join(cur_dir, os.pardir))
-config_path = os.path.join(cur_dir, "configs/launching_config.yml")
-
-
-def test_checker_vllm_model_unload():
-    data_config = load_config_file(config_path)
-    checker = PromptChecker(data_config)
-    checker.preload_vllm_model()
-
-    _, gpu_memory_total_before = torch.cuda.mem_get_info()
-    gpu_available_memory_before = gpu_memory_total_before - torch.cuda.memory_allocated()
-
-    checker.unload_vllm_model()
-
-    _, gpu_memory_total_after = torch.cuda.mem_get_info()
-    gpu_available_memory_after = gpu_memory_total_after - torch.cuda.memory_allocated()
-
-    assert gpu_available_memory_before != gpu_available_memory_after
-    assert (gpu_memory_total_after - gpu_available_memory_after)/(1024**3) < 1
-
-
-def test_generator_vllm_model_unload():
-    data_config = load_config_file(config_path)
-    generator = PromptGenerator(data_config)
-    generator.preload_vllm_model()
-
-    _, gpu_memory_total_before = torch.cuda.mem_get_info()
-    gpu_available_memory_before = gpu_memory_total_before - torch.cuda.memory_allocated()
-
-    generator.unload_vllm_model()
-
-    _, gpu_memory_total_after = torch.cuda.mem_get_info()
-    gpu_available_memory_after = gpu_memory_total_after - torch.cuda.memory_allocated()
-
-    assert gpu_available_memory_before != gpu_available_memory_after
-    assert (gpu_memory_total_after - gpu_available_memory_after)/(1024**3) < 1
+import generator.utils.prompts_filtering_utils as prompt_filters
 
 
 def test_unique_prompts_filtering():
@@ -58,9 +12,7 @@ def test_unique_prompts_filtering():
                     "a Building with Yellow Column Base",
                     "a bronze gorilla"]
 
-    data_config = load_config_file(config_path)
-    checker = PromptChecker(data_config)
-    res_lines = checker.filter_unique_prompts(test_dataset).sort()
+    res_lines = prompt_filters.filter_unique_prompts(test_dataset).sort()
 
     ref_lines = ["plants",
                  "a building with red wall frame",
@@ -85,9 +37,7 @@ def test_filter_prompts_with_words():
                     "bronze gorilla drinking a water from the glass",
                     "An elephant in the zoo"]
 
-    data_config = load_config_file(config_path)
-    checker = PromptChecker(data_config)
-    res_lines = checker.filter_prompts_with_words(test_dataset, filtering_words).sort()
+    res_lines = prompt_filters.filter_prompts_with_words(test_dataset, filtering_words).sort()
 
     ref_lines = ["a building with red wall frame",
                  "the gold turtle",
@@ -97,57 +47,77 @@ def test_filter_prompts_with_words():
     assert ref_lines == res_lines
 
 
-def test_prompt_quality_check():
-    data_config = load_config_file(config_path)
-    checker = PromptChecker(data_config)
-    checker.preload_vllm_model()
+def test_correction_of_non_finished_prompts():
+    test_dataset = ["female android with",
+                    "black slanted game controller on",
+                    "viking warrior holding axe by",
+                    "dark green horned griffin at",
+                    "dark chocolate covered raisins with",
+                    "black and white bone-clawed manticore about",
+                    "giraffe with long neck reaching leaves against",
+                    "curved lounge chair in orange among",
+                    "green triangular drone propeller behind",
+                    "red angled tablet stand before",
+                    "red and blue segmented snake-like robot between",
+                    "orange tabby cat washing its face during",
+                    "brown bear standing on hind legs for",
+                    "majestic redwood tree trunk from",
+                    "gold elongated vr controller of",
+                    "dark oak barrel chair to",
+                    "twisting steel and glass skyscraper over",
+                    "red and black striped chimera under",
+                    "melting vanilla ice cream cone through",
+                    "blue and green humanoid robot with crossed arms into",
+                    "cybernetic ninja in black suit upon",
+                    "black and gold ottoman within",
+                    "pineapple upside down cake without",
+                    "purple wired gaming mouse along",
+                    "green spider-like robot with outstretched limbs across",
+                    "blue viking war hammer behind",
+                    "brown twisted tree bark beneath",
+                    "silver space-age laser gun beside",
+                    "android knight with lance beyond",
+                    "white polar bear hunting for seals near",
+                    "blue circular smartwatch face off",
+                    "cyberpunk punk with leather jacket onto",
+                    "steampunk inventor in goggles towards",
+                    "gold twisted headphone cable underneath"]
 
-    prompts = ["white fan shaped bird of paradise flower",
-               "a brown bear",
-               "super spider shaped flower in vacuum",
-               "sleeping cat on the bed"]
+    res_lines = prompt_filters.correct_non_finished_prompts(test_dataset)
 
-    wrong_prompts = []
-    correct_prompts = []
-    for p in prompts:
-        score = checker.vllm_check_prompt(p)
+    ref_lines = ["female android",
+                 "black slanted game controller",
+                 "viking warrior holding axe",
+                 "dark green horned griffin",
+                 "dark chocolate covered raisins",
+                 "black and white bone-clawed manticore",
+                 "giraffe with long neck reaching leaves",
+                 "curved lounge chair in orange",
+                 "green triangular drone propeller",
+                 "red angled tablet stand",
+                 "red and blue segmented snake-like robot",
+                 "orange tabby cat washing its face",
+                 "brown bear standing on hind legs",
+                 "majestic redwood tree trunk",
+                 "gold elongated vr controller",
+                 "dark oak barrel chair",
+                 "twisting steel and glass skyscraper",
+                 "red and black striped chimera",
+                 "melting vanilla ice cream cone",
+                 "blue and green humanoid robot with crossed arms",
+                 "cybernetic ninja in black suit",
+                 "black and gold ottoman",
+                 "pineapple upside down cake",
+                 "purple wired gaming mouse",
+                 "green spider-like robot with outstretched limbs",
+                 "blue viking war hammer",
+                 "brown twisted tree bark",
+                 "silver space-age laser gun",
+                 "android knight with lance",
+                 "white polar bear hunting for seals",
+                 "blue circular smartwatch face",
+                 "cyberpunk punk with leather jacket",
+                 "steampunk inventor in goggles",
+                 "gold twisted headphone cable"]
 
-        if float(score) >= 0.5:
-            correct_prompts.append(p)
-        else:
-            wrong_prompts.append(p)
-
-    checker.unload_vllm_model()
-
-    assert "a brown bear" in correct_prompts
-    assert "sleeping cat on the bed" in correct_prompts
-    assert "super spider shaped flower in vacuum" in wrong_prompts
-    assert "white fan shaped bird of paradise flower" in wrong_prompts
-
-
-def test_prompt_correction():
-    data_config = load_config_file(config_path)
-    checker = PromptChecker(data_config)
-    checker.preload_vllm_model()
-
-    prompts = ["white fan shaped bird of paradise flower",
-               "a brown bear",
-               "super spider shaped flower in vacuum",
-               "sleeping cat on the bed"]
-
-    corrected_prompts = []
-    for p in prompts:
-        score = checker.vllm_check_prompt(p)
-
-        if float(score) >= 0.5:
-            corrected_prompts.append(p)
-        else:
-            prompt = checker.vllm_correct_prompt(p)
-            corrected_prompts.append(prompt)
-
-    checker.unload_vllm_model()
-
-    assert prompts[0] != corrected_prompts[0] and corrected_prompts[0] != ""
-    assert prompts[1] == corrected_prompts[1] and corrected_prompts[1] != ""
-    assert prompts[2] != corrected_prompts[2] and corrected_prompts[2] != ""
-    assert prompts[3] == corrected_prompts[3] and corrected_prompts[3] != ""
+    assert ref_lines == res_lines
