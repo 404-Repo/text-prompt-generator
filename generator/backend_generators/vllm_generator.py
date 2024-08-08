@@ -23,8 +23,8 @@ class VLLMGenerator:
         """
         self._max_tokens = config_data["max_tokens"]
         self._seed = config_data['seed']
-        self._max_model_len = 1024
-        self._temperature = [0.25, 0.6]
+        self._max_model_len = config_data["max_model_len"]
+        self._temperature = config_data["temperature"]
 
         self._generator = None
 
