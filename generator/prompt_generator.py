@@ -1,4 +1,5 @@
 import re
+from typing import Optional
 
 from loguru import logger
 from huggingface_hub import login
@@ -41,7 +42,7 @@ class PromptGenerator:
 
         self._instruction_prompt = self._get_instruction_prompt()
 
-    def load_model(self, model_name: str, quantization: str):
+    def load_model(self, model_name: str, quantization: Optional[str] = ""):
         """
 
         Parameters
