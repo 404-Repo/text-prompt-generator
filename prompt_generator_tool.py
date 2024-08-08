@@ -1,76 +1,27 @@
 import os
 os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
-import tqdm
 import argparse
-from typing import List
+
+import generator.utils.prompts_filtering_utils as prompt_filters
+import generator.utils.io_utils as io_utils
 
 from generator.prompt_generator import PromptGenerator
-from generator.utils.io_utils import (load_config_file,
-                                      load_file_with_prompts,
-                                      save_prompts)
-from generator.prompt_checker_old import PromptChecker
-
-
-def postprocess_prompts(prompt_checker: PromptChecker, prompts: List[str], words_to_filter: List[str]):
-    """ Function for post-processing input prompts: grammar check and filtering
-    :param prompt_checker: object that provides access to the PromptChecker methods
-    :param prompts: list with input prompts
-    :param words_to_filter: a list with words that will be used for filtering input prompts
-    :return a list with processed prompts
-    """
-    prompts_out = prompt_checker.filter_unique_prompts(prompts)
-    prompts_out = prompt_checker.filter_prompts_with_words(prompts_out, words_to_filter)
-    prompts_out = prompt_checker.correct_prompts(prompts_out)
-    return prompts_out
-
-
-def check_prompts(prompt_checker: PromptChecker,
-                  prompts: list,
-                  model_name: str,
-                  mode: str,
-                  file_name: str = "correct_prompts.txt"):
-    """ Function for checking the quality of the prompts using another LLM. It also corrects/reformulates prompts.
-    :param prompt_checker: object that provides access to the PromptChecker methods
-    :param prompts: list with input prompts
-    :param model_name: the name of the LLM that will be used
-    :param mode: can be 'online' or 'offline'
-    :param file_name: the name of the file where the suitable prompts will be output after filtering (optional), default "correct_prompts.txt"
-    """
-    start_batch = 0
-    end_batch = len(prompts)
-
-    for p, _ in zip(prompts[start_batch:end_batch], tqdm.trange(len(prompts[start_batch:end_batch]))):
-        if mode == "vllm":
-            score = prompt_checker.vllm_check_prompt(p)
-        elif mode == "groq":
-            score = prompt_checker.groq_check_prompt(p)
-        else:
-            raise ValueError("Unknown mode was specified. Supported ones are: online and offline")
-
-        if float(score) >= 0.5:
-            if "gemma" not in model_name:
-                if mode == "vllm":
-                    p = prompt_checker.vllm_correct_prompt(p)
-                else:
-                    p = prompt_checker.groq_correct_prompt(p)
-
-            p = p.strip()
-            p += "\n"
-            save_prompts(file_name, [p], "a")
-        else:
-            p = p.strip()
-            p += ", [ " + score + " ]\n"
-            save_prompts("wrong_prompts.txt", [p], "a")
 
 
 def console_args():
-    """ Function that parses the argument passed via console
-    :return a list of parsed arguments with their values
+    """
+    Function that parses the argument passed via console
+
+    Returns
+    -------
+    proc_mode: tool mode, string value (prompt_generation, filter_unique_prompts, filter_prompts_with_words)
+    proc_mode_option: processing option (only for prompt_generation: vllm or groq, otherwise "")
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", required=False, help="options: 'prompt_generation, groq', 'prompt_generation, vllm',"
-                                                       "'filter_unique_prompts', 'filter_prompts', "
-                                                       "'semantic_check, qroq', 'semantic_check, vllm'")
+    parser.add_argument("--mode", required=False, help="options: 'prompt_generation, groq', "
+                                                       "'prompt_generation, vllm',"
+                                                       "'filter_unique_prompts', "
+                                                       "'filter_prompts_with_words'")
     args = parser.parse_args()
 
     if args.mode is not None:
@@ -88,63 +39,52 @@ def console_args():
     return proc_mode, proc_mode_option
 
 
-if __name__ == '__main__':
-    config_data = load_config_file("configs/pipeline_config.yml")
-    prompt_generator = PromptGenerator(config_data)
-    prompt_checker = PromptChecker(config_data)
-
+def main():
+    """ Pipeline wrapper """
     proc_mode, proc_mode_option = console_args()
 
-    if config_data["iteration_num"] > -1:
-        total_iters = range(config_data["iteration_num"])
-    else:
-        total_iters = iter(bool, True)
-
-    if proc_mode == "prompt_generation":
+    pipeline_config = io_utils.load_config_file("./configs/pipeline_config.yml")
+    if proc_mode == "prompt_generation" and proc_mode_option != "":
         if proc_mode_option == "groq":
-            for i, _ in enumerate(total_iters):
-                prompts = prompt_generator.groq_generator()
-                prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
-                save_prompts(config_data["prompts_output_file"], prompts, "a")
-
+            groq_config = io_utils.load_config_file("./configs/groq_config.yml")
+            llm_models = groq_config["llm_models"]
         elif proc_mode_option == "vllm":
-            prompt_generator.preload_vllm_model()
-            for i, _ in enumerate(total_iters):
-                prompts = prompt_generator.vllm_generator()
-                prompts = postprocess_prompts(prompt_checker, prompts, config_data["filter_prompts_with_words"])
-                save_prompts(config_data["prompts_output_file"], prompts, "a")
-
+            vllm_config = io_utils.load_config_file("./configs/vllm_config.yml")
+            llm_models = vllm_config["llm_models"]
         else:
-            raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
+            raise ValueError("Unsupported inference engine was specified!")
+
+        if pipeline_config["iterations_number"] > -1:
+            total_iters = range(pipeline_config["iterations_number"])
+        else:
+            total_iters = iter(bool, True)
+
+        prompt_generator = PromptGenerator(proc_mode_option)
+        prompt_generator.load_model(llm_models[0])
+        for i, _ in enumerate(total_iters):
+            prompts = prompt_generator.generate()
+            prompts_out = prompt_filters.post_process_generated_prompts(prompts)
+            prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
+            prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
+                                                                   pipeline_config["filter_prompts_with_words"])
+            prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
+            io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "a")
 
     elif proc_mode == "filter_unique_prompts":
-        prompts = load_file_with_prompts(config_data["prompts_output_file"])
-        prompts = prompt_checker.filter_unique_prompts(prompts)
-        save_prompts(config_data["prompts_output_file"], prompts, "w")
+        prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
+        prompts_out = prompt_filters.filter_unique_prompts(prompts)
+        prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
+        io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "w")
 
-    elif proc_mode == "filter_prompts":
-        prompts = load_file_with_prompts(config_data["prompts_output_file"])
-        prompts = prompt_checker.filter_prompts_with_words(prompts, config_data["filter_prompts_with_words"])
-        save_prompts(config_data["prompts_output_file"], prompts, "w")
-
-    elif proc_mode == "semantic_check":
-        if proc_mode_option == "groq":
-            prompts = load_file_with_prompts(config_data["prompts_output_file"])
-            check_prompts(prompt_checker,
-                          prompts,
-                          config_data["groq_api"]["llm_model_prompt_checker"],
-                          "groq")
-
-        elif proc_mode_option == "vllm":
-            prompts = load_file_with_prompts(config_data["prompts_output_file"])
-            prompt_checker.preload_vllm_model()
-            check_prompts(prompt_checker,
-                          prompts,
-                          config_data["vllm_api"]["llm_model_prompt_checker"],
-                          "vllm")
-
-        else:
-            raise UserWarning("No option was specified in the form: --mode prompt_generation, groq. Nothing to be done.")
+    elif proc_mode == "filter_prompts_with_words":
+        prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
+        prompts_out = prompt_filters.filter_prompts_with_words(prompts, pipeline_config["filter_prompts_with_words"])
+        prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
+        io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "w")
 
     else:
         raise ValueError("Unknown mode was specified. Check supported modes using -h option.")
+
+
+if __name__ == '__main__':
+    main()
