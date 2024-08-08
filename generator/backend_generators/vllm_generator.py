@@ -73,9 +73,9 @@ class VLLMGenerator:
 
         Parameters
         ----------
-        model_name:
+        model_name: the name of the model from the HF (hugging face)
         quantization: optional parameter that defines the quantizaton of the model:
-                             "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
+                      "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
         if self._seed < 0:
             seed = random.randint(0, int(1e+5))
@@ -113,10 +113,14 @@ class VLLMGenerator:
 
     @staticmethod
     def quantize_model_awq(model_path_hf: str, quant_model_path: str):
-        """ Function for quantizing the LLM model using AWQ library
+        """
+        Function for quantizing the LLM model using AWQ library
 
-        :param model_path_hf: path to the higging face library
-        :param quant_model_path: output path of the quantozed model
+        Parameters
+        ----------
+        model_path_hf: path to the higging face library
+        quant_model_path: output path of the quantozed model
+
         """
         quant_config = {"zero_point": True,
                         "q_group_size": 128,
