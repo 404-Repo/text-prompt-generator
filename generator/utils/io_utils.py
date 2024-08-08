@@ -20,21 +20,19 @@ def load_config_file(config_path: str):
     return config_data
 
 
-def load_file_with_prompts(file_path: str, file_name: str):
+def load_file_with_prompts(file_path: str):
     """
     Function for loading the prompts dataset for processing.
 
     Parameters
     ----------
-    file_path: path to the file's folder
-    file_name: file name with .txt extension, e.g. "dataset.txt"
+    file_path: path to the file
 
     Returns
     -------
     prompts: list with loaded prompts
     """
-    dataset_file = os.path.join(file_path, file_name)
-    with open(dataset_file, "r") as file:
+    with open(file_path, "r") as file:
         prompts = [line.rstrip() for line in file]
     return prompts
 
