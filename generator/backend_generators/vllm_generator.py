@@ -23,7 +23,6 @@ class VLLMGenerator:
         self._object_categories = config_data["obj_categories"]
         self._max_tokens = config_data["vllm_api"]["max_tokens"]
         self._seed = config_data["vllm_api"]['seed']
-        self._model_name = config_data["vllm_api"]["llm_model"]
         self._max_model_len = 1024
         self._temperature = [0.25, 0.6]
 
@@ -62,12 +61,13 @@ class VLLMGenerator:
 
         return output_prompts
 
-    def preload_vllm_model(self, quantization: Optional[str] = None):
+    def preload_model(self, model_name: str,  quantization: Optional[str] = None):
         """
         Function for preloading LLM model in GPU memory
 
         Parameters
         ----------
+        model_name:
         quantization: optional parameter that defines the quantizaton of the model:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
@@ -76,13 +76,13 @@ class VLLMGenerator:
         else:
             seed = self._seed
 
-        self._generator = LLM(model=self._model_name,
+        self._generator = LLM(model=model_name,
                               trust_remote_code=True,
                               quantization=quantization,
                               max_model_len=self._max_model_len,
                               seed=seed)
 
-    def unload_vllm_model(self):
+    def unload_model(self):
         """ Function for unloading the model """
         logger.info("Deleting model in use.")
 
