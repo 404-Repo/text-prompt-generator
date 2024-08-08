@@ -5,20 +5,25 @@ import argparse
 import requests
 import json
 from time import (time, sleep)
+from typing import Dict, List
 
 import tqdm
 from loguru import logger
 from fastapi import FastAPI
 import uvicorn
 
+import generator.utils.io_utils as io_utils
 from generator.prompt_generator import PromptGenerator
-from generator.prompt_checker import PromptChecker
-from generator.utils import (save_prompts,
-                             load_file_with_prompts,
-                             load_config_file)
+import generator.utils.prompts_filtering_utils as prompt_filters
 
 
 def get_args():
+    """
+
+    Returns
+    -------
+
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=10006)
     args, extras = parser.parse_known_args()
@@ -29,21 +34,26 @@ app = FastAPI()
 args, _ = get_args()
 
 
-def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
+def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Dict):
     """
 
-    :param config_data:
-    :param prompts_list:
-    :param headers:
-    :return:
+    Parameters
+    ----------
+    config_data
+    prompts_list
+    headers
+
+    Returns
+    -------
+
     """
     logger.info("Sending the data to the server.")
 
     prompts_to_json = json.dumps({"prompts": prompts_list})
 
-    for attempt in tqdm.trange(1, config_data["server"]["server_max_retries_number"] + 1):
+    for attempt in tqdm.trange(1, config_data["server_max_retries_number"] + 1):
         try:
-            response = requests.post(config_data["server"]["api_prompt_server_url"],
+            response = requests.post(config_data["api_prompt_server_url"],
                                      data=prompts_to_json,
                                      headers=headers)
 
@@ -56,9 +66,9 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
         except requests.RequestException as e:
             logger.warning(f"Error sending data [attempt: {attempt}]: {e}")
 
-        if attempt < config_data["server"]["server_max_retries_number"]:
-            logger.info(f'Retrying in {config_data["server"]["server_retry_delay"]}seconds.')
-            retry_delay = int(config_data["server"]["server_retry_delay"])
+        if attempt < config_data["server_max_retries_number"]:
+            logger.info(f'Retrying in {config_data["server_retry_delay"]}seconds.')
+            retry_delay = int(config_data["server_retry_delay"])
             sleep(retry_delay)
 
     logger.warning("Max retries reached. Failed to send data. Continue generating prompts.")
@@ -75,57 +85,61 @@ async def generate_prompts():
     logger.info("*" * 35)
     logger.info(f"\n")
 
-    config_data = load_config_file("./configs/launching_config.yml")
-    prompt_generator = PromptGenerator(config_data)
-    prompt_generator.preload_vllm_model()
-    prompt_checker = PromptChecker(config_data)
-
+    # loading server config
+    server_config = io_utils.load_config_file("./configs/server_config.yml")
     headers = {'Content-Type': 'application/json',
-               'X-Api-Key': f'{config_data["server"]["api_key_prompt_server"]}'}
+               'X-Api-Key': f'{server_config["api_key_prompt_server"]}'}
+
+    # loading vllm config and getting list of models
+    vllm_config = io_utils.load_config_file("./configs/vllm_config.yml")
+    llm_models = vllm_config["llm_models"]
 
     # defines whether we will have an infinite loop or not
-    if config_data["iteration_num"] > -1:
-        total_iters = range(config_data["iteration_num"])
+    pipeline_config = io_utils.load_config_file("./configs/pipeline_config.yml")
+
+    if pipeline_config["iteration_number"] > -1:
+        total_iters = range(pipeline_config["iterations_number"])
         logger.info(f"Requested amount of iterations: {total_iters}")
     else:
         total_iters = iter(bool, True)
         logger.info("Running infinite loop. Interrupt by CTRL + C.")
 
-    t1 = time()
+    # init prompt generator
+    prompt_generator = PromptGenerator("vllm")
+    prompt_generator.load_model(llm_models[0])
+
     # loop for prompt generation
     prompts_to_send = []
     for i, _ in enumerate(total_iters):
         t1_local = time()
 
         logger.info(f"Generation Iteration: {i}\n")
-        prompts = prompt_generator.vllm_generator()
+        prompts = prompt_generator.generate()
 
-        prompts_out = prompt_checker.filter_unique_prompts(prompts)
-        prompts_out = prompt_checker.filter_prompts_with_words(prompts_out, config_data["filter_prompts_with_words"])
-        prompts_out = prompt_checker.correct_prompts(prompts_out)
+        prompts_out = prompt_filters.post_process_generated_prompts(prompts)
+        prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
+        prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
+                                                               pipeline_config["filter_prompts_with_words"])
+        prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
 
         prompts_to_send += prompts_out
-        prompts_to_send = prompt_checker.filter_unique_prompts(prompts_to_send)
+        prompts_to_send = prompt_filters.filter_unique_prompts(prompts_to_send)
 
-        logger.info(f"Current prompts list size: {len(prompts_to_send)}")
+        logger.info(f"Current prompts list size: {len(prompts_to_send)} / 1000+")
 
-        save_prompts(config_data["prompts_output_file"], prompts_out)
+        io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out)
 
         t2_local = time()
         iter_duration = (t2_local-t1_local)/60.0
         logger.info(f"Current iteration took: {iter_duration} min.")
 
         if len(prompts_to_send) >= 1000:
-            result = send_data_with_retry(config_data, prompts_to_send, headers)
+            result = send_data_with_retry(server_config, prompts_to_send, headers)
             if result and i % 500 == 0:
-                prompts = load_file_with_prompts(config_data["prompts_output_file"])
-                prompts_filtered = prompt_checker.filter_unique_prompts(prompts)
-                save_prompts(config_data["prompts_output_file"], prompts_filtered, "w")
+                prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
+                prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
+                io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
                 prompts_to_send.clear()
-
-    t2 = time()
-    total_duration = (t2-t1)/60.0
-    logger.info(f"Total time: {total_duration} min.")
 
 
 if __name__ == "__main__":
