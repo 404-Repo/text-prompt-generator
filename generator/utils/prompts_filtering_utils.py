@@ -4,7 +4,7 @@ from typing import List
 from loguru import logger
 
 
-def filter_unique_prompts(prompts: list):
+def filter_unique_prompts(prompts: List[str]):
     """
     Function for filtering all duplicates from the input prompt list
 
@@ -97,7 +97,7 @@ def correct_non_finished_prompts(prompts: List[str]):
     return filtered_prompts
 
 
-def post_process_generated_prompts(prompts_list: list):
+def post_process_generated_prompts(prompts_list: List[str]):
     """
     Function for post-processing of the generated prompts. The LLM output is filtered from punctuation symbols
     and all non-alphabetic characters.
