@@ -19,7 +19,7 @@ class GroqGenerator:
         self._object_categories = config_data["obj_categories"]
         self._max_tokens = config_data["groq_api"]["max_tokens"]
         self._seed = config_data["groq_api"]['seed']
-        self._model_name = config_data["groq_api"]["llm_model"]
+        self._model_name = ""
         self._temperature = [0.25, 0.6]
 
         self._generator = groq.Groq(api_key=config_data["groq_api"]["api_key"])
@@ -75,3 +75,6 @@ class GroqGenerator:
         logger.info(f"\n")
 
         return output_prompts
+
+    def preload_model(self, model_name: str):
+        self._model_name = model_name
