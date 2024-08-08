@@ -1,0 +1,12 @@
+# the vllm model that will be used for the prompt generation
+# awq - quantization level of the model supported by the vllm
+llm_model: "meta-llama/Meta-Llama-3.1-8B-Instruct"
+
+# the llm model that will be used for checking the quality of the prompts
+llm_model_prompt_checker: "TechxGenus/gemma-1.1-7b-it-AWQ"
+
+# max tokens for prompt generation
+max_tokens: 160
+
+# random seed
+seed: 0
