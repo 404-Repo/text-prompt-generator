@@ -5,10 +5,10 @@ import argparse
 from typing import List
 
 from generator.prompt_generator import PromptGenerator
-from generator.utils import (load_config_file,
-                             load_file_with_prompts,
-                             save_prompts)
-from generator.prompt_checker import PromptChecker
+from generator.utils.io_utils import (load_config_file,
+                                      load_file_with_prompts,
+                                      save_prompts)
+from generator.prompt_checker_old import PromptChecker
 
 
 def postprocess_prompts(prompt_checker: PromptChecker, prompts: List[str], words_to_filter: List[str]):
@@ -89,7 +89,7 @@ def console_args():
 
 
 if __name__ == '__main__':
-    config_data = load_config_file("./configs/launching_config.yml")
+    config_data = load_config_file("configs/pipeline_config.yml")
     prompt_generator = PromptGenerator(config_data)
     prompt_checker = PromptChecker(config_data)
 
