@@ -13,3 +13,4 @@ vllm==0.5.*
 autoawq==0.2.*
 bitsandbytes==0.43.*
 tensorizer==2.9.*
+nvitop
