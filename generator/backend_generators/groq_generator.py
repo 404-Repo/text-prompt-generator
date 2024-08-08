@@ -20,7 +20,7 @@ class GroqGenerator:
         self._max_tokens = config_data["max_tokens"]
         self._seed = config_data['seed']
         self._model_name = ""
-        self._temperature = [0.25, 0.6]
+        self._temperature = config_data["temperature"]
 
         self._generator = groq.Groq(api_key=config_data["api_key"])
 
