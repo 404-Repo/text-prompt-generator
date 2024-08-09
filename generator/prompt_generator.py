@@ -47,7 +47,7 @@ class PromptGenerator:
 
         self._instruction_prompt = self._get_instruction_prompt()
 
-    def load_model(self, model_name: str, quantization: Optional[str] = ""):
+    def load_model(self, model_name: str):
         """
 
         Parameters
@@ -57,12 +57,7 @@ class PromptGenerator:
                              "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
 
         """
-        if self._generator_type == "vllm":
-            self._generator.preload_model(model_name, quantization)
-        elif self._generator_type == "groq":
-            self._generator.preload_model(model_name)
-        else:
-            logger.warning(f"Unknown generator type was specified: {self._generator_type}")
+        self._generator.preload_model(model_name)
 
     def unload_model(self):
         """Function for unloading model"""
