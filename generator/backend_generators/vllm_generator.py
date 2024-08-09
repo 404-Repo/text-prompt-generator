@@ -83,7 +83,8 @@ class VLLMGenerator:
 
         self._generator = LLM(model=model_name,
                               trust_remote_code=True,
-                              max_model_len=self._max_model_len)
+                              max_model_len=self._max_model_len,
+                              seed=random.randint(0, int(1e+5)))
 
     def unload_model(self):
         """ Function for unloading the model """
