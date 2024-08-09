@@ -81,6 +81,7 @@ def main():
         prompt_generator = PromptGenerator(proc_mode_option)
         prompt_generator.load_model(llm_models[0])
 
+        prompts_dataset = []
         for i, _ in enumerate(total_iters):
             prompts = prompt_generator.generate()
             prompts_out = prompt_filters.post_process_generated_prompts(prompts)
@@ -88,12 +89,19 @@ def main():
             prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
                                                                    pipeline_config["filter_prompts_with_words"])
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
+            prompts_dataset += prompts_out
+
             if (len(prompts_out) % 30 == 0) or (i >= pipeline_config["iterations_number"]-1):
-                io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "a")
+                io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
+                prompts_dataset.clear()
                 if len(llm_models) > 1:
                     model_id = np.random.randint(0, len(llm_models))
                     prompt_generator.unload_model()
                     prompt_generator.load_model(llm_models[model_id])
+
+        prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
+        prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
+        io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
 
     elif proc_mode == "filter_unique_prompts":
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
