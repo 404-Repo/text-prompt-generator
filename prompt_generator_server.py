@@ -1,13 +1,17 @@
 import os
+import gc
 os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
 
 import argparse
 import requests
 import json
+import numpy as np
 from time import (time, sleep)
 from typing import Dict, List
+from contextlib import asynccontextmanager
 
 import tqdm
+import torch
 from loguru import logger
 from fastapi import FastAPI
 import uvicorn
@@ -19,10 +23,11 @@ import generator.utils.prompts_filtering_utils as prompt_filters
 
 def get_args():
     """
-
+    Function for setting up server port arg
     Returns
     -------
-
+    args: list with input (port number)
+    wxtras: other extra arguments
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=10006)
@@ -34,18 +39,46 @@ app = FastAPI()
 args, _ = get_args()
 
 
-def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Dict):
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
+    Function for preloading LLM models before they will be used by pipeline
 
     Parameters
     ----------
-    config_data
-    prompts_list
-    headers
+    app: FastAPI server app
+    """
+    # Startup logic
+    vllm_config = io_utils.load_config_file("./configs/vllm_config.yml")
+    llm_models = vllm_config["llm_models"]
+    app.state.generator = PromptGenerator("vllm")
+
+    for i in tqdm.trange(len(llm_models)):
+        app.state.generator.load_model(llm_models[i])
+
+    yield
+
+    gc.collect()
+    torch.cuda.empty_cache()
+
+
+app.router.lifespan_context = lifespan
+
+
+def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Dict):
+    """
+    Function for sending generated prompts to the remote server
+
+    Parameters
+    ----------
+    config_data: dictionary with configuration for the remote server
+    prompts_list: list of strings with prompts
+    headers: a dictionary with data that is essential for posting data to the remote server
 
     Returns
     -------
-
+    true if data was sent successfully;
+    false otherwise
     """
     logger.info("Sending the data to the server.")
 
@@ -140,6 +173,11 @@ async def generate_prompts():
                 prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
                 prompts_to_send.clear()
+
+                if len(llm_models) > 1:
+                    model_id = np.random.randint(0, len(llm_models))
+                    prompt_generator.unload_model()
+                    prompt_generator.load_model(llm_models[model_id])
 
 
 if __name__ == "__main__":
