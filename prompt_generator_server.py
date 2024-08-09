@@ -1,10 +1,9 @@
 import os
 import gc
-os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
-
 import argparse
 import requests
 import json
+
 import numpy as np
 from time import (time, sleep)
 from typing import Dict, List

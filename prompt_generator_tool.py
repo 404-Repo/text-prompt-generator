@@ -1,5 +1,4 @@
 import os
-os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
 import argparse
 
 import numpy as np

@@ -20,7 +20,6 @@ conda info --env
 
 CUDA_HOME=${CONDA_PREFIX}
 pip install flash-attn --no-build-isolation
-pip install flashinfer -i https://flashinfer.ai/whl/cu121/torch2.4
 
 # Store the path of the Conda interpreter
 CONDA_INTERPRETER_PATH=$(which python)
