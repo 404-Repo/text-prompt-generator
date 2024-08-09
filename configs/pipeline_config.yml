@@ -7,24 +7,23 @@ hugging_face_api_key: ""
 # prompts_num will be replaced with prompts_num from this config;
 # member_placeholder will be replaced with one of the strings stored in obj_categories list.
 
-#instruction_prompt: "Generate a prompt dataset for generating 3D models.
-#                     Each prompt should define a single 3D object that can be generated as a 3D mesh.
-#                     The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.
-#                     Each object should be different and must be strictly picked from the [category_name] category.
-#                     When objects from the architecture categories are picked up, avoid description of interiors.
-#                     Avoid descriptions of bodies of water, e.g lakes, seas, oceans, rivers and similar.
-#                     Each prompt must be unique, on the new line, up to seven words, finished with a noun.
-#                     Ensure that last word of each prompt is a noun.
-#                     Generate a numbered list of [prompts_number] prompts.
-#                    "
+instruction_prompt: "Generate a prompt dataset for generating 3D models.
+                     Each prompt should define a single 3D object that can be generated as a 3D mesh.
+                     The prompt should contain one or two distinctive features such as color, shape, or pose of the generating object.
+                     Each object should be different and must be strictly picked from the [category_name] category.
+                     When objects from the architecture categories are picked up, avoid description of interiors.
+                     Avoid descriptions of bodies of water, e.g lakes, seas, oceans, rivers and similar.
+                     Each prompt must be unique, on the new line, up to seven words, finished with a noun.
+                     Ensure that last word of each prompt is a noun.
+                     Generate a numbered list of [prompts_number] prompts."
 
-instruction_prompt: "Task: Create a dataset of prompts for generating 3D objects.
-                     Distinctive Features: Include one or two unique features, such as color, shape, or pose.
-                     Category Specificity: Ensure all objects are exclusively from the [category_name] category.
-                     Architecture: If selecting architecture objects, avoid describing interiors.
-                     Exclusions: Do not describe bodies of water (e.g., lakes, seas, rivers) or open vast areas (e.g. fields, forests, planes).
-                     Prompt Format: each prompt must be unique, limited to seven words or fewer.
-                     Output: Generate a numbered list with [prompts_number] prompts."
+#instruction_prompt: "Task: Create a dataset of prompts for generating 3D objects.
+#                     Distinctive Features: Include one or two unique features, such as color, shape, or pose.
+#                     Category Specificity: Ensure all objects are exclusively from the [category_name] category.
+#                     Architecture: If selecting architecture objects, avoid describing interiors.
+#                     Exclusions: Do not describe bodies of water (e.g., lakes, seas, rivers) or open vast areas (e.g. fields, forests, planes).
+#                     Prompt Format: each prompt must be unique, limited to seven words or fewer.
+#                     Output: Generate a numbered list with [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
 obj_categories: ["characters",
