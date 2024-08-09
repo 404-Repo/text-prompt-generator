@@ -55,6 +55,7 @@ async def lifespan(app: FastAPI):
 
     for i in tqdm.trange(len(llm_models)):
         app.state.generator.load_model(llm_models[i])
+        app.state.generator.unload_model()
 
     yield
 
