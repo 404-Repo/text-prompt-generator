@@ -88,7 +88,7 @@ def main():
             prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
                                                                    pipeline_config["filter_prompts_with_words"])
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
-            if len(prompts_out) > 2000:
+            if (len(prompts_out) % 30 == 0) or (i >= pipeline_config["iterations_number"]-1):
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "a")
                 if len(llm_models) > 1:
                     model_id = np.random.randint(0, len(llm_models))
