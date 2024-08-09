@@ -4,7 +4,7 @@ from typing import Optional
 from loguru import logger
 from huggingface_hub import login
 
-import utils.io_utils as io_utils
+import generator.utils.io_utils as io_utils
 from generator.backend_generators.groq_generator import GroqGenerator
 from generator.backend_generators.vllm_generator import VLLMGenerator
 
