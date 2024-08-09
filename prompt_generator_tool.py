@@ -4,6 +4,7 @@ import argparse
 
 import numpy as np
 import tqdm
+from loguru import logger
 
 import generator.utils.prompts_filtering_utils as prompt_filters
 import generator.utils.io_utils as io_utils
@@ -92,6 +93,7 @@ def main():
             prompts_dataset += prompts_out
 
             if (len(prompts_out) % 30 == 0) or (i >= pipeline_config["iterations_number"]-1):
+                logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
                 if len(llm_models) > 1:
