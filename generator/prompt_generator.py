@@ -1,6 +1,5 @@
 import re
 import os
-from typing import Optional
 
 from loguru import logger
 from huggingface_hub import login
