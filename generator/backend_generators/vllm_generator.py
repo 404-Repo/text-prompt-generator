@@ -3,7 +3,7 @@ import copy
 import random
 import contextlib
 from time import time
-from typing import Optional, List
+from typing import List
 
 import torch
 import tqdm
@@ -72,20 +72,17 @@ class VLLMGenerator:
 
         return output_prompts
 
-    def preload_model(self, model_name: str,  quantization: Optional[str] = None):
+    def preload_model(self, model_name: str):
         """
         Function for preloading LLM model in GPU memory
 
         Parameters
         ----------
         model_name: the name of the model from the HF (hugging face)
-        quantization: optional parameter that defines the quantizaton of the model:
-                      "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
 
         self._generator = LLM(model=model_name,
                               trust_remote_code=True,
-                              quantization=quantization,
                               max_model_len=self._max_model_len)
 
     def unload_model(self):
