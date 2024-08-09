@@ -12,4 +12,4 @@ max_model_len: 1024
 temperature: [0.25, 0.5]
 
 # random seed
-seed: 0
+seed: -1
