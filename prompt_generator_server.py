@@ -49,7 +49,9 @@ async def lifespan(app: FastAPI):
     app: FastAPI server app
     """
     # Startup logic
-    vllm_config = io_utils.load_config_file("./configs/vllm_config.yml")
+    current_dir = os.getcwd()
+    vllm_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                         "configs/vllm_config.yml"))
     llm_models = vllm_config["llm_models"]
     app.state.generator = PromptGenerator("vllm")
 
@@ -84,7 +86,6 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
     logger.info("Sending the data to the server.")
 
     prompts_to_json = json.dumps({"prompts": prompts_list})
-
     for attempt in tqdm.trange(1, config_data["server_max_retries_number"] + 1):
         try:
             response = requests.post(config_data["api_prompt_server_url"],
@@ -120,16 +121,21 @@ async def generate_prompts():
     logger.info(f"\n")
 
     # loading server config
-    server_config = io_utils.load_config_file("./configs/server_config.yml")
+    current_dir = os.getcwd()
+
+    server_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                           "configs/server_config.yml"))
     headers = {'Content-Type': 'application/json',
                'X-Api-Key': f'{server_config["api_key_prompt_server"]}'}
 
     # loading vllm config and getting list of models
-    vllm_config = io_utils.load_config_file("./configs/vllm_config.yml")
+    vllm_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                         "configs/vllm_config.yml"))
     llm_models = vllm_config["llm_models"]
 
     # defines whether we will have an infinite loop or not
-    pipeline_config = io_utils.load_config_file("./configs/pipeline_config.yml")
+    pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                             "configs/pipeline_config.yml"))
 
     if pipeline_config["iteration_number"] > -1:
         total_iters = range(pipeline_config["iterations_number"])

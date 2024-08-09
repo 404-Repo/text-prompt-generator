@@ -1,4 +1,5 @@
 import re
+import os
 from typing import Optional
 
 from loguru import logger
@@ -19,8 +20,10 @@ class PromptGenerator:
         """
         self._generator_type = generator_type
 
+        current_dir = os.getcwd()
         if self._generator_type == "groq":
-            self._generator_config = io_utils.load_config_file("../configs/groq_config.yml")
+            self._generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                                            "configs/groq_config.yml"))
 
             if self._generator_config["api_key"] != "":
                 self._generator = GroqGenerator(self._generator_config)
@@ -28,13 +31,15 @@ class PromptGenerator:
                 logger.error("Groq API key was not specified.")
 
         elif self._generator_type == "vllm":
-            self._generator_config = io_utils.load_config_file("../configs/vllm_config.yml")
+            self._generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                                            "configs/vllm_config.yml"))
             self._generator = VLLMGenerator(self._generator_config)
 
         else:
             raise ValueError("Unknown generator_type was specified.")
 
-        self._pipeline_config = io_utils.load_config_file("../configs/pipeline_config.yml")
+        self._pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                                       "configs/pipeline_config.yml"))
         if self._pipeline_config["hugging_face_api_key"] != "":
             login(token=self._pipeline_config["hugging_face_api_key"])
         else:
