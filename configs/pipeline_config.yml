@@ -27,7 +27,7 @@ instruction_prompt: "Task: Create a dataset of prompts for generating 3D objects
                      Output: Generate a numbered list with [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["Characters",
+obj_categories: ["characters",
                  "animals",
                  "monsters",
                  "robots",
@@ -42,7 +42,7 @@ obj_categories: ["Characters",
                  "sports equipment",
                  "clothing",
                  "furniture",
-                 "jewelry"
+                 "jewelry",
                  "tools",
                  "Musical Instruments"]
 
