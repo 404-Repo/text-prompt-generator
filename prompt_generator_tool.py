@@ -2,6 +2,9 @@ import os
 os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
 import argparse
 
+import numpy as np
+import tqdm
+
 import generator.utils.prompts_filtering_utils as prompt_filters
 import generator.utils.io_utils as io_utils
 
@@ -18,8 +21,10 @@ def console_args():
     proc_mode_option: processing option (only for prompt_generation: vllm or groq, otherwise "")
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", required=False, help="options: 'prompt_generation, groq', "
-                                                       "'prompt_generation, vllm',"
+    parser.add_argument("--mode", required=False, help="options: "
+                                                       "'preload_llms, vllm', "
+                                                       "'prompt_generation, groq', "
+                                                       "'prompt_generation, vllm', "
                                                        "'filter_unique_prompts', "
                                                        "'filter_prompts_with_words'")
     args = parser.parse_args()
@@ -44,7 +49,16 @@ def main():
     proc_mode, proc_mode_option = console_args()
 
     pipeline_config = io_utils.load_config_file("./configs/pipeline_config.yml")
-    if proc_mode == "prompt_generation" and proc_mode_option != "":
+    if proc_mode == "preload_llms" and proc_mode_option == "vllm":
+        vllm_config = io_utils.load_config_file("./configs/vllm_config.yml")
+        llm_models = vllm_config["llm_models"]
+        prompt_generator = PromptGenerator(proc_mode_option)
+
+        for i in tqdm.trange(len(llm_models)):
+            prompt_generator.load_model(llm_models[i])
+            prompt_generator.unload_model()
+
+    elif proc_mode == "prompt_generation" and proc_mode_option != "":
         if proc_mode_option == "groq":
             groq_config = io_utils.load_config_file("./configs/groq_config.yml")
             llm_models = groq_config["llm_models"]
@@ -61,6 +75,7 @@ def main():
 
         prompt_generator = PromptGenerator(proc_mode_option)
         prompt_generator.load_model(llm_models[0])
+
         for i, _ in enumerate(total_iters):
             prompts = prompt_generator.generate()
             prompts_out = prompt_filters.post_process_generated_prompts(prompts)
@@ -68,7 +83,12 @@ def main():
             prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
                                                                    pipeline_config["filter_prompts_with_words"])
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
-            io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "a")
+            if len(prompts_out) > 2000:
+                io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "a")
+                if len(llm_models) > 1:
+                    model_id = np.random.randint(0, len(llm_models))
+                    prompt_generator.unload_model()
+                    prompt_generator.load_model(llm_models[model_id])
 
     elif proc_mode == "filter_unique_prompts":
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
