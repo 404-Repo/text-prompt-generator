@@ -26,24 +26,9 @@ instruction_prompt: "Generate a prompt dataset for generating 3D models.
 #                     Output: Generate a numbered list with [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["characters",
-                 "animals",
-                 "monsters",
-                 "robots",
-                 "architecture",
-                 "nature",
-                 "vehicles",
-                 "weapons and equipments",
-                 "food and drinks",
-                 "gadgets and electronics",
-                 "decorative elements",
-                 "household items",
-                 "sports equipment",
-                 "clothing",
-                 "furniture",
-                 "jewelry",
-                 "tools",
-                 "Musical Instruments"]
+obj_categories: ["characters", "animals", "monsters", "robots", "architecture", "nature", "vehicles", "weapons and equipments",
+                 "food and drinks", "gadgets and electronics", "decorative elements", "household items", "sports equipment",
+                 "clothing", "furniture", "jewelry", "tools", "musical instruments"]
 
 # Words that prompts should npt contain. Prompts with these words will be removed from the dataset and filtering stage.
 filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
