@@ -13,27 +13,26 @@ from generator.backend_generators.vllm_generator import VLLMGenerator
 class PromptGenerator:
     def __init__(self, generator_type: str):
         """
-
         Parameters
         ----------
-        generator_type:
+        generator_type: one of the supported inference engines: VLLM or Groq
         """
         self._generator_type = generator_type
 
         current_dir = os.getcwd()
         if self._generator_type == "groq":
-            self._generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                            "configs/groq_config.yml"))
+            generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                                      "configs/groq_config.yml"))
 
-            if self._generator_config["api_key"] != "":
-                self._generator = GroqGenerator(self._generator_config)
+            if generator_config["api_key"] != "":
+                self._generator = GroqGenerator(generator_config)
             else:
                 logger.error("Groq API key was not specified.")
 
         elif self._generator_type == "vllm":
-            self._generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                            "configs/vllm_config.yml"))
-            self._generator = VLLMGenerator(self._generator_config)
+            generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                                      "configs/vllm_config.yml"))
+            self._generator = VLLMGenerator(generator_config)
 
         else:
             raise ValueError("Unknown generator_type was specified.")
@@ -53,9 +52,6 @@ class PromptGenerator:
         Parameters
         ----------
         model_name: a string with model name from HF (hugging face)
-        quantization: optional parameter that defines the quantizaton of the model:
-                             "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
-
         """
         self._generator.preload_model(model_name)
 
