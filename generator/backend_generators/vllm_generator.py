@@ -51,8 +51,6 @@ class VLLMGenerator:
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("[category_name]", category)
 
-            print(prompt_in)
-
             if self._seed < 0:
                 seed = random.randint(0, int(1e+5))
             else:
