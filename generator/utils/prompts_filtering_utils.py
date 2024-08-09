@@ -92,7 +92,7 @@ def correct_non_finished_prompts(prompts: List[str]):
         'beneath', 'beside', 'beyond', 'near', 'off', 'onto', 'towards', 'underneath'
     ]
     pattern = re.compile(r'\b(' + '|'.join(prepositions) + r')\b\s*$', re.IGNORECASE)
-    filtered_prompts = [re.sub(pattern, '', prompt).strip() for prompt in prompts]
+    filtered_prompts = [re.sub(pattern, '', prompt).strip() + "\n" for prompt in prompts]
     return filtered_prompts
 
 
