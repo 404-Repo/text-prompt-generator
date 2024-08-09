@@ -53,7 +53,12 @@ class VLLMGenerator:
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("[category_name]", category)
 
-            sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._max_tokens)
+            if self._seed < 0:
+                seed = random.randint(0, int(1e+5))
+            else:
+                seed = self._seed
+
+            sampling_params = SamplingParams(n=1, seed=seed, temperature=temperature, max_tokens=self._max_tokens)
             outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "[category_name]")
@@ -77,16 +82,11 @@ class VLLMGenerator:
         quantization: optional parameter that defines the quantizaton of the model:
                       "awq", "gptq", "squeezellm", and "fp8" (experimental); Default value None.
         """
-        if self._seed < 0:
-            seed = random.randint(0, int(1e+5))
-        else:
-            seed = self._seed
 
         self._generator = LLM(model=model_name,
                               trust_remote_code=True,
                               quantization=quantization,
-                              max_model_len=self._max_model_len,
-                              seed=seed)
+                              max_model_len=self._max_model_len)
 
     def unload_model(self):
         """ Function for unloading the model """
