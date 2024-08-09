@@ -7,8 +7,6 @@ from typing import List
 
 import torch
 import tqdm
-from awq import AutoAWQForCausalLM
-from transformers import AutoTokenizer
 from vllm import LLM, SamplingParams
 from vllm.distributed.parallel_state import destroy_model_parallel
 from loguru import logger
@@ -52,6 +50,8 @@ class VLLMGenerator:
 
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("[category_name]", category)
+
+            print(prompt_in)
 
             if self._seed < 0:
                 seed = random.randint(0, int(1e+5))
@@ -108,30 +108,3 @@ class VLLMGenerator:
         _, gpu_memory_total = torch.cuda.mem_get_info()
         gpu_available_memory_after = gpu_memory_total - torch.cuda.memory_allocated()
         logger.info(f"GPU available memory [after]: {gpu_available_memory_after / 1024 ** 3} Gb\n")
-
-    @staticmethod
-    def quantize_model_awq(model_path_hf: str, quant_model_path: str):
-        """
-        Function for quantizing the LLM model using AWQ library
-
-        Parameters
-        ----------
-        model_path_hf: path to the higging face library
-        quant_model_path: output path of the quantozed model
-
-        """
-        quant_config = {"zero_point": True,
-                        "q_group_size": 128,
-                        "w_bit": 4,
-                        "version": "GEMM"}
-
-        # Load model
-        model = AutoAWQForCausalLM.from_pretrained(model_path_hf)
-        tokenizer = AutoTokenizer.from_pretrained(model_path_hf, trust_remote_code=True)
-
-        # Quantize
-        model.quantize(tokenizer, quant_config=quant_config)
-
-        # Save quantized model
-        model.save_quantized(quant_model_path)
-        tokenizer.save_pretrained(quant_model_path)
