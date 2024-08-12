@@ -1,0 +1,32 @@
+groq_api:
+  # put here token generated at https://console.groq.com/keys
+  api_key: ""
+
+  # one of the models supported by groq platform: llama3-70b-8192, mixtral-8x7b-32768, gemma-7b-it
+  llm_models: ["llama3-8b-8192"]
+
+  # max tokens for prompt generation
+  max_tokens: 160
+
+  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
+  temperature: [0.25, 0.5]
+
+  # random seed
+  seed: -1
+
+vllm_api:
+  # the vllm model that will be used for the prompt generation
+  # awq - quantization level of the model supported by the vllm
+  llm_models: [ "hugging-quants/Meta-Llama-3.1-8B-Instruct-AWQ-INT4" ]
+
+  # max tokens for prompt generation
+  max_tokens: 160
+
+  # defines the maximum length of the model output
+  max_model_len: 1024
+
+  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
+  temperature: [ 0.25, 0.5 ]
+
+  # random seed
+  seed: -1
