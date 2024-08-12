@@ -19,10 +19,10 @@ class VLLMGenerator:
         ----------
         config_data: dictionary with generator configuration
         """
-        self._max_tokens = config_data["max_tokens"]
-        self._seed = config_data['seed']
-        self._max_model_len = config_data["max_model_len"]
-        self._temperature = config_data["temperature"]
+        self._max_tokens = config_data["vllm_api"]["max_tokens"]
+        self._seed = config_data["vllm_api"]['seed']
+        self._max_model_len = config_data["vllm_api"]["max_model_len"]
+        self._temperature = config_data["vllm_api"]["temperature"]
 
         self._generator = None
 
