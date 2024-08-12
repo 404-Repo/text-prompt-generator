@@ -85,11 +85,11 @@ def main():
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
             prompts_dataset += prompts_out
 
-            if (len(prompts_dataset) > 100 == 0) or (i >= pipeline_config["iterations_number"]-1):
+            if (len(prompts_dataset) > 100) or (i >= pipeline_config["iterations_number"]-1):
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
-                if len(llm_models) > 1:
+                if len(llm_models) > 1 and i < pipeline_config["iterations_number"]-1:
                     model_id = np.random.randint(0, len(llm_models))
                     prompt_generator.unload_model()
                     prompt_generator.load_model(llm_models[model_id])
