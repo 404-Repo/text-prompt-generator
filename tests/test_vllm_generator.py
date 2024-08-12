@@ -5,12 +5,12 @@ from generator.backend_generators.vllm_generator import VLLMGenerator
 from generator.utils.io_utils import load_config_file
 
 current_dir = os.getcwd()
-vllm_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/vllm_config.yml"))
-generator = VLLMGenerator(vllm_config)
+generator_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/generator_config.yml"))
+generator = VLLMGenerator(generator_config)
 
 
 def test_load_model():
-    generator.preload_model(vllm_config["llm_models"][0])
+    generator.preload_model(generator_config["vllm"]["llm_models"][0])
     pipeline_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/pipeline_config.yml"))
     instruction_prompt = pipeline_config["instruction_prompt"]
     instruction_prompt = instruction_prompt.replace("[prompts_number]", str(1))

@@ -51,10 +51,10 @@ def main():
 
     pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                              "configs/pipeline_config.yml"))
+    generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                              "configs/generator_config.yml"))
     if proc_mode == "preload_llms" and proc_mode_option == "vllm":
-        vllm_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                             "configs/vllm_config.yml"))
-        llm_models = vllm_config["llm_models"]
+        llm_models = generator_config["vllm_api"]["llm_models"]
         prompt_generator = PromptGenerator(proc_mode_option)
 
         for i in tqdm.trange(len(llm_models)):
@@ -63,13 +63,9 @@ def main():
 
     elif proc_mode == "prompt_generation" and proc_mode_option != "":
         if proc_mode_option == "groq":
-            groq_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                 "configs/groq_config.yml"))
-            llm_models = groq_config["llm_models"]
+            llm_models = generator_config["groq_api"]["llm_models"]
         elif proc_mode_option == "vllm":
-            vllm_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                 "configs/vllm_config.yml"))
-            llm_models = vllm_config["llm_models"]
+            llm_models = generator_config["vllm_api"]["llm_models"]
         else:
             raise ValueError("Unsupported inference engine was specified!")
 

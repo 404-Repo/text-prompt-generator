@@ -19,7 +19,7 @@ class PromptGenerator:
         current_dir = os.getcwd()
         self._generator_type = generator_type
         generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                  "configs/infer_config.yml"))
+                                                                  "configs/generator_config.yml"))
 
         if self._generator_type == "groq":
             if generator_config["groq_api"]["api_key"] != "":

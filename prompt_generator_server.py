@@ -47,21 +47,24 @@ async def lifespan(app: FastAPI):
     ----------
     app: FastAPI server app
     """
+    logger.info("Pre-downloading all models.")
     # Startup logic
     current_dir = os.getcwd()
-    vllm_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                         "configs/vllm_config.yml"))
-    llm_models = vllm_config["llm_models"]
+    generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                              "configs/generator_config.yml"))
+    llm_models = generator_config["vllm_api"]["llm_models"]
     app.state.generator = PromptGenerator("vllm")
 
-    for i in tqdm.trange(len(llm_models)):
-        app.state.generator.load_model(llm_models[i])
-        app.state.generator.unload_model()
+    if len(llm_models) > 0:
+        for i in tqdm.trange(len(llm_models)):
+            app.state.generator.load_model(llm_models[i])
+            app.state.generator.unload_model()
 
     yield
 
     gc.collect()
     torch.cuda.empty_cache()
+    logger.info("Done.")
 
 
 app.router.lifespan_context = lifespan
@@ -110,8 +113,15 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
 
 
 @app.post("/generate_prompts/")
-async def generate_prompts():
-    """ Server function for running the prompt generation """
+async def generate_prompts(inference_api: str):
+    """
+    Server function for running the prompt generation
+    Parameters
+    ----------
+    inference_api: string with the name of the inference api that is supported by the generator:
+                   currently: groq, vllm
+
+    """
 
     logger.info(f"\n")
     logger.info("*" * 35)
@@ -128,9 +138,15 @@ async def generate_prompts():
                'X-Api-Key': f'{server_config["api_key_prompt_server"]}'}
 
     # loading vllm config and getting list of models
-    vllm_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                         "configs/vllm_config.yml"))
-    llm_models = vllm_config["llm_models"]
+    generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                              "configs/generator_config.yml"))
+
+    if inference_api == "vllm":
+        llm_models = generator_config["vllm_api"]["llm_models"]
+    elif inference_api == "groq":
+        llm_models = generator_config["groq_api"]["llm_models"]
+    else:
+        raise ValueError(f"Unsupported inference engine was specified: {inference_api}.")
 
     # defines whether we will have an infinite loop or not
     pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
@@ -144,7 +160,7 @@ async def generate_prompts():
         logger.info("Running infinite loop. Interrupt by CTRL + C.")
 
     # init prompt generator
-    prompt_generator = PromptGenerator("vllm")
+    prompt_generator = PromptGenerator(inference_api)
     prompt_generator.load_model(llm_models[0])
 
     # loop for prompt generation
