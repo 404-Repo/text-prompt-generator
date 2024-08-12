@@ -98,8 +98,6 @@ class VLLMGenerator:
 
         gc.collect()
         torch.cuda.empty_cache()
-        with contextlib.suppress(AssertionError):
-            torch.distributed.destroy_process_group()
 
         self._generator = None
 
