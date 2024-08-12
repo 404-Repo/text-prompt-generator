@@ -1,5 +1,7 @@
 import os
 
+from loguru import logger
+
 from generator.backend_generators.groq_generator import GroqGenerator
 from generator.utils.io_utils import load_config_file
 
@@ -14,5 +16,7 @@ def test_load_model():
         instruction_prompt = pipeline_config["instruction_prompt"]
         instruction_prompt = instruction_prompt.replace("[prompts_number]", str(1))
         prompts = generator.generate(instruction_prompt, ["toys"])
+
+        logger.info(f"Generated prompts: {prompts}")
 
         assert len(prompts) > 0
