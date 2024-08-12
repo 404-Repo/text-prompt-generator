@@ -2,7 +2,7 @@ import sys
 import copy
 import random
 from time import time
-from typing import List
+from typing import List, Dict
 
 import tqdm
 import groq
@@ -10,17 +10,16 @@ from loguru import logger
 
 
 class GroqGenerator:
-    def __init__(self, config_data: dict):
+    def __init__(self, config_data: Dict):
         """
         Parameters
         ----------
         config_data: dictionary with generator configuration
         """
-        self._instruction_prompt = config_data["groq_api"]["prompt"]
         self._max_tokens = config_data["groq_api"]["max_tokens"]
         self._seed = config_data["groq_api"]['seed']
-        self._model_name = ""
         self._temperature = config_data["groq_api"]["temperature"]
+        self._model_name = ""
 
         self._generator = groq.Groq(api_key=config_data["groq_api"]["api_key"])
 
