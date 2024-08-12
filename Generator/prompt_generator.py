@@ -105,12 +105,20 @@ class PromptGenerator:
 
         output_list = []
         for category, _ in zip(self._object_categories, tqdm.trange(len(self._object_categories))):
-            temperature = random.uniform(0.25, 0.6)
+            temperature = random.uniform(0.25, 0.5)
 
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("member_placeholder", category)
 
-            sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["vllm_api"]["max_tokens"])
+            if self._config_data["vllm_api"]['seed'] < 0:
+                seed = random.randint(0, sys.maxsize)
+            else:
+                seed = self._config_data["vllm_api"]['seed']
+
+            sampling_params = SamplingParams(n=1,
+                                             temperature=temperature,
+                                             max_tokens=self._config_data["vllm_api"]["max_tokens"],
+                                             seed=seed)
             outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "member_placeholder")
