@@ -1,8 +1,8 @@
 numpy==1.26.*
 torch==2.3.*
-torchvision==0.18.*
+torchvision>=0.18.*
 huggingface_hub==0.*
-transformers==4.43.*
+transformers==4.44.*
 protobuf==5.*
 tqdm==4.*
 pytest==8.*

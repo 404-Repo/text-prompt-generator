@@ -42,7 +42,7 @@ vllm_api:
     max_tokens: 160
 
     # random seed
-    seed: 0
+    seed: -1
 
 transformers_llm_model_prompt_checker: "google/gemma-1.1-7b-it"
 

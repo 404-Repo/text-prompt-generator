@@ -110,7 +110,15 @@ class PromptGenerator:
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("member_placeholder", category)
 
-            sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._config_data["vllm_api"]["max_tokens"])
+            if self._config_data["vllm_api"]['seed'] < 0:
+                seed = random.randint(0, sys.maxsize)
+            else:
+                seed = self._config_data["vllm_api"]['seed']
+
+            sampling_params = SamplingParams(n=1,
+                                             temperature=temperature,
+                                             max_tokens=self._config_data["vllm_api"]["max_tokens"],
+                                             seed=seed)
             outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "member_placeholder")
