@@ -117,11 +117,11 @@ async def generate_prompts():
 
         if len(prompts_to_send) >= 1000:
             result = send_data_with_retry(config_data, prompts_to_send, headers)
+            prompts_to_send.clear()
             if result and i % 500 == 0:
                 prompts = load_file_with_prompts(config_data["prompts_output_file"])
                 prompts_filtered = prompt_checker.filter_unique_prompts(prompts)
                 save_prompts(config_data["prompts_output_file"], prompts_filtered, "w")
-                prompts_to_send.clear()
 
     t2 = time()
     total_duration = (t2-t1)/60.0
