@@ -1,5 +1,5 @@
-import os
-os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
+# import os
+# os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
 
 import argparse
 import requests
