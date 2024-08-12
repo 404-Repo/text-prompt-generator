@@ -194,12 +194,13 @@ async def generate_prompts(inference_api: str):
                 prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
                 prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
-                prompts_to_send.clear()
 
                 if len(llm_models) > 1:
                     model_id = np.random.randint(0, len(llm_models))
                     prompt_generator.unload_model()
                     prompt_generator.load_model(llm_models[model_id])
+
+        prompts_to_send.clear()
 
 
 if __name__ == "__main__":
