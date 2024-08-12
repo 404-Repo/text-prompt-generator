@@ -38,6 +38,7 @@ def send_data_with_retry(config_data: dict, prompts_list: list, headers: dict):
     :return:
     """
     logger.info("Sending the data to the server.")
+    logger.info(f"Current batch size: {len(prompts_list)}")
 
     prompts_to_json = json.dumps({"prompts": prompts_list})
 
