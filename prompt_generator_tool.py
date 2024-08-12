@@ -53,10 +53,10 @@ def main():
                                                              "configs/pipeline_config.yml"))
     generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                               "configs/generator_config.yml"))
+    prompt_generator = PromptGenerator(proc_mode_option)
+
     if proc_mode == "preload_llms" and proc_mode_option == "vllm":
         llm_models = generator_config["vllm_api"]["llm_models"]
-        prompt_generator = PromptGenerator(proc_mode_option)
-
         for i in tqdm.trange(len(llm_models)):
             prompt_generator.load_model(llm_models[i])
             prompt_generator.unload_model()
@@ -74,9 +74,7 @@ def main():
         else:
             total_iters = iter(bool, True)
 
-        prompt_generator = PromptGenerator(proc_mode_option)
         prompt_generator.load_model(llm_models[0])
-
         prompts_dataset = []
         for i, _ in enumerate(total_iters):
             prompts = prompt_generator.generate()
