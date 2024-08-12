@@ -16,21 +16,18 @@ class PromptGenerator:
         ----------
         generator_type: one of the supported inference engines: VLLM or Groq
         """
-        self._generator_type = generator_type
-
         current_dir = os.getcwd()
-        if self._generator_type == "groq":
-            generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                      "configs/groq_config.yml"))
+        self._generator_type = generator_type
+        generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
+                                                                  "configs/infer_config.yml"))
 
-            if generator_config["api_key"] != "":
+        if self._generator_type == "groq":
+            if generator_config["groq_api"]["api_key"] != "":
                 self._generator = GroqGenerator(generator_config)
             else:
                 logger.error("Groq API key was not specified.")
 
         elif self._generator_type == "vllm":
-            generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                      "configs/vllm_config.yml"))
             self._generator = VLLMGenerator(generator_config)
 
         else:
