@@ -85,7 +85,7 @@ def main():
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
             prompts_dataset += prompts_out
 
-            if (len(prompts_out) % 30 == 0) or (i >= pipeline_config["iterations_number"]-1):
+            if (len(prompts_dataset) > 100 == 0) or (i >= pipeline_config["iterations_number"]-1):
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
