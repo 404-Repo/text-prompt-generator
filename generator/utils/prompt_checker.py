@@ -27,7 +27,7 @@ class PromptChecker:
                     "groq_api": {
                         "api_key": generator_config["groq_api"]["api_key"],
                         "llm_models": [""],
-                        "max_tokens": 2024,
+                        "max_tokens": 1024,
                         "temperature": [0.25, 0.4],
                         "seed": -1
                     }
@@ -41,8 +41,8 @@ class PromptChecker:
             checker_config = {
                 "vllm_api": {
                     "llm_models": [""],
-                    "max_tokens": 2024,
-                    "max_model_len": 2024,
+                    "max_tokens": 1024,
+                    "max_model_len": 1024,
                     "temperature": [0.25, 0.4],
                     "seed": -1
                 }
