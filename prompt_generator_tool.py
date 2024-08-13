@@ -99,7 +99,7 @@ def main():
                 lines = prompts_checked.splitlines()
                 split_index = next(i for i, line in enumerate(lines) if "Solution" in line)
                 prompts_checked = "\n".join(lines[split_index+1:])
-                prompts_checked = [s.split('. ', 1)[1] for s in prompts_checked]
+                prompts_checked = [line.split('. ', 1)[1] for line in prompts_checked if '. ' in line]
                 prompts_checked = prompt_filters.filter_unique_prompts(prompts_checked)
                 logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
                 logger.info(f"{prompts_checked}")
