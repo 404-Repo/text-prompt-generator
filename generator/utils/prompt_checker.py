@@ -72,7 +72,7 @@ class PromptChecker:
         """
         instruction = "Prompts list: \n" + (", ".join(prompts) + "\n" +
                                             "Given the Prompts list, identify and complete any that are unfinished. "
-                                            "Return only Prompts list with corrected fully completed prompts.")
+                                            "Return only numbered Prompts list with corrected fully completed prompts.")
         prompts = self._generator.check_prompts_for_completeness(instruction)
         return prompts
 
