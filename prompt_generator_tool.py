@@ -94,6 +94,7 @@ def main():
                 prompt_generator.unload_model()
                 prompt_checker.load_model("microsoft/Phi-3-small-128k-instruct")
                 prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
+                prompts_checked = [s.split('. ', 1)[1] for s in prompts_checked]
                 prompt_checker.unload_model()
                 prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
 
