@@ -9,6 +9,7 @@ import generator.utils.prompts_filtering_utils as prompt_filters
 import generator.utils.io_utils as io_utils
 
 from generator.prompt_generator import PromptGenerator
+from generator.utils.prompt_checker import PromptChecker
 
 
 def console_args():
@@ -75,6 +76,8 @@ def main():
             total_iters = iter(bool, True)
 
         prompt_generator.load_model(llm_models[0])
+        prompt_checker = PromptChecker("vllm")
+
         prompts_dataset = []
         for i, _ in enumerate(total_iters):
             prompts = prompt_generator.generate()
@@ -87,6 +90,15 @@ def main():
 
             if (len(prompts_dataset) > 100) or (i >= pipeline_config["iterations_number"]-1):
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
+
+                prompt_generator.unload_model()
+                prompt_checker.load_model("bjaidi/Phi-3-medium-128k-instruct-awq")
+                prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
+                prompt_checker.unload_model()
+
+                logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
+                logger.info(f"{prompts_checked}")
+
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
                 if len(llm_models) > 1 and i < pipeline_config["iterations_number"]-1:
