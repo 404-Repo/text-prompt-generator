@@ -90,16 +90,18 @@ def main():
 
             if (len(prompts_dataset) > 100) or (i >= pipeline_config["iterations_number"]-1):
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
-
                 prompt_generator.unload_model()
+
                 prompt_checker.load_model("microsoft/Phi-3-small-128k-instruct")
                 prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
-                prompts_checked = [s.split('. ', 1)[1] for s in prompts_checked]
-                prompt_checker.unload_model()
-                prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
-
                 logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
+                logger.info(f"{prompts_checked} \n")
+                prompts_checked = [s.split('. ', 1)[1] for s in prompts_checked]
                 logger.info(f"{prompts_checked}")
+
+                prompt_checker.unload_model()
+
+                prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
 
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
