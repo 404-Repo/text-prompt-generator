@@ -1,7 +1,7 @@
 import gc
 import copy
 import random
-import contextlib
+import os
 from time import time
 from typing import List
 
@@ -70,6 +70,22 @@ class VLLMGenerator:
 
         return output_prompts
 
+    def check_prompts_for_completeness(self,  instruction_prompt: str):
+        """
+
+        Parameters
+        ----------
+        instruction_prompt
+
+        Returns
+        -------
+
+        """
+        temperature = random.uniform(self._temperature[0], self._temperature[1])
+        sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._max_tokens)
+        outputs = self._generator.generate([instruction_prompt], sampling_params, use_tqdm=False)
+        return outputs[0].outputs[0].text
+
     def preload_model(self, model_name: str):
         """
         Function for preloading LLM model in GPU memory
@@ -78,6 +94,11 @@ class VLLMGenerator:
         ----------
         model_name: the name of the model from the HF (hugging face)
         """
+
+        if "gemma" in model_name:
+            os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASHINFER'
+        else:
+            os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASH_ATTN'
 
         self._generator = LLM(model=model_name,
                               trust_remote_code=True,
