@@ -92,7 +92,7 @@ def main():
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
 
                 prompt_generator.unload_model()
-                prompt_checker.load_model("bjaidi/Phi-3-medium-128k-instruct-awq")
+                prompt_checker.load_model("microsoft/Phi-3-small-128k-instruct")
                 prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
                 prompt_checker.unload_model()
                 prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
