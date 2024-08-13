@@ -10,24 +10,24 @@ from generator.backend_generators.vllm_generator import VLLMGenerator
 
 
 class PromptGenerator:
-    def __init__(self, generator_type: str):
+    def __init__(self, backend: str):
         """
         Parameters
         ----------
-        generator_type: one of the supported inference engines: VLLM or Groq
+        backend: one of the supported inference engines: VLLM or Groq
         """
         current_dir = os.getcwd()
-        self._generator_type = generator_type
+        self._backend = backend
         generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                                   "configs/generator_config.yml"))
 
-        if self._generator_type == "groq":
+        if self._backend == "groq":
             if generator_config["groq_api"]["api_key"] != "":
                 self._generator = GroqGenerator(generator_config)
             else:
                 logger.error("Groq API key was not specified.")
 
-        elif self._generator_type == "vllm":
+        elif self._backend == "vllm":
             self._generator = VLLMGenerator(generator_config)
 
         else:
@@ -53,7 +53,7 @@ class PromptGenerator:
 
     def unload_model(self):
         """Function for unloading model"""
-        if self._generator_type == "vllm":
+        if self._backend == "vllm":
             self._generator.unload_model()
         else:
             logger.warning("Model unloading needed only for VLLM pipeline.")
