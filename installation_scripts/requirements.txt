@@ -1,5 +1,5 @@
 numpy==1.26.*
-torch==2.4.*
+torch==2.3.*
 huggingface_hub==0.*
 transformers==4.44.*
 protobuf==5.*
