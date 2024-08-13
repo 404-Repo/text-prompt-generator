@@ -95,6 +95,7 @@ def main():
                 prompt_checker.load_model("bjaidi/Phi-3-medium-128k-instruct-awq")
                 prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
                 prompt_checker.unload_model()
+                prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
 
                 logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
                 logger.info(f"{prompts_checked}")
