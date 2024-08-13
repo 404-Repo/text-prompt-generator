@@ -94,9 +94,10 @@ def main():
 
                 prompt_checker.load_model("microsoft/Phi-3-small-128k-instruct")
                 prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
-                logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
                 logger.info(f"{prompts_checked} \n")
+                prompts_checked = prompts_checked.split("### Solution\n\n")[1].strip()
                 prompts_checked = [s.split('. ', 1)[1] for s in prompts_checked]
+                logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
                 logger.info(f"{prompts_checked}")
 
                 prompt_checker.unload_model()
