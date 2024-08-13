@@ -36,7 +36,7 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                           ]
 
 # amount of prompts to generate per category.
-prompts_number: 30
+prompts_number: 100
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
 # if set to -1, the prompts will be generated infinitely
