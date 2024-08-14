@@ -7,13 +7,13 @@ hugging_face_api_key: ""
 # [prompts_number] will be replaced with prompts_num from this config;
 # [category_name] will be replaced with one of the strings stored in obj_categories list.
 
-instruction_prompt: "Task: Create a dataset of prompts for generating 3D objects.
+instruction_prompt: "Task: Create a dataset of fully completed, semantically correct prompts for generating 3D objects using AI.
                      Distinctive Features: Include one or two unique features, such as color, shape, or pose.
                      Category Specificity: Ensure all objects are exclusively from the [category_name] category.
                      Architecture: If selecting architecture objects, avoid describing interiors.
                      Exclusions: Do not describe bodies of water (e.g., lakes, seas, rivers) or open vast areas (e.g. fields, forests, planes, parks). 
                                  Do not add those objects to prompts too.
-                     Prompt Format: each prompt must be unique, limited to seven words or fewer.
+                     Prompt Format: each prompt must be unique, limited to seven words or fewer and fully completed.
                      Output: Generate a numbered list with [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
