@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 import tqdm
 import torch
 from loguru import logger
-from fastapi import FastAPI
+from fastapi import FastAPI, Form
 import uvicorn
 
 import generator.utils.io_utils as io_utils
@@ -113,13 +113,15 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
 
 
 @app.post("/generate_prompts/")
-async def generate_prompts(inference_api: str, save_locally_only: bool):
+async def generate_prompts(inference_api: str = Form(),
+                           save_locally_only: bool = Form()):
     """
     Server function for running the prompt generation
     Parameters
     ----------
     inference_api: string with the name of the inference api that is supported by the generator:
                    currently: groq, vllm
+    save_locally_only: enable/disable saving locally to the hdd only without posting to remote server
 
     """
 
@@ -152,7 +154,7 @@ async def generate_prompts(inference_api: str, save_locally_only: bool):
     pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                              "configs/pipeline_config.yml"))
 
-    if pipeline_config["iteration_number"] > -1:
+    if pipeline_config["iterations_number"] > -1:
         total_iters = range(pipeline_config["iterations_number"])
         logger.info(f"Requested amount of iterations: {total_iters}")
     else:
@@ -204,8 +206,6 @@ async def generate_prompts(inference_api: str, save_locally_only: bool):
                 model_id = np.random.randint(0, len(llm_models))
                 prompt_generator.unload_model()
                 prompt_generator.load_model(llm_models[model_id])
-
-
 
 
 if __name__ == "__main__":
