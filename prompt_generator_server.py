@@ -113,7 +113,7 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
 
 
 @app.post("/generate_prompts/")
-async def generate_prompts(inference_api: str):
+async def generate_prompts(inference_api: str, save_locally_only: bool):
     """
     Server function for running the prompt generation
     Parameters
@@ -175,7 +175,7 @@ async def generate_prompts(inference_api: str):
         prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
         prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
                                                                pipeline_config["filter_prompts_with_words"])
-        prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
+        # prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
 
         prompts_to_send += prompts_out
         prompts_to_send = prompt_filters.filter_unique_prompts(prompts_to_send)
@@ -189,18 +189,23 @@ async def generate_prompts(inference_api: str):
         logger.info(f"Current iteration took: {iter_duration} min.")
 
         if len(prompts_to_send) >= 1000:
-            result = send_data_with_retry(server_config, prompts_to_send, headers)
-            if result and i % 500 == 0:
-                prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
-                prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
-                io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
+            if not save_locally_only:
+                result = send_data_with_retry(server_config, prompts_to_send, headers)
+                if result:
+                    prompts_to_send.clear()
 
-                if len(llm_models) > 1:
-                    model_id = np.random.randint(0, len(llm_models))
-                    prompt_generator.unload_model()
-                    prompt_generator.load_model(llm_models[model_id])
+        if i % 500 == 0:
+            prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
+            prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
+            io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
+            prompts_to_send.clear()
 
-        prompts_to_send.clear()
+            if len(llm_models) > 1:
+                model_id = np.random.randint(0, len(llm_models))
+                prompt_generator.unload_model()
+                prompt_generator.load_model(llm_models[model_id])
+
+
 
 
 if __name__ == "__main__":
