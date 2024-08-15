@@ -8,10 +8,10 @@ import tqdm
 import groq
 from loguru import logger
 
-from generator.backend_generators.base_generator import BaseGenerator
+from generator.generator_backend.base_generator_backend import BaseGeneratorBackend
 
 
-class GroqGenerator(BaseGenerator):
+class GroqBackend(BaseGeneratorBackend):
     def __init__(self, config_data: Dict):
         """
         Parameters
