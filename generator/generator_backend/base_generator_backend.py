@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 
-class BaseGenerator(ABC):
+class BaseGeneratorBackend(ABC):
     """
     BaseGenerator is an abstract base class for defining different prompt generator backends.
     Subclasses must implement methods for generating prompts.
