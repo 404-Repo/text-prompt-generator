@@ -31,3 +31,18 @@ vllm_api:
 
   # random seed
   seed: -1
+
+mlc_api:
+  # the vllm model that will be used for the prompt generation;
+  # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
+  # awq - quantization level of the model supported by the vllm
+  llm_models: ["mlc-ai/Llama-3.1-8B-Instruct-q4f32_1-MLC"]
+
+  # max tokens for prompt generation
+  max_tokens: 160
+
+  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
+  temperature: [0.25, 0.5]
+
+  # random seed
+  seed: -1
