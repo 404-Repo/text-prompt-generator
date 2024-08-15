@@ -13,7 +13,7 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically, a
                      Architecture: If selecting objects from the architecture category, describe only exteriors, avoiding interior details.
                      Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers) or vast open areas (e.g., fields, forests, plains, parks) in the prompts.
                      Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to seven words or fewer.
-                     Output: Provide a numbered list containing [prompts_number] prompts."
+                     Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
 obj_categories: ["characters", "animals", "monsters", "robots", "architecture", "nature", "vehicles", "weapons and equipments",
@@ -34,8 +34,8 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "avoid", "category", "street", "park"
                           ]
 
-# amount of prompts to generate per category.
-prompts_number: 100
+# amount of prompts to generate per category (can be in numbers or in words).
+prompts_number: 200
 
 # specify number of times you want to run the model (total prompt size: prompts_num x len(obj_categories) x iteration_num
 # if set to -1, the prompts will be generated infinitely
