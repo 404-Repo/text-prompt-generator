@@ -1,12 +1,12 @@
 import os
 import torch
 
-from generator.backend_generators.vllm_generator import VLLMGenerator
+from generator.generator_backend.vllm_backend import VLLMBackend
 from generator.utils.io_utils import load_config_file
 
 current_dir = os.getcwd()
 generator_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/generator_config.yml"))
-generator = VLLMGenerator(generator_config)
+generator = VLLMBackend(generator_config)
 
 
 def test_load_model():

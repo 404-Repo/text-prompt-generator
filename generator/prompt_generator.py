@@ -5,8 +5,8 @@ from loguru import logger
 from huggingface_hub import login
 
 import generator.utils.io_utils as io_utils
-from generator.backend_generators.groq_generator import GroqGenerator
-from generator.backend_generators.vllm_generator import VLLMGenerator
+from generator.generator_backend.groq_backend import GroqBackend
+from generator.generator_backend.vllm_backend import VLLMBackend
 
 
 class PromptGenerator:
@@ -23,12 +23,12 @@ class PromptGenerator:
 
         if self._backend == "groq":
             if generator_config["groq_api"]["api_key"] != "":
-                self._generator = GroqGenerator(generator_config)
+                self._generator = GroqBackend(generator_config)
             else:
                 logger.error("Groq API key was not specified.")
 
         elif self._backend == "vllm":
-            self._generator = VLLMGenerator(generator_config)
+            self._generator = VLLMBackend(generator_config)
 
         else:
             raise ValueError("Unknown generator_type was specified.")
