@@ -70,22 +70,6 @@ class VLLMGenerator:
 
         return output_prompts
 
-    def check_prompts_for_completeness(self,  instruction_prompt: str):
-        """
-
-        Parameters
-        ----------
-        instruction_prompt
-
-        Returns
-        -------
-
-        """
-        temperature = random.uniform(self._temperature[0], self._temperature[1])
-        sampling_params = SamplingParams(n=1, temperature=temperature, max_tokens=self._max_tokens)
-        outputs = self._generator.generate([instruction_prompt], sampling_params, use_tqdm=False)
-        return outputs[0].outputs[0].text
-
     def preload_model(self, model_name: str):
         """
         Function for preloading LLM model in GPU memory

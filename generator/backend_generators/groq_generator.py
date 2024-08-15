@@ -8,8 +8,10 @@ import tqdm
 import groq
 from loguru import logger
 
+from generator.backend_generators.base_generator import BaseGenerator
 
-class GroqGenerator:
+
+class GroqGenerator(BaseGenerator):
     def __init__(self, config_data: Dict):
         """
         Parameters
@@ -89,3 +91,7 @@ class GroqGenerator:
         model_name: a string with model name in the format of the Groq platform
         """
         self._model_name = model_name
+
+    def unload_model(self):
+        """ With groq we do not need to unload anything. """
+        pass
