@@ -31,7 +31,7 @@ filter_prompts_with_words: ["sky", "skies", "river", "ocean", "sea", "garden", "
                             "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                             "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
                             "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                            "avoid", "category", "street", "park"
+                            "avoid", "category", "street", "park", "make", "build"
                           ]
 
 # amount of prompts to generate per category (can be in numbers or in words).
