@@ -23,8 +23,10 @@ def console_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", required=False, help="options: "
                                                        "'preload_llms, vllm', "
+                                                       "'preload_llms, mcl', "
                                                        "'prompt_generation, groq', "
                                                        "'prompt_generation, vllm', "
+                                                       "'prompt_generation, mcl', "
                                                        "'filter_unique_prompts', "
                                                        "'filter_prompts_with_words'")
     args = parser.parse_args()
@@ -55,19 +57,26 @@ def main():
                                                               "configs/generator_config.yml"))
     prompt_generator = PromptGenerator(proc_mode_option)
 
-    if proc_mode == "preload_llms" and proc_mode_option == "vllm":
+    if proc_mode_option == "vllm":
         llm_models = generator_config["vllm_api"]["llm_models"]
+    elif proc_mode_option == "mlc":
+        llm_models = generator_config["mlc_api"]["llm_models"]
+    elif proc_mode_option == "groq":
+        llm_models = generator_config["groq_api"]["llm_models"]
+    else:
+        llm_models = []
+
+    if proc_mode == "preload_llms":
+        if len(llm_models) == 0:
+            raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
+
         for i in tqdm.trange(len(llm_models)):
             prompt_generator.load_model(llm_models[i])
             prompt_generator.unload_model()
 
     elif proc_mode == "prompt_generation" and proc_mode_option != "":
-        if proc_mode_option == "groq":
-            llm_models = generator_config["groq_api"]["llm_models"]
-        elif proc_mode_option == "vllm":
-            llm_models = generator_config["vllm_api"]["llm_models"]
-        else:
-            raise ValueError("Unsupported inference engine was specified!")
+        if len(llm_models) == 0:
+            raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
 
         if pipeline_config["iterations_number"] > -1:
             total_iters = range(pipeline_config["iterations_number"])

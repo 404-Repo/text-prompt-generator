@@ -7,6 +7,7 @@ from huggingface_hub import login
 import generator.utils.io_utils as io_utils
 from generator.generator_backend.groq_backend import GroqBackend
 from generator.generator_backend.vllm_backend import VLLMBackend
+from generator.generator_backend.mcl_backend import MCLBackend
 
 
 class PromptGenerator:
@@ -29,6 +30,9 @@ class PromptGenerator:
 
         elif self._backend == "vllm":
             self._generator = VLLMBackend(generator_config)
+
+        elif self._backend == "mlc":
+            self._generator = MCLBackend(generator_config)
 
         else:
             raise ValueError("Unknown generator_type was specified.")
@@ -53,10 +57,7 @@ class PromptGenerator:
 
     def unload_model(self):
         """Function for unloading model"""
-        if self._backend == "vllm":
-            self._generator.unload_model()
-        else:
-            logger.warning("Model unloading needed only for VLLM pipeline.")
+        self._generator.unload_model()
 
     def generate(self):
         """
