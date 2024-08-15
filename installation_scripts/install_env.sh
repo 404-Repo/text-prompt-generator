@@ -21,6 +21,7 @@ conda info --env
 CUDA_HOME=${CONDA_PREFIX}
 pip install flash-attn==2.6.1 --no-build-isolation
 pip install flashinfer==0.1.3 -i https://flashinfer.ai/whl/cu121/torch2.4
+pip install --pre -U -f https://mlc.ai/wheels mlc-llm-nightly-cu121 mlc-ai-nightly-cu121
 
 # Store the path of the Conda interpreter
 CONDA_INTERPRETER_PATH=$(which python)
