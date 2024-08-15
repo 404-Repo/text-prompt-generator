@@ -1,0 +1,33 @@
+groq_api:
+  # put here token generated at https://console.groq.com/keys
+  api_key: ""
+
+  # one of the models supported by groq platform: https://console.groq.com/docs/models
+  llm_models: [""]
+
+  # max tokens for prompt generation
+  max_tokens: 160
+
+  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
+  temperature: [0.25, 0.5]
+
+  # random seed
+  seed: -1
+
+vllm_api:
+  # the vllm model that will be used for the prompt generation;
+  # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
+  # awq - quantization level of the model supported by the vllm
+  llm_models: [""]
+
+  # max tokens for prompt generation
+  max_tokens: 160
+
+  # defines the maximum length of the model output
+  max_model_len: 1024
+
+  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
+  temperature: [0.25, 0.5]
+
+  # random seed
+  seed: -1

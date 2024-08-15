@@ -1,0 +1,11 @@
+# api key to get access to the server
+api_key_prompt_server: ""
+
+# server address
+api_prompt_server_url: ""
+
+# maximum amount of retries accessing the server before continue prompt generation
+server_max_retries_number: 5
+
+# wait time in seconds before reattempting to send the data to the server
+server_retry_delay: 1
