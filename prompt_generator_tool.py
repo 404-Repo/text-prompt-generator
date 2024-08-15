@@ -75,7 +75,6 @@ def main():
             total_iters = iter(bool, True)
 
         prompt_generator.load_model(llm_models[0])
-        # prompt_checker = PromptChecker("vllm")
 
         prompts_dataset = []
         for i, _ in enumerate(total_iters):
@@ -89,10 +88,6 @@ def main():
 
             if (len(prompts_dataset) > 100) or (i >= pipeline_config["iterations_number"]-1):
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
-                prompt_generator.unload_model()
-
-                prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
-
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
                 if len(llm_models) > 1 and i < pipeline_config["iterations_number"]-1:
