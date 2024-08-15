@@ -11,8 +11,10 @@ from vllm import LLM, SamplingParams
 from vllm.distributed.parallel_state import destroy_model_parallel
 from loguru import logger
 
+from generator.generator_backend.base_generator_backend import BaseGeneratorBackend
 
-class VLLMGenerator:
+
+class VLLMBackend(BaseGeneratorBackend):
     def __init__(self, config_data: dict):
         """
         Parameters
