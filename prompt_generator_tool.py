@@ -9,7 +9,6 @@ import generator.utils.prompts_filtering_utils as prompt_filters
 import generator.utils.io_utils as io_utils
 
 from generator.prompt_generator import PromptGenerator
-from generator.utils.prompt_checker import PromptChecker
 
 
 def console_args():
@@ -91,18 +90,6 @@ def main():
             if (len(prompts_dataset) > 100) or (i >= pipeline_config["iterations_number"]-1):
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
                 prompt_generator.unload_model()
-
-                # prompt_checker.load_model("microsoft/Phi-3-small-128k-instruct")
-                # prompts_checked = prompt_checker.check_prompts_for_completeness(prompts_dataset)
-                # logger.info(f"{prompts_checked} \n")
-                # lines = prompts_checked.splitlines()
-                # split_index = next(i for i, line in enumerate(lines) if "Solution" in line)
-                # prompts_checked = lines[split_index+1:]
-                # prompts_checked = [line.split('. ', 1)[1] for line in prompts_checked if '. ' in line]
-                # prompts_checked = prompt_filters.filter_unique_prompts(prompts_checked)
-                # logger.info(f"{len(prompts_checked)} / {len(prompts_dataset)}")
-                # logger.info(f"{prompts_checked}")
-                # prompt_checker.unload_model()
 
                 prompt_generator.load_model(generator_config["vllm_api"]["llm_models"][0])
 
