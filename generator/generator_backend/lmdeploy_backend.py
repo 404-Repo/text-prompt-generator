@@ -64,7 +64,6 @@ class LmdeployBackend(BaseGeneratorBackend):
             gen_config = GenerationConfig(temperature=temperature,
                                           max_new_tokens=self._max_tokens,
                                           random_seed=seed,
-                                          repetition_penalty=1.5,
                                           bad_words=["design", "build", "create", "produce", "develop", "generate",
                                                      "make"])
 
