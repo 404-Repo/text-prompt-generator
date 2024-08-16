@@ -7,7 +7,7 @@ from huggingface_hub import login
 import generator.utils.io_utils as io_utils
 from generator.generator_backend.groq_backend import GroqBackend
 from generator.generator_backend.vllm_backend import VLLMBackend
-from generator.generator_backend.mcl_backend import MCLBackend
+from generator.generator_backend.lmdeploy_backend import LmdeployBackend
 
 
 class PromptGenerator:
@@ -31,8 +31,8 @@ class PromptGenerator:
         elif self._backend == "vllm":
             self._generator = VLLMBackend(generator_config)
 
-        elif self._backend == "mlc":
-            self._generator = MCLBackend(generator_config)
+        elif self._backend == "lmdeploy":
+            self._generator = LmdeployBackend(generator_config)
 
         else:
             raise ValueError("Unknown generator_type was specified.")

@@ -23,10 +23,10 @@ def console_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", required=False, help="options: "
                                                        "'preload_llms, vllm', "
-                                                       "'preload_llms, mcl', "
+                                                       "'preload_llms, mlc', "
                                                        "'prompt_generation, groq', "
                                                        "'prompt_generation, vllm', "
-                                                       "'prompt_generation, mcl', "
+                                                       "'prompt_generation, mlc', "
                                                        "'filter_unique_prompts', "
                                                        "'filter_prompts_with_words'")
     args = parser.parse_args()
@@ -59,10 +59,10 @@ def main():
 
     if proc_mode_option == "vllm":
         llm_models = generator_config["vllm_api"]["llm_models"]
-    elif proc_mode_option == "mlc":
-        llm_models = generator_config["mlc_api"]["llm_models"]
     elif proc_mode_option == "groq":
         llm_models = generator_config["groq_api"]["llm_models"]
+    elif proc_mode_option == "lmdeploy":
+        llm_models = generator_config["lmdeploy_api"]["llm_models"]
     else:
         llm_models = []
 
