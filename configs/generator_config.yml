@@ -32,11 +32,11 @@ vllm_api:
   # random seed
   seed: -1
 
-mlc_api:
-  # the vllm model that will be used for the prompt generation;
-  # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
+lmdeploy_api:
+  # the lmdeploy model that will be used for the prompt generation;
+  # Supported models: https://lmdeploy.readthedocs.io/en/latest/supported_models/supported_models.html
   # awq - quantization level of the model supported by the vllm
-  llm_models: ["mlc-ai/Llama-3.1-8B-Instruct-q4f32_1-MLC"]
+  llm_models: [""]
 
   # max tokens for prompt generation
   max_tokens: 160
