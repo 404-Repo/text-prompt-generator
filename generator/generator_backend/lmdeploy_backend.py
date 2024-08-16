@@ -50,6 +50,7 @@ class LmdeployBackend(BaseGeneratorBackend):
 
             # find 'member' in the input string and replace it with category
             prompt_in = prompt_in.replace("[category_name]", category)
+            prompt_in += " Do not use words: design, build, create, produce, develop, generate, make in prompts."
 
             prompt =[
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -63,8 +64,8 @@ class LmdeployBackend(BaseGeneratorBackend):
             gen_config = GenerationConfig(temperature=temperature,
                                           max_new_tokens=self._max_tokens,
                                           random_seed=seed,
-                                          bad_words=["Design", "Build", "Create", "Produce", "Develop", "Generate",
-                                                     "Make"])
+                                          bad_words=["design", "build", "create", "produce", "develop", "generate",
+                                                     "make"])
 
             outputs = self._generator(prompt, gen_config=gen_config)
             print(outputs.text)
