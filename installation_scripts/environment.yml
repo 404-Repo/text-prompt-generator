@@ -8,7 +8,5 @@ dependencies:
   - python=3.11
   - pip
   - cuda-toolkit=12.1.1
-  - git-lfs
-  - libgcc-ng
   - pip:
     - -r requirements.txt
