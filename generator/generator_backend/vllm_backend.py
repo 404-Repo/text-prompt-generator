@@ -23,8 +23,15 @@ class VLLMBackend(BaseGeneratorBackend):
         """
         self._max_tokens = config_data["vllm_api"]["max_tokens"]
         self._seed = config_data["vllm_api"]['seed']
+        self._top_p = config_data["vllm_api"]["top_p"]
+        self._gpu_memory_utilization = config_data["vllm_api"]["gpu_memory_utilization"]
+        self._tensor_parallel_size = config_data["vllm_api"]["tensor_parallel_size"]
         self._max_model_len = config_data["vllm_api"]["max_model_len"]
         self._temperature = config_data["vllm_api"]["temperature"]
+        self._num_speculative_tokens = config_data["vllm_api"]["num_speculative_tokens"]
+        self._ngram_prompt_lookup_max = config_data["vllm_api"]["ngram_prompt_lookup_max"]
+        self._use_v2_block_manager = config_data["vllm_api"]["use_v2_block_manager"]
+        self._speculative_draft_tensor_parallel_size = config_data["vllm_api"]["speculative_draft_tensor_parallel_size"]
 
         self._generator = None
 
@@ -34,8 +41,8 @@ class VLLMBackend(BaseGeneratorBackend):
 
         Parameters
         ----------
-        instruction_prompt: a string with instruction prompt
-        object_categories: a list of strings with categories
+        instruction_prompt: a string with instruction prompt;
+        object_categories: a list of strings with categories;
 
         Returns
         -------
@@ -58,7 +65,11 @@ class VLLMBackend(BaseGeneratorBackend):
             else:
                 seed = self._seed
 
-            sampling_params = SamplingParams(n=1, seed=seed, temperature=temperature, max_tokens=self._max_tokens)
+            sampling_params = SamplingParams(n=1,
+                                             seed=seed,
+                                             temperature=temperature,
+                                             max_tokens=self._max_tokens,
+                                             top_p=self._top_p)
             outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "[category_name]")
@@ -72,13 +83,14 @@ class VLLMBackend(BaseGeneratorBackend):
 
         return output_prompts
 
-    def preload_model(self, model_name: str):
+    def preload_model(self, model_name: str, speculative_model: str = ""):
         """
         Function for preloading LLM model in GPU memory
 
         Parameters
         ----------
-        model_name: the name of the model from the HF (hugging face)
+        model_name: the name of the model from the HF (hugging face);
+        speculative_model: the name of the speculative model or [ngrams];
         """
 
         if "gemma" in model_name:
@@ -86,10 +98,34 @@ class VLLMBackend(BaseGeneratorBackend):
         else:
             os.environ['VLLM_ATTENTION_BACKEND'] = 'FLASH_ATTN'
 
-        self._generator = LLM(model=model_name,
-                              trust_remote_code=True,
-                              max_model_len=self._max_model_len,
-                              seed=random.randint(0, int(1e+5)))
+        if speculative_model == "":
+            self._generator = LLM(model=model_name,
+                                  trust_remote_code=True,
+                                  tensor_parallel_size=1,
+                                  max_model_len=self._max_model_len,
+                                  gpu_memory_utilization=self._gpu_memory_utilization,
+                                  seed=random.randint(0, int(1e+5)))
+        elif speculative_model == "[ngram]":
+            self._generator = LLM(model=model_name,
+                                  trust_remote_code=True,
+                                  tensor_parallel_size=self._tensor_parallel_size,
+                                  seed=random.randint(0, int(1e+5)),
+                                  gpu_memory_utilization=self._gpu_memory_utilization,
+                                  max_model_len=self._max_model_len,
+                                  speculative_model=speculative_model,
+                                  num_speculative_tokens=self._num_speculative_tokens,
+                                  ngram_prompt_lookup_max=self._ngram_prompt_lookup_max,
+                                  use_v2_block_manager=self._use_v2_block_manager)
+        else:
+            self._generator = LLM(model=model_name,
+                                  trust_remote_code=True,
+                                  tensor_parallel_size=self._tensor_parallel_size,
+                                  seed=random.randint(0, int(1e+5)),
+                                  gpu_memory_utilization=self._gpu_memory_utilization,
+                                  max_model_len=self._max_model_len,
+                                  speculative_model=speculative_model,
+                                  speculative_draft_tensor_parallel_size=self._speculative_draft_tensor_parallel_size,
+                                  use_v2_block_manager=self._use_v2_block_manager)
 
     def unload_model(self):
         """ Function for unloading the model """
