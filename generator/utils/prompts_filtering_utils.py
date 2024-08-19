@@ -127,3 +127,25 @@ def post_process_generated_prompts(prompts_list: List[str]):
                 processed_lines += [line]
         result_prompts += processed_lines
     return result_prompts
+
+
+def remove_words_from_prompts(prompts: List[str], words_to_remove: List[str]):
+    """
+
+    Parameters
+    ----------
+    prompts
+    words_to_remove
+
+    Returns
+    -------
+
+    """
+    result_prompts = []
+    for prompt in prompts:
+        word_list = prompt.split()
+        filtered_words = [word for word in word_list if word not in words_to_remove]
+        result_prompt = ' '.join(filtered_words)
+        result_prompts.append(result_prompt)
+
+    return result_prompts
