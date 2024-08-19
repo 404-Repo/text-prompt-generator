@@ -104,7 +104,9 @@ class VLLMBackend(BaseGeneratorBackend):
                                   tensor_parallel_size=self._tensor_parallel_size,
                                   max_model_len=self._max_model_len,
                                   gpu_memory_utilization=self._gpu_memory_utilization,
-                                  seed=random.randint(0, int(1e+5)))
+                                  seed=random.randint(0, int(1e+5)),
+                                  enable_chunked_prefill=True,
+                                  max_num_batched_tokens=2048)
         elif speculative_model == "[ngram]":
             self._generator = LLM(model=model_name,
                                   trust_remote_code=True,
