@@ -7,7 +7,6 @@ from huggingface_hub import login
 import generator.utils.io_utils as io_utils
 from generator.generator_backend.groq_backend import GroqBackend
 from generator.generator_backend.vllm_backend import VLLMBackend
-from generator.generator_backend.lmdeploy_backend import LmdeployBackend
 
 
 class PromptGenerator:
@@ -30,9 +29,7 @@ class PromptGenerator:
 
         elif self._backend == "vllm":
             self._generator = VLLMBackend(generator_config)
-
-        elif self._backend == "lmdeploy":
-            self._generator = LmdeployBackend(generator_config)
+            self._speculative_models = generator_config["vllm_api"]["speculative_models"]
 
         else:
             raise ValueError("Unknown generator_type was specified.")
@@ -53,7 +50,10 @@ class PromptGenerator:
         ----------
         model_name: a string with model name from HF (hugging face)
         """
-        self._generator.preload_model(model_name)
+        if self._backend == "vllm":
+            self._generator.preload_model(model_name, self._speculative_models[0])
+        else:
+            self._generator.preload_model(model_name)
 
     def unload_model(self):
         """Function for unloading model"""
