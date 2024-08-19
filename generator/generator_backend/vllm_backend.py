@@ -101,7 +101,7 @@ class VLLMBackend(BaseGeneratorBackend):
         if speculative_model == "":
             self._generator = LLM(model=model_name,
                                   trust_remote_code=True,
-                                  tensor_parallel_size=1,
+                                  tensor_parallel_size=self._tensor_parallel_size,
                                   max_model_len=self._max_model_len,
                                   gpu_memory_utilization=self._gpu_memory_utilization,
                                   seed=random.randint(0, int(1e+5)))
