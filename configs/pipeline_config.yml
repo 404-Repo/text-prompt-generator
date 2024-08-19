@@ -19,9 +19,9 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["cartoon characters and robots", "animals", "monsters", "architecture", "nature", "vehicles", "weapons and equipments",
-                 "food and drinks", "gadgets and electronics", "decorative elements", "household items", "sports equipment",
-                 "clothing", "furniture", "jewelry", "tools", "musical instruments"]
+obj_categories: ["cartoon characters and robots", "animals", "monsters and creatures", "architecture", "nature", "vehicles",
+                 "weapons and equipments", "food and drinks", "gadgets and electronics", "decorative elements", "household items",
+                 "sports equipment", "clothing", "furniture", "jewelry", "tools", "musical instruments"]
 
 # Words that prompts should not contain. Prompts with these words will be removed from the dataset and filtering stage.
 prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
