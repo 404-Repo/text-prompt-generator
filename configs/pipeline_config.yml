@@ -34,7 +34,8 @@ prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "gar
                             "avoid", "category", "street", "park", "make", "build"
                           ]
 #
-words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example", "develop"]
+words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
+                               "develop", "paint"]
 
 # amount of prompts to generate per category (can be in numbers or in words).
 prompts_number: 200
