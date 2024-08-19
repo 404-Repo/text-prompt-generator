@@ -23,10 +23,8 @@ def console_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", required=False, help="options: "
                                                        "'preload_llms, vllm', "
-                                                       "'preload_llms, mlc', "
                                                        "'prompt_generation, groq', "
                                                        "'prompt_generation, vllm', "
-                                                       "'prompt_generation, mlc', "
                                                        "'filter_unique_prompts', "
                                                        "'filter_prompts_with_words'")
     args = parser.parse_args()
@@ -61,8 +59,6 @@ def main():
         llm_models = generator_config["vllm_api"]["llm_models"]
     elif proc_mode_option == "groq":
         llm_models = generator_config["groq_api"]["llm_models"]
-    elif proc_mode_option == "lmdeploy":
-        llm_models = generator_config["lmdeploy_api"]["llm_models"]
     else:
         llm_models = []
 
@@ -91,7 +87,9 @@ def main():
             prompts_out = prompt_filters.post_process_generated_prompts(prompts)
             prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
             prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
-                                                                   pipeline_config["filter_prompts_with_words"])
+                                                                   pipeline_config["prompts_with_words_to_filter_out"])
+            prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
+                                                                   pipeline_config["words_to_remove_from_prompts"])
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
             prompts_dataset += prompts_out
 
@@ -116,7 +114,9 @@ def main():
 
     elif proc_mode == "filter_prompts_with_words":
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
-        prompts_out = prompt_filters.filter_prompts_with_words(prompts, pipeline_config["filter_prompts_with_words"])
+        prompts_out = prompt_filters.filter_prompts_with_words(prompts, pipeline_config["prompts_with_words_to_filter_out"])
+        prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
+                                                               pipeline_config["words_to_remove_from_prompts"])
         prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
         io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "w")
 
