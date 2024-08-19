@@ -7,10 +7,10 @@ hugging_face_api_key: ""
 # [prompts_number] will be replaced with prompts_num from this config;
 # [category_name] will be replaced with one of the strings stored in obj_categories list.
 
-instruction_prompt: "Task: Generate a dataset of fully complete, semantically, and grammatically correct written prompts for 3D object generation using AI.
-                     Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, or pose, using correct prepositions.
+instruction_prompt: "Task: Generate a dataset of fully complete, semantically and grammatically correct written prompts for 3D object generation using AI.
+                     Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, appearance, or pose using correct prepositions. Describe static objects.
                      Category Specificity: All objects must belong exclusively to the [category_name] category.
-                     Architecture: If selecting objects from the architecture category, describe only exteriors, avoiding interior details.
+                     Architecture: If selecting objects from the architecture category, describe only exterior appearance of the object, avoiding interior details.
                      Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers) or vast open areas (e.g., fields, forests, plains, parks) in the prompts.
                      Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to seven words or fewer.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
@@ -35,7 +35,7 @@ prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "gar
                           ]
 #
 words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
-                               "develop", "paint"]
+                               "develop", "paint", "construct"]
 
 # amount of prompts to generate per category (can be in numbers or in words).
 prompts_number: 200
