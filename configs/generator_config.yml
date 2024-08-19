@@ -11,7 +11,7 @@ groq_api:
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
   temperature: [0.25, 0.5]
 
-  # random seed
+  # random seed for sampling during prompt generation
   seed: -1
 
 vllm_api:
@@ -29,20 +29,31 @@ vllm_api:
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
   temperature: [0.25, 0.5]
 
-  # random seed
+  # defines how much of the GPU memory will be reserved for LLM
+  gpu_memory_utilization: 0.9
+
+  #
+  top_p: 0.95
+
+  # random seed for sampling during prompt generation
   seed: -1
 
-lmdeploy_api:
-  # the lmdeploy model that will be used for the prompt generation;
-  # Supported models: https://lmdeploy.readthedocs.io/en/latest/supported_models/supported_models.html
-  # awq - quantization level of the model supported by the vllm
-  llm_models: [""]
+  #
+  tensor_parallel_size: 1
 
-  # max tokens for prompt generation
-  max_tokens: 160
+  # Speculative decoding [Optional];
+  # for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
+  #
+  speculative_models: [""]
 
-  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.25, 0.5]
+  #
+  num_speculative_tokens: 5
 
-  # random seed
-  seed: -1
+  #
+  ngram_prompt_lookup_max: 4
+
+  # if speculative decoding is in use, this parameter should be set to True
+  use_v2_block_manager: True
+
+  # should be set to 1, but in the future can be changed (check the link 'for more details:' above on dev status)
+  speculative_draft_tensor_parallel_size: 1
