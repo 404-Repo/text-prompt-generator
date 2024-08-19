@@ -1,5 +1,5 @@
 numpy==1.26.*
-torch==2.3.*
+torch==2.4.*
 huggingface_hub==0.*
 transformers==4.44.*
 protobuf==5.*
@@ -13,4 +13,3 @@ bitsandbytes==0.43.*
 tensorizer==2.9.*
 nvitop==1.3.2
 python-multipart==0.0.9
-lmdeploy
