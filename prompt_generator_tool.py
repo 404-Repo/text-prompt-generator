@@ -123,6 +123,8 @@ def main():
     else:
         raise ValueError("Unknown mode was specified. Check supported modes using -h option.")
 
+    prompt_generator.unload_model()
+
 
 if __name__ == '__main__':
     main()
