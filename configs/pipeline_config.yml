@@ -11,32 +11,33 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, appearance, or pose using correct prepositions. Describe static objects.
                      Category Specificity: All objects must belong exclusively to the [category_name] category.
                      Architecture: If selecting objects from the architecture category, describe only exterior appearance of the object, avoiding interior details.
-                     Vehicles: If selecting objects from the vehicles category, describe only appearance of the vehicle.
-                     Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers) or vast open areas (e.g., fields, forests, plains, parks) in the prompts.
+                     Vehicles, Animals and monsters: If selecting objects from the vehicles, animals or monsters category, 
+                     describe only appearance of the object without scenery or place.
+                     Jewelry and Clothes: If selecting objects from the jewelry or clothes category, exclude references to human body parts. 
+                     Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers, marina) or vast open areas (e.g., fields, forests, plains, parks) in the prompts.
                      Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to ten words or fewer.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["characters", "animals", "monsters", "robots", "architecture", "nature", "vehicles", "weapons and equipments",
+obj_categories: ["cartoon characters and robots", "animals", "monsters", "architecture", "nature", "vehicles", "weapons and equipments",
                  "food and drinks", "gadgets and electronics", "decorative elements", "household items", "sports equipment",
                  "clothing", "furniture", "jewelry", "tools", "musical instruments"]
 
 # Words that prompts should not contain. Prompts with these words will be removed from the dataset and filtering stage.
 prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
-                            "tow", "city", "accessories", "jungle", "forest", "space", "pool", "pond", "I", "i",
-                            "fields", "horizon", "oops", "hillside", "underwater", "floor", "grass", "nature", "mist",
-                            "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
-                            "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word",
-                            "words", "money", "copy", "vacuum", "outdoor", "to", "us", "miami", "kidding", "time",
-                            "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
-                            "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
-                            "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
-                            "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                            "avoid", "category", "street", "park", "make", "build"
-                          ]
+                                   "tow", "city", "accessories", "jungle", "forest", "space", "pool", "pond", "I", "i",
+                                   "fields", "horizon", "oops", "hillside", "underwater", "floor", "grass", "nature", "mist",
+                                   "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
+                                   "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word",
+                                   "words", "money", "copy", "vacuum", "outdoor", "to", "us", "miami", "kidding", "time",
+                                   "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
+                                   "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
+                                   "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
+                                   "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
+                                   "avoid", "category", "street", "park", "make", "build", "marina"]
 #
 words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
-                               "develop", "paint", "construct"]
+                               "develop", "paint", "construct", "answer"]
 
 # amount of prompts to generate per category (can be in numbers or in words).
 prompts_number: 200
