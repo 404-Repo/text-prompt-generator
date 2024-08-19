@@ -11,8 +11,9 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, appearance, or pose using correct prepositions. Describe static objects.
                      Category Specificity: All objects must belong exclusively to the [category_name] category.
                      Architecture: If selecting objects from the architecture category, describe only exterior appearance of the object, avoiding interior details.
+                     Vehicles: If selecting objects from the vehicles category, describe only appearance of the vehicle.
                      Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers) or vast open areas (e.g., fields, forests, plains, parks) in the prompts.
-                     Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to seven words or fewer.
+                     Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to ten words or fewer.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
