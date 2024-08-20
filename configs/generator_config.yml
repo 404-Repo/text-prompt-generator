@@ -6,12 +6,12 @@ groq_api:
   llm_models: [""]
 
   # max tokens for prompt generation
-  max_tokens: 160
+  max_tokens: 150
 
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.25, 0.5]
+  temperature: [0.35, 0.55]
 
-  # random seed
+  # random seed for sampling during prompt generation
   seed: -1
 
 vllm_api:
@@ -21,13 +21,47 @@ vllm_api:
   llm_models: [""]
 
   # max tokens for prompt generation
-  max_tokens: 160
+  max_tokens: 150
 
   # defines the maximum length of the model output
   max_model_len: 1024
 
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.25, 0.5]
+  temperature: [0.35, 0.55]
 
-  # random seed
+  # defines how much of the GPU memory will be reserved for LLM
+  gpu_memory_utilization: 0.9
+
+  # Float that controls the cumulative probability of the top tokens to consider.
+  # Must be in (0, 1]. Set to 1 to consider all tokens.
+  top_p: 0.95
+
+  # Float that penalizes new tokens based on whether they appear in the generated text so far.
+  # Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
+  presence_penalty: 0.3
+
+  # Float that penalizes new tokens based on their frequency in the generated text so far.
+  # Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
+  frequency_penalty: 0.3
+
+  # random seed for sampling during prompt generation
   seed: -1
+
+  # the number of GPUs that will be used by vLLM
+  tensor_parallel_size: 1
+
+  # Speculative decoding [Optional];
+  # for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
+  speculative_models: [""]
+
+  # amount of speculative tokens
+  num_speculative_tokens: 5
+
+  # ngram specific parameter: 
+  ngram_prompt_lookup_max: 4
+
+  # if speculative decoding is in use, this parameter should be set to True
+  use_v2_block_manager: True
+
+  # should be set to 1, but in the future can be changed (check the link 'for more details:' above on dev status)
+  speculative_draft_tensor_parallel_size: 1

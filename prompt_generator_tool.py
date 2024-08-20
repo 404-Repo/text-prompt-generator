@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import tqdm
 from loguru import logger
+from time import time
 
 import generator.utils.prompts_filtering_utils as prompt_filters
 import generator.utils.io_utils as io_utils
@@ -55,19 +56,28 @@ def main():
                                                               "configs/generator_config.yml"))
     prompt_generator = PromptGenerator(proc_mode_option)
 
-    if proc_mode == "preload_llms" and proc_mode_option == "vllm":
+    if proc_mode_option == "vllm":
         llm_models = generator_config["vllm_api"]["llm_models"]
+    elif proc_mode_option == "groq":
+        llm_models = generator_config["groq_api"]["llm_models"]
+    else:
+        llm_models = []
+
+    if proc_mode == "preload_llms":
+        if len(llm_models) == 0:
+            raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
+
+        t1 = time()
         for i in tqdm.trange(len(llm_models)):
             prompt_generator.load_model(llm_models[i])
             prompt_generator.unload_model()
+        t2 = time()
+        duration = (t2 - t1) / 60
+        logger.info(f" It tooK: {duration} mins.")
 
     elif proc_mode == "prompt_generation" and proc_mode_option != "":
-        if proc_mode_option == "groq":
-            llm_models = generator_config["groq_api"]["llm_models"]
-        elif proc_mode_option == "vllm":
-            llm_models = generator_config["vllm_api"]["llm_models"]
-        else:
-            raise ValueError("Unsupported inference engine was specified!")
+        if len(llm_models) == 0:
+            raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
 
         if pipeline_config["iterations_number"] > -1:
             total_iters = range(pipeline_config["iterations_number"])
@@ -76,13 +86,16 @@ def main():
 
         prompt_generator.load_model(llm_models[0])
 
+        t1 = time()
         prompts_dataset = []
         for i, _ in enumerate(total_iters):
             prompts = prompt_generator.generate()
             prompts_out = prompt_filters.post_process_generated_prompts(prompts)
             prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
             prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
-                                                                   pipeline_config["filter_prompts_with_words"])
+                                                                   pipeline_config["prompts_with_words_to_filter_out"])
+            prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
+                                                                   pipeline_config["words_to_remove_from_prompts"])
             prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
             prompts_dataset += prompts_out
 
@@ -94,6 +107,9 @@ def main():
                     model_id = np.random.randint(0, len(llm_models))
                     prompt_generator.unload_model()
                     prompt_generator.load_model(llm_models[model_id])
+        t2 = time()
+        duration = (t2 - t1) / 60
+        logger.info(f" It tooK: {duration} mins.")
 
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
         prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
@@ -107,12 +123,16 @@ def main():
 
     elif proc_mode == "filter_prompts_with_words":
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
-        prompts_out = prompt_filters.filter_prompts_with_words(prompts, pipeline_config["filter_prompts_with_words"])
+        prompts_out = prompt_filters.filter_prompts_with_words(prompts, pipeline_config["prompts_with_words_to_filter_out"])
+        prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
+                                                               pipeline_config["words_to_remove_from_prompts"])
         prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
         io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out, "w")
 
     else:
         raise ValueError("Unknown mode was specified. Check supported modes using -h option.")
+
+    prompt_generator.unload_model()
 
 
 if __name__ == '__main__':
