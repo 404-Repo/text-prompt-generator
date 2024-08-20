@@ -12,14 +12,14 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Describe static objects.
                      Category Specificity: All objects must belong exclusively to the [category_name] category. 
                      Describe only appearance of the object and exclude any description of the surroundings. 
-                     Exclusions: Do not include bodies of water (for example: lake, sea, river, marina) or 
+                     Exclusions: Do not include bodies of water (for example: lake, sea, river, marina, water) or 
                      vast open areas (for example: field, forest, plain, park, street, highway, road, parking lot) in the prompts.
                      Prompt Format: Each prompt must be written in lower case, unique, fully complete, grammatically correct, and limited to ten words or fewer.
                      Prompts must not finish with prepositions (for example: 'in', 'on', 'with', 'of', 'over') or 'and' word.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["humanoid machines", "animals", "fantasy and science fiction creatures", "statues",
+obj_categories: ["machines", "animals", "fantasy and science fiction creatures", "statues",
                  "plants, mushrooms and trees", "gem stones and rocks", "vehicles", "weapons",
                  "food and drinks", "household items", "sports equipment", "clothing", "furniture", "jewelry", "tools",
                  "musical instruments"]
@@ -35,7 +35,7 @@ prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "gar
                                    "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                                    "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
                                    "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                                   "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach"]
+                                   "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach", "water"]
 #
 words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
                                "develop", "paint", "construct", "answer"]
