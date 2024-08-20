@@ -85,14 +85,14 @@ def correct_non_finished_prompts(prompts: List[str]):
     filtered_prompts: list with filtered prompts
     """
 
-    prepositions = [
+    words = [
         'in', 'on', 'at', 'by', 'with', 'about', 'against', 'among', 'before',
         'behind', 'between', 'during', 'for', 'from', 'of', 'to', 'over', 'under',
         'through', 'into', 'upon', 'within', 'without', 'along', 'across', 'behind',
         'beneath', 'beside', 'beyond', 'near', 'off', 'onto', 'towards', 'underneath',
-        'outside'
+        'outside', 'and', 'that', 'which'
     ]
-    pattern = re.compile(r'\b(' + '|'.join(prepositions) + r')\b\s*$', re.IGNORECASE)
+    pattern = re.compile(r'\b(' + '|'.join(words) + r')\b\s*$', re.IGNORECASE)
     filtered_prompts = [re.sub(pattern, '', prompt).strip() + "\n" for prompt in prompts]
     return filtered_prompts
 
@@ -126,4 +126,27 @@ def post_process_generated_prompts(prompts_list: List[str]):
                     line += "\n"
                 processed_lines += [line]
         result_prompts += processed_lines
+    return result_prompts
+
+
+def remove_words_from_prompts(prompts: List[str], words_to_remove: List[str]):
+    """
+    Function for removing words from the prompts
+
+    Parameters
+    ----------
+    prompts: list of input prompts stored as strings
+    words_to_remove: list of words that will be removed from the prompts of they will be found
+
+    Returns
+    -------
+    result_prompts: a list with edited prompts
+    """
+    result_prompts = []
+    for prompt in prompts:
+        word_list = prompt.split()
+        filtered_words = [word for word in word_list if word not in words_to_remove]
+        result_prompt = ' '.join(filtered_words)
+        result_prompts.append(result_prompt)
+
     return result_prompts
