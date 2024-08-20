@@ -13,20 +13,13 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Category Specificity: All objects must belong exclusively to the [category_name] category. 
                      Describe only appearance of the object and exclude any description of the surroundings. 
                      Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers, marina) or 
-                     vast open areas (e.g., fields, forests, plains, parks, streets, highways) in the prompts.
+                     vast open areas (e.g., fields, forests, plains, parks, streets, highways, road, parking lot) in the prompts.
                      Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to ten words or fewer.
+                     Prompts must not finish with prepositions (for example: 'in', 'on', 'with', 'of', 'over') or 'and' word.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
-#                     Architecture: If selecting objects from the architecture category, describe only exterior appearance of the object, avoiding interior details.
-#                     Vehicles, Animals and monsters: If selecting objects from the vehicles, animals or monsters category,
-#                     describe only appearance of the object without scenery or place.
-#                     Jewelry and Clothes: If selecting objects from the jewelry or clothes category, exclude references to human body parts.
-
-# special instructions per category [optional], array should be same size as obj_categories
-#instruction_per_category: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
-
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["cartoon characters and robots", "animals", "monsters and creatures", "architecture", "nature", "vehicles",
+obj_categories: ["pixar cartoon characters and robots", "animals", "monsters and creatures", "architecture", "nature", "vehicles",
                  "weapons and equipments", "food and drinks", "gadgets and electronics", "decorative elements", "household items",
                  "sports equipment", "clothing", "furniture", "jewelry", "tools", "musical instruments"]
 
@@ -41,7 +34,7 @@ prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "gar
                                    "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                                    "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
                                    "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                                   "avoid", "category", "street", "park", "make", "build", "marina"]
+                                   "avoid", "category", "street", "park", "make", "build", "marina", "what"]
 #
 words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
                                "develop", "paint", "construct", "answer"]
