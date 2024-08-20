@@ -66,6 +66,8 @@ class VLLMBackend(BaseGeneratorBackend):
                 seed = self._seed
 
             sampling_params = SamplingParams(n=1,
+                                             presence_penalty=0.3,
+                                             frequency_penalty=0.3,
                                              seed=seed,
                                              temperature=temperature,
                                              max_tokens=self._max_tokens,
