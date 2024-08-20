@@ -6,7 +6,7 @@ groq_api:
   llm_models: [""]
 
   # max tokens for prompt generation
-  max_tokens: 160
+  max_tokens: 140
 
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
   temperature: [0.3, 0.55]
@@ -21,7 +21,7 @@ vllm_api:
   llm_models: [""]
 
   # max tokens for prompt generation
-  max_tokens: 160
+  max_tokens: 140
 
   # defines the maximum length of the model output
   max_model_len: 1024
