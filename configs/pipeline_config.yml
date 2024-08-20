@@ -19,10 +19,10 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["animation characters and robots", "animals", "fictional creatures", "statues",
-                 "plants, mushrooms and trees", "rocks", "vehicles", "weapons and equipments", "food and drinks",
-                 "electronic gadgets", "household items", "sports equipment", "clothing", "furniture", "jewelry",
-                 "tools", "musical instruments"]
+obj_categories: ["characters, humans, androids", "animals", "fantasy and science fiction creatures", "statues",
+                 "plants, mushrooms and trees", "rocks, gem stones, minerals", "vehicles", "weapons and equipments",
+                 "food and drinks", "household items", "sports equipment", "clothing", "furniture", "jewelry", "tools",
+                 "musical instruments"]
 
 # Words that prompts should not contain. Prompts with these words will be removed from the dataset and filtering stage.
 prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
@@ -35,7 +35,7 @@ prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "gar
                                    "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                                    "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
                                    "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                                   "avoid", "category", "street", "park", "make", "build", "marina", "what"]
+                                   "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach"]
 #
 words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
                                "develop", "paint", "construct", "answer"]
