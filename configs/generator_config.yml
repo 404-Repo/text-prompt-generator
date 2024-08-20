@@ -9,7 +9,7 @@ groq_api:
   max_tokens: 160
 
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.25, 0.5]
+  temperature: [0.3, 0.55]
 
   # random seed for sampling during prompt generation
   seed: -1
@@ -27,7 +27,7 @@ vllm_api:
   max_model_len: 1024
 
   # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.25, 0.5]
+  temperature: [0.3, 0.55]
 
   # defines how much of the GPU memory will be reserved for LLM
   gpu_memory_utilization: 0.9
@@ -46,10 +46,10 @@ vllm_api:
   #
   speculative_models: [""]
 
-  #
+  # amount of speculative tokens
   num_speculative_tokens: 5
 
-  #
+  # ngram specific parameter: 
   ngram_prompt_lookup_max: 4
 
   # if speculative decoding is in use, this parameter should be set to True
