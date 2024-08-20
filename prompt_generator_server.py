@@ -177,6 +177,8 @@ async def generate_prompts(inference_api: str = Form(),
         prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
         prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
                                                                pipeline_config["filter_prompts_with_words"])
+        prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
+                                                               pipeline_config["words_to_remove_from_prompts"])
         prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
 
         prompts_to_send += prompts_out
