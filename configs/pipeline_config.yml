@@ -8,15 +8,22 @@ hugging_face_api_key: ""
 # [category_name] will be replaced with one of the strings stored in obj_categories list.
 
 instruction_prompt: "Task: Generate a dataset of fully complete, semantically and grammatically correct written prompts for 3D object generation using AI.
-                     Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, appearance, or pose using correct prepositions. Describe static objects.
-                     Category Specificity: All objects must belong exclusively to the [category_name] category.
-                     Architecture: If selecting objects from the architecture category, describe only exterior appearance of the object, avoiding interior details.
-                     Vehicles, Animals and monsters: If selecting objects from the vehicles, animals or monsters category, 
-                     describe only appearance of the object without scenery or place.
-                     Jewelry and Clothes: If selecting objects from the jewelry or clothes category, exclude references to human body parts. 
-                     Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers, marina) or vast open areas (e.g., fields, forests, plains, parks) in the prompts.
+                     Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, appearance, or pose using correct prepositions. 
+                     Describe static objects.
+                     Category Specificity: All objects must belong exclusively to the [category_name] category. 
+                     Describe only appearance of the object and exclude any description of the surroundings. 
+                     Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers, marina) or 
+                     vast open areas (e.g., fields, forests, plains, parks, streets, highways) in the prompts.
                      Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to ten words or fewer.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
+
+#                     Architecture: If selecting objects from the architecture category, describe only exterior appearance of the object, avoiding interior details.
+#                     Vehicles, Animals and monsters: If selecting objects from the vehicles, animals or monsters category,
+#                     describe only appearance of the object without scenery or place.
+#                     Jewelry and Clothes: If selecting objects from the jewelry or clothes category, exclude references to human body parts.
+
+# special instructions per category [optional], array should be same size as obj_categories
+#instruction_per_category: ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]
 
 # Categories of objects from where the LLM model could sample the data.
 obj_categories: ["cartoon characters and robots", "animals", "monsters and creatures", "architecture", "nature", "vehicles",
