@@ -14,7 +14,7 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Describe only appearance of the object and exclude any description of the surroundings. 
                      Exclusions: Do not include bodies of water (e.g., lakes, seas, rivers, marina) or 
                      vast open areas (e.g., fields, forests, plains, parks, streets, highways, road, parking lot) in the prompts.
-                     Prompt Format: Each prompt must be unique, fully complete, grammatically correct, and limited to ten words or fewer.
+                     Prompt Format: Each prompt must be written in lower case, unique, fully complete, grammatically correct, and limited to ten words or fewer.
                      Prompts must not finish with prepositions (for example: 'in', 'on', 'with', 'of', 'over') or 'and' word.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
