@@ -19,7 +19,7 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["pixar cartoon characters", "robots", "animals", "fantasy and science fiction creatures", "buildings",
+obj_categories: ["personages", "robots", "animals", "fantasy and science fiction creatures", "buildings",
                  "nature", "vehicles", "weapons and equipments", "food and drinks", "gadgets", "household items",
                  "sports equipment", "clothing", "furniture", "jewelry", "tools", "musical instruments"]
 
