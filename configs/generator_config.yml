@@ -32,18 +32,26 @@ vllm_api:
   # defines how much of the GPU memory will be reserved for LLM
   gpu_memory_utilization: 0.9
 
-  #
+  # Float that controls the cumulative probability of the top tokens to consider.
+  # Must be in (0, 1]. Set to 1 to consider all tokens.
   top_p: 0.95
+
+  # Float that penalizes new tokens based on whether they appear in the generated text so far.
+  # Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
+  presence_penalty: 0.3
+
+  # Float that penalizes new tokens based on their frequency in the generated text so far.
+  # Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
+  frequency_penalty: 0.3
 
   # random seed for sampling during prompt generation
   seed: -1
 
-  #
+  # the number of GPUs that will be used by vLLM
   tensor_parallel_size: 1
 
   # Speculative decoding [Optional];
   # for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
-  #
   speculative_models: [""]
 
   # amount of speculative tokens
