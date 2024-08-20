@@ -72,7 +72,8 @@ def main():
             prompt_generator.load_model(llm_models[i])
             prompt_generator.unload_model()
         t2 = time()
-        logger.info(f" It tooK: {(t2 - t1) / 60} mins.")
+        duration = (t2 - t1) / 60
+        logger.info(f" It tooK: {duration} mins.")
 
     elif proc_mode == "prompt_generation" and proc_mode_option != "":
         if len(llm_models) == 0:
@@ -107,7 +108,8 @@ def main():
                     prompt_generator.unload_model()
                     prompt_generator.load_model(llm_models[model_id])
         t2 = time()
-        logger.info(f" It tooK: {(t2 - t1) / 60} mins.")
+        duration = (t2 - t1) / 60
+        logger.info(f" It tooK: {duration} mins.")
 
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
         prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
