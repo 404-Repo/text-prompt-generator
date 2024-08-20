@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 import tqdm
 from loguru import logger
+from time import time
 
 import generator.utils.prompts_filtering_utils as prompt_filters
 import generator.utils.io_utils as io_utils
@@ -66,9 +67,12 @@ def main():
         if len(llm_models) == 0:
             raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
 
+        t1 = time()
         for i in tqdm.trange(len(llm_models)):
             prompt_generator.load_model(llm_models[i])
             prompt_generator.unload_model()
+        t2 = time()
+        logger.info(f" It tooK: {(t2 - t1) / 60} mins.")
 
     elif proc_mode == "prompt_generation" and proc_mode_option != "":
         if len(llm_models) == 0:
@@ -81,6 +85,7 @@ def main():
 
         prompt_generator.load_model(llm_models[0])
 
+        t1 = time()
         prompts_dataset = []
         for i, _ in enumerate(total_iters):
             prompts = prompt_generator.generate()
@@ -101,6 +106,8 @@ def main():
                     model_id = np.random.randint(0, len(llm_models))
                     prompt_generator.unload_model()
                     prompt_generator.load_model(llm_models[model_id])
+        t2 = time()
+        logger.info(f" It tooK: {(t2 - t1) / 60} mins.")
 
         prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
         prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
