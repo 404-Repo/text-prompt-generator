@@ -131,15 +131,16 @@ def post_process_generated_prompts(prompts_list: List[str]):
 
 def remove_words_from_prompts(prompts: List[str], words_to_remove: List[str]):
     """
+    Function for removing words from the prompts
 
     Parameters
     ----------
-    prompts
-    words_to_remove
+    prompts: list of input prompts stored as strings
+    words_to_remove: list of words that will be removed from the prompts of they will be found
 
     Returns
     -------
-
+    result_prompts: a list with edited prompts
     """
     result_prompts = []
     for prompt in prompts:
