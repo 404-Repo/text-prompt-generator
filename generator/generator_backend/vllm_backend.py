@@ -21,13 +21,20 @@ class VLLMBackend(BaseGeneratorBackend):
         ----------
         config_data: dictionary with generator configuration
         """
+        # vLLM model generator parameters
+        self._max_model_len = config_data["vllm_api"]["max_model_len"]
         self._max_tokens = config_data["vllm_api"]["max_tokens"]
+        self._temperature = config_data["vllm_api"]["temperature"]
         self._seed = config_data["vllm_api"]['seed']
         self._top_p = config_data["vllm_api"]["top_p"]
+        self._presence_penalty = config_data["vllm_api"]["presence_penalty"]
+        self._frequency_penalty = config_data["vllm_api"]["frequency_penalty"]
+
+        # gpu parameters
         self._gpu_memory_utilization = config_data["vllm_api"]["gpu_memory_utilization"]
         self._tensor_parallel_size = config_data["vllm_api"]["tensor_parallel_size"]
-        self._max_model_len = config_data["vllm_api"]["max_model_len"]
-        self._temperature = config_data["vllm_api"]["temperature"]
+
+        # speculative model parameters
         self._num_speculative_tokens = config_data["vllm_api"]["num_speculative_tokens"]
         self._ngram_prompt_lookup_max = config_data["vllm_api"]["ngram_prompt_lookup_max"]
         self._use_v2_block_manager = config_data["vllm_api"]["use_v2_block_manager"]
@@ -66,8 +73,8 @@ class VLLMBackend(BaseGeneratorBackend):
                 seed = self._seed
 
             sampling_params = SamplingParams(n=1,
-                                             presence_penalty=0.3,
-                                             frequency_penalty=0.3,
+                                             presence_penalty=self._presence_penalty,
+                                             frequency_penalty=self._frequency_penalty,
                                              seed=seed,
                                              temperature=temperature,
                                              max_tokens=self._max_tokens,
