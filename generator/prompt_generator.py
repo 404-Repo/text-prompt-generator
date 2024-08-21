@@ -29,7 +29,7 @@ class PromptGenerator:
 
         elif self._backend == "vllm":
             self._generator = VLLMBackend(generator_config)
-            self._speculative_models = generator_config["vllm_api"]["speculative_models"]
+            self._speculative_model = generator_config["vllm_api"]["speculative_model"]
 
         else:
             raise ValueError("Unknown generator_type was specified.")
@@ -51,7 +51,7 @@ class PromptGenerator:
         model_name: a string with model name from HF (hugging face)
         """
         if self._backend == "vllm":
-            self._generator.preload_model(model_name, self._speculative_models[0])
+            self._generator.preload_model(model_name, self._speculative_model)
         else:
             self._generator.preload_model(model_name)
 

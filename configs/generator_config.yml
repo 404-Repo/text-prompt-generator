@@ -3,7 +3,7 @@ groq_api:
   api_key: ""
 
   # one of the models supported by groq platform: https://console.groq.com/docs/models
-  llm_models: [""]
+  llm_model: ""
 
   # max tokens for prompt generation
   max_tokens: 150
@@ -18,7 +18,7 @@ vllm_api:
   # the vllm model that will be used for the prompt generation;
   # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
   # awq - quantization level of the model supported by the vllm
-  llm_models: [""]
+  llm_model: ""
 
   # max tokens for prompt generation
   max_tokens: 150
@@ -52,7 +52,7 @@ vllm_api:
 
   # Speculative decoding [Optional];
   # for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
-  speculative_models: [""]
+  speculative_model: ""
 
   # amount of speculative tokens
   num_speculative_tokens: 5

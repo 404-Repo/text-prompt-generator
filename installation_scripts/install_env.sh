@@ -32,7 +32,7 @@ module.exports = {
     name: 'prompts_generator',
     script: 'prompt_generator_server.py',
     interpreter: '${CONDA_INTERPRETER_PATH}',
-    args: '--port 8888'
+    args: '--port 8888 --backend vllm'
   }]
 };
 EOF
