@@ -4,7 +4,6 @@ import argparse
 import requests
 import json
 
-import numpy as np
 from time import (time, sleep)
 from typing import Dict, List
 from contextlib import asynccontextmanager
@@ -40,7 +39,7 @@ args, _ = get_args()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI, args: List[str]):
+async def lifespan(app: FastAPI):
     """
     Function for preloading LLM models before they will be used by pipeline
 
