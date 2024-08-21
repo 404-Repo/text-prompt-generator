@@ -30,6 +30,7 @@ def get_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=10006)
+    parser.add_argument("--backend", type=str, default='vllm')
     args, extras = parser.parse_known_args()
     return args, extras
 
@@ -39,26 +40,25 @@ args, _ = get_args()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI, args: List[str]):
     """
     Function for preloading LLM models before they will be used by pipeline
 
     Parameters
     ----------
     app: FastAPI server app
+    args: list of input arguments
     """
     logger.info("Pre-downloading all models.")
     # Startup logic
     current_dir = os.getcwd()
     generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                               "configs/generator_config.yml"))
-    llm_models = generator_config["vllm_api"]["llm_models"]
-    app.state.generator = PromptGenerator("vllm")
+    llm_model = generator_config["vllm_api"]["llm_model"]
+    app.state.generator = PromptGenerator(args.backend)
 
-    if len(llm_models) > 0:
-        for i in tqdm.trange(len(llm_models)):
-            app.state.generator.load_model(llm_models[i])
-            app.state.generator.unload_model()
+    app.state.generator.load_model(llm_model)
+    app.state.generator.unload_model()
 
     yield
 
@@ -113,8 +113,7 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
 
 
 @app.post("/generate_prompts/")
-async def generate_prompts(inference_api: str = Form(),
-                           save_locally_only: bool = Form()):
+async def generate_prompts(save_locally_only: bool = Form(False)):
     """
     Server function for running the prompt generation
     Parameters
@@ -143,13 +142,6 @@ async def generate_prompts(inference_api: str = Form(),
     generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                               "configs/generator_config.yml"))
 
-    if inference_api == "vllm":
-        llm_models = generator_config["vllm_api"]["llm_models"]
-    elif inference_api == "groq":
-        llm_models = generator_config["groq_api"]["llm_models"]
-    else:
-        raise ValueError(f"Unsupported inference engine was specified: {inference_api}.")
-
     # defines whether we will have an infinite loop or not
     pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
                                                              "configs/pipeline_config.yml"))
@@ -161,22 +153,18 @@ async def generate_prompts(inference_api: str = Form(),
         total_iters = iter(bool, True)
         logger.info("Running infinite loop. Interrupt by CTRL + C.")
 
-    # init prompt generator
-    prompt_generator = PromptGenerator(inference_api)
-    prompt_generator.load_model(llm_models[0])
-
     # loop for prompt generation
     prompts_to_send = []
     for i, _ in enumerate(total_iters):
         t1_local = time()
 
         logger.info(f"Generation Iteration: {i}\n")
-        prompts = prompt_generator.generate()
+        prompts = app.state.generator.generate()
 
         prompts_out = prompt_filters.post_process_generated_prompts(prompts)
         prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
         prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
-                                                               pipeline_config["filter_prompts_with_words"])
+                                                               pipeline_config["prompts_with_words_to_filter_out"])
         prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
                                                                pipeline_config["words_to_remove_from_prompts"])
         prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
@@ -205,11 +193,7 @@ async def generate_prompts(inference_api: str = Form(),
             prompts_to_send.clear()
             logger.info(f"Current dataset size: {len(prompts_filtered)}")
 
-            if len(llm_models) > 1:
-                model_id = np.random.randint(0, len(llm_models))
-                prompt_generator.unload_model()
-                prompt_generator.load_model(llm_models[model_id])
-
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=args.port)
+    app.state.generator.unload_model()
