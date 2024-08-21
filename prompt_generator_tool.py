@@ -23,7 +23,7 @@ def console_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", required=False, help="options: "
-                                                       "'preload_llms, vllm', "
+                                                       "'preload_llm, vllm', "
                                                        "'prompt_generation, groq', "
                                                        "'prompt_generation, vllm', "
                                                        "'filter_unique_prompts', "
@@ -57,34 +57,29 @@ def main():
     prompt_generator = PromptGenerator(proc_mode_option)
 
     if proc_mode_option == "vllm":
-        llm_models = generator_config["vllm_api"]["llm_models"]
+        llm_model = generator_config["vllm_api"]["llm_model"]
     elif proc_mode_option == "groq":
-        llm_models = generator_config["groq_api"]["llm_models"]
+        llm_model = generator_config["groq_api"]["llm_model"]
     else:
-        llm_models = []
+        raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
 
-    if proc_mode == "preload_llms":
-        if len(llm_models) == 0:
-            raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
-
+    if proc_mode == "preload_llm":
         t1 = time()
-        for i in tqdm.trange(len(llm_models)):
-            prompt_generator.load_model(llm_models[i])
-            prompt_generator.unload_model()
+
+        prompt_generator.load_model(llm_model)
+        prompt_generator.unload_model()
+
         t2 = time()
         duration = (t2 - t1) / 60
         logger.info(f" It tooK: {duration} mins.")
 
     elif proc_mode == "prompt_generation" and proc_mode_option != "":
-        if len(llm_models) == 0:
-            raise ValueError(f"Unknown backend was specified: {proc_mode_option}")
-
         if pipeline_config["iterations_number"] > -1:
             total_iters = range(pipeline_config["iterations_number"])
         else:
             total_iters = iter(bool, True)
 
-        prompt_generator.load_model(llm_models[0])
+        prompt_generator.load_model(llm_model)
 
         t1 = time()
         prompts_dataset = []
@@ -103,10 +98,7 @@ def main():
                 logger.info(f"Saving batch of prompts: {len(prompts_dataset)}")
                 io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_dataset, "a")
                 prompts_dataset.clear()
-                if len(llm_models) > 1 and i < pipeline_config["iterations_number"]-1:
-                    model_id = np.random.randint(0, len(llm_models))
-                    prompt_generator.unload_model()
-                    prompt_generator.load_model(llm_models[model_id])
+
         t2 = time()
         duration = (t2 - t1) / 60
         logger.info(f" It tooK: {duration} mins.")
