@@ -55,9 +55,7 @@ async def lifespan(app: FastAPI):
                                                               "configs/generator_config.yml"))
     llm_model = generator_config["vllm_api"]["llm_model"]
     app.state.generator = PromptGenerator(args.backend)
-
     app.state.generator.load_model(llm_model)
-    app.state.generator.unload_model()
 
     yield
 
@@ -136,10 +134,6 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
                                                            "configs/server_config.yml"))
     headers = {'Content-Type': 'application/json',
                'X-Api-Key': f'{server_config["api_key_prompt_server"]}'}
-
-    # loading vllm config and getting list of models
-    generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                              "configs/generator_config.yml"))
 
     # defines whether we will have an infinite loop or not
     pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
