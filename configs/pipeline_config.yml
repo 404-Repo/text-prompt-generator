@@ -35,7 +35,9 @@ prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "gar
                                    "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
                                    "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
                                    "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                                   "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach", "water"]
+                                   "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach", "water",
+                                   "yes", "provided", "so", "using", "concise", "instruction", "instructions", "road", "station",
+                                   "store"]
 #
 words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
                                "develop", "paint", "construct", "answer"]

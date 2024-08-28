@@ -29,6 +29,9 @@ class VLLMBackend(BaseGeneratorBackend):
         self._top_p = config_data["vllm_api"]["top_p"]
         self._presence_penalty = config_data["vllm_api"]["presence_penalty"]
         self._frequency_penalty = config_data["vllm_api"]["frequency_penalty"]
+        self._disable_sliding_window = config_data["vllm_api"]["disable_sliding_window"]
+        self._enable_chunked_prefill = config_data["vllm_api"]["enable_chunked_prefill"]
+        self._max_num_batched_tokens = config_data["vllm_api"]["max_num_batched_tokens"]
 
         # gpu parameters
         self._gpu_memory_utilization = config_data["vllm_api"]["gpu_memory_utilization"]
@@ -114,8 +117,9 @@ class VLLMBackend(BaseGeneratorBackend):
                                   max_model_len=self._max_model_len,
                                   gpu_memory_utilization=self._gpu_memory_utilization,
                                   seed=random.randint(0, int(1e+5)),
-                                  enable_chunked_prefill=True,
-                                  max_num_batched_tokens=2048)
+                                  disable_sliding_window=self._disable_sliding_window,
+                                  enable_chunked_prefill=self._enable_chunked_prefill,
+                                  max_num_batched_tokens=self._max_num_batched_tokens)
         elif speculative_model == "[ngram]":
             self._generator = LLM(model=model_name,
                                   trust_remote_code=True,

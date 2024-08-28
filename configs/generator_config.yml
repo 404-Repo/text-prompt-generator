@@ -50,6 +50,15 @@ vllm_api:
   # the number of GPUs that will be used by vLLM
   tensor_parallel_size: 1
 
+  # enabling / disabling sliding window
+  disable_sliding_window: True
+
+  # enabling / disabling chunked prefill optimization
+  enable_chunked_prefill: True
+
+  # amount of tokens to use if chunked prefill is enabled
+  max_num_batched_tokens: 2048
+
   # Speculative decoding [Optional];
   # for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
   speculative_model: ""
