@@ -10,9 +10,10 @@ from contextlib import asynccontextmanager
 
 import tqdm
 import torch
+import uvicorn
 from loguru import logger
 from fastapi import FastAPI, Form
-import uvicorn
+
 
 import generator.utils.io_utils as io_utils
 from generator.prompt_generator import PromptGenerator
