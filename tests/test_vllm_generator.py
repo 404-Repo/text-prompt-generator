@@ -1,8 +1,9 @@
 import os
-import torch
 
+import torch
 from generator.generator_backend.vllm_backend import VLLMBackend
 from generator.utils.io_utils import load_config_file
+
 
 current_dir = os.getcwd()
 generator_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/generator_config.yml"))
@@ -29,4 +30,4 @@ def test_unload_model():
     gpu_available_memory_after = gpu_memory_total_after - torch.cuda.memory_allocated()
 
     assert gpu_available_memory_before != gpu_available_memory_after
-    assert (gpu_memory_total_after - gpu_available_memory_after)/(1024**3) < 10**3
+    assert (gpu_memory_total_after - gpu_available_memory_after) / (1024**3) < 10**3
