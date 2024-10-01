@@ -1,8 +1,10 @@
+from pathlib import Path
+from typing import Any
+
 import yaml
-import os
 
 
-def load_config_file(config_path: str):
+def load_config_file(config_path: Path) -> dict[str, Any]:
     """
     Function for loading parameters for running the LLM
 
@@ -15,12 +17,12 @@ def load_config_file(config_path: str):
     config_data: loaded dictionary with data from the configuration file
     """
 
-    with open(config_path, "r") as file:
-        config_data = yaml.safe_load(file)
+    with config_path.open(encoding="utf-8") as file:
+        config_data: dict[str, Any] = yaml.safe_load(file)
     return config_data
 
 
-def load_file_with_prompts(file_path: str):
+def load_file_with_prompts(file_path: str) -> list[str]:
     """
     Function for loading the prompts dataset for processing.
 
@@ -32,12 +34,12 @@ def load_file_with_prompts(file_path: str):
     -------
     prompts: list with loaded prompts
     """
-    with open(file_path, "r") as file:
+    with Path(file_path).open(encoding="utf-8") as file:
         prompts = [line.rstrip() for line in file]
     return prompts
 
 
-def save_prompts(file_name: str, prompts_list: list, mode: str = "a"):
+def save_prompts(file_name: str, prompts_list: list, mode: str = "a") -> None:
     """
     Function for saving the prompts stored in the prompts list
 
@@ -48,6 +50,6 @@ def save_prompts(file_name: str, prompts_list: list, mode: str = "a"):
     mode: mode for writing the file: 'a', 'w'
 
     """
-    with open(file_name, mode) as file:
+    with Path(file_name).open(mode=mode, encoding="utf-8") as file:
         for p in prompts_list:
-            file.write("%s" % p)
+            file.write(f"{p}")

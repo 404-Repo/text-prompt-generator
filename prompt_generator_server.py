@@ -1,25 +1,23 @@
-import os
-import gc
 import argparse
-import requests
+import gc
 import json
-
-from time import (time, sleep)
-from typing import Dict, List
+from collections.abc import Iterator
 from contextlib import asynccontextmanager
-
-import tqdm
-import torch
-from loguru import logger
-from fastapi import FastAPI, Form
-import uvicorn
+from pathlib import Path
+from time import sleep, time
 
 import generator.utils.io_utils as io_utils
-from generator.prompt_generator import PromptGenerator
 import generator.utils.prompts_filtering_utils as prompt_filters
+import requests
+import torch
+import tqdm
+import uvicorn
+from fastapi import FastAPI, Form
+from generator.prompt_generator import PromptGenerator
+from loguru import logger
 
 
-def get_args():
+def get_args() -> tuple[argparse.Namespace, list[str]]:
     """
     Function for setting up server port arg
     Returns
@@ -29,7 +27,7 @@ def get_args():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=10006)
-    parser.add_argument("--backend", type=str, default='vllm')
+    parser.add_argument("--backend", type=str, default="vllm")
     args, extras = parser.parse_known_args()
     return args, extras
 
@@ -39,7 +37,7 @@ args, _ = get_args()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     """
     Function for preloading LLM models before they will be used by pipeline
 
@@ -50,9 +48,8 @@ async def lifespan(app: FastAPI):
     """
     logger.info("Pre-downloading all models.")
     # Startup logic
-    current_dir = os.getcwd()
-    generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                              "configs/generator_config.yml"))
+    current_dir = Path.cwd()
+    generator_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "generator_config.yml")
     llm_model = generator_config["vllm_api"]["llm_model"]
     app.state.generator = PromptGenerator(args.backend)
     app.state.generator.load_model(llm_model)
@@ -67,7 +64,7 @@ async def lifespan(app: FastAPI):
 app.router.lifespan_context = lifespan
 
 
-def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Dict):
+def send_data_with_retry(config_data: dict, prompts_list: list[str], headers: dict) -> bool:
     """
     Function for sending generated prompts to the remote server
 
@@ -85,24 +82,27 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
     logger.info("Sending the data to the server.")
 
     prompts_to_json = json.dumps({"prompts": prompts_list})
-    for attempt in tqdm.trange(1, config_data["server_max_retries_number"] + 1):
+    max_retries = config_data["server_max_retries_number"]
+    retry_delay = int(config_data["server_retry_delay"])
+
+    for attempt in tqdm.trange(1, max_retries + 1):
         try:
-            response = requests.post(config_data["api_prompt_server_url"],
-                                     data=prompts_to_json,
-                                     headers=headers)
+            response = requests.post(
+                config_data["api_prompt_server_url"], data=prompts_to_json, headers=headers, timeout=30
+            )
 
             if response.status_code == 200:
                 logger.info("Successfully sent the data!")
                 return True
-            else:
-                logger.warning(f"Failed to send data (attempt {attempt}): {response.status_code}.")
-                logger.warning("Reattempting...")
-        except requests.RequestException as e:
+
+            logger.warning(f"Failed to send data (attempt {attempt}): {response.status_code}.")
+            logger.warning("Reattempting...")
+
+        except requests.exceptions.RequestException as e:
             logger.warning(f"Error sending data [attempt: {attempt}]: {e}")
 
-        if attempt < config_data["server_max_retries_number"]:
-            logger.info(f'Retrying in {config_data["server_retry_delay"]}seconds.')
-            retry_delay = int(config_data["server_retry_delay"])
+        if attempt < max_retries:
+            logger.info(f"Retrying in {retry_delay} seconds.")
             sleep(retry_delay)
 
     logger.warning("Max retries reached. Failed to send data. Continue generating prompts.")
@@ -110,7 +110,7 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
 
 
 @app.post("/generate_prompts/")
-async def generate_prompts(save_locally_only: bool = Form(False)):
+async def generate_prompts(save_locally_only: bool = Form(False)) -> None:
     """
     Server function for running the prompt generation
     Parameters
@@ -121,24 +121,20 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
 
     """
 
-    logger.info(f"\n")
-    logger.info("*" * 35)
+    logger.info("\n" + "*" * 35)
     logger.info(" *** Prompt Dataset generator ***")
-    logger.info("*" * 35)
-    logger.info(f"\n")
+    logger.info("*" * 35 + "\n")
 
     # loading server config
-    current_dir = os.getcwd()
+    current_dir = Path.cwd()
 
-    server_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                           "configs/server_config.yml"))
-    headers = {'Content-Type': 'application/json',
-               'X-Api-Key': f'{server_config["api_key_prompt_server"]}'}
+    server_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "server_config.yml")
+    headers = {"Content-Type": "application/json", "X-Api-Key": f'{server_config["api_key_prompt_server"]}'}
 
     # defines whether we will have an infinite loop or not
-    pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                             "configs/pipeline_config.yml"))
+    pipeline_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "pipeline_config.yml")
 
+    total_iters: range | Iterator[bool]
     if pipeline_config["iterations_number"] > -1:
         total_iters = range(pipeline_config["iterations_number"])
         logger.info(f"Requested amount of iterations: {total_iters}")
@@ -156,10 +152,12 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
 
         prompts_out = prompt_filters.post_process_generated_prompts(prompts)
         prompts_out = prompt_filters.filter_unique_prompts(prompts_out)
-        prompts_out = prompt_filters.filter_prompts_with_words(prompts_out,
-                                                               pipeline_config["prompts_with_words_to_filter_out"])
-        prompts_out = prompt_filters.remove_words_from_prompts(prompts_out,
-                                                               pipeline_config["words_to_remove_from_prompts"])
+        prompts_out = prompt_filters.filter_prompts_with_words(
+            prompts_out, pipeline_config["prompts_with_words_to_filter_out"]
+        )
+        prompts_out = prompt_filters.remove_words_from_prompts(
+            prompts_out, pipeline_config["words_to_remove_from_prompts"]
+        )
         prompts_out = prompt_filters.correct_non_finished_prompts(prompts_out)
 
         prompts_to_send += prompts_out
@@ -170,7 +168,7 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
         io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out)
 
         t2_local = time()
-        iter_duration = (t2_local-t1_local)/60.0
+        iter_duration = (t2_local - t1_local) / 60.0
         logger.info(f"Current iteration took: {iter_duration} min.")
 
         if len(prompts_to_send) >= 1000:
@@ -188,5 +186,5 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=args.port)
+    uvicorn.run(app, host="0.0.0.0", port=args.port)  # noqa:S104
     app.state.generator.unload_model()

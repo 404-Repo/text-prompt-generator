@@ -1,8 +1,8 @@
 import re
-import os
+from pathlib import Path
 
-from loguru import logger
 from huggingface_hub import login
+from loguru import logger
 
 import generator.utils.io_utils as io_utils
 from generator.generator_backend.groq_backend import GroqBackend
@@ -10,56 +10,63 @@ from generator.generator_backend.vllm_backend import VLLMBackend
 
 
 class PromptGenerator:
-    def __init__(self, backend: str):
+    def __init__(self, backend: str) -> None:
         """
         Parameters
         ----------
         backend: one of the supported inference engines: VLLM or Groq
         """
-        current_dir = os.getcwd()
+        current_dir = Path.cwd()
+        self._generator: VLLMBackend | GroqBackend
         self._backend = backend
-        generator_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                  "configs/generator_config.yml"))
+        self._generator_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "generator_config.yml")
+        self._pipeline_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "pipeline_config.yml")
 
+        self._initialize_backend()
+        self._initialize_huggingface()
+        self._instruction_prompt = self._get_instruction_prompt()
+
+    def _initialize_backend(self) -> None:
         if self._backend == "groq":
-            if generator_config["groq_api"]["api_key"] != "":
-                self._generator = GroqBackend(generator_config)
-            else:
-                logger.error("Groq API key was not specified.")
-
+            self._initialize_groq()
         elif self._backend == "vllm":
-            self._generator = VLLMBackend(generator_config)
-            self._speculative_model = generator_config["vllm_api"]["speculative_model"]
-
+            self._initialize_vllm()
         else:
-            raise ValueError("Unknown generator_type was specified.")
+            raise ValueError(f"Unknown generator_type was specified: {self._backend}")
 
-        self._pipeline_config = io_utils.load_config_file(os.path.join(os.path.relpath(current_dir),
-                                                                       "configs/pipeline_config.yml"))
-        if self._pipeline_config["hugging_face_api_key"] != "":
+    def _initialize_groq(self) -> None:
+        if self._generator_config["groq_api"]["api_key"]:
+            self._generator = GroqBackend(self._generator_config)
+        else:
+            logger.error("Groq API key was not specified.")
+
+    def _initialize_vllm(self) -> None:
+        self._generator = VLLMBackend(self._generator_config)
+        self._speculative_model = self._generator_config["vllm_api"]["speculative_model"]
+
+    def _initialize_huggingface(self) -> None:
+        if self._pipeline_config["hugging_face_api_key"]:
             login(token=self._pipeline_config["hugging_face_api_key"])
         else:
             logger.error("Hugging Face API key was not specified.")
 
-        self._instruction_prompt = self._get_instruction_prompt()
-
-    def load_model(self, model_name: str):
+    def load_model(self, model_name: str) -> None:
         """
 
         Parameters
         ----------
         model_name: a string with model name from HF (hugging face)
         """
-        if self._backend == "vllm":
+        if isinstance(self._generator, VLLMBackend):
             self._generator.preload_model(model_name, self._speculative_model)
         else:
             self._generator.preload_model(model_name)
 
-    def unload_model(self):
+    def unload_model(self) -> None:
         """Function for unloading model"""
         self._generator.unload_model()
 
-    def generate(self):
+    def generate(self) -> list[str]:
         """
         Function wrapper for calling one of the backend generators.
 
@@ -71,7 +78,7 @@ class PromptGenerator:
         prompts = self._generator.generate(self._instruction_prompt, self._pipeline_config["obj_categories"])
         return prompts
 
-    def _get_instruction_prompt(self):
+    def _get_instruction_prompt(self) -> str:
         """
         Function for pre-processing input prompt-instruction for the LLM.
         It will be used for generating prompts.
@@ -83,11 +90,13 @@ class PromptGenerator:
 
         # prompt for dataset generation
         instruction_prompt = self._pipeline_config["instruction_prompt"]
-        instruction_prompt = instruction_prompt.replace("[prompts_number]", str(self._pipeline_config["prompts_number"]))
+        instruction_prompt = instruction_prompt.replace(
+            "[prompts_number]", str(self._pipeline_config["prompts_number"])
+        )
 
-        regex = re.compile(r'(?<=[^.{}])(\.)(?![{}])'.format("e.g.", "e.g."))
-        prompt_printing = regex.sub(r'\1\n', instruction_prompt)
+        regex = re.compile(r"(?<=[^.{}])(\.)(?![{}])".format("e.g.", "e.g."))
+        prompt_printing = regex.sub(r"\1\n", instruction_prompt)
 
         logger.info(f" Input prompt: {prompt_printing}")
 
-        return instruction_prompt
+        return str(instruction_prompt)

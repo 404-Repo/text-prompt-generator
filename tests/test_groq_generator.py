@@ -1,9 +1,8 @@
 import os
 
-from loguru import logger
-
 from generator.generator_backend.groq_backend import GroqBackend
 from generator.utils.io_utils import load_config_file
+from loguru import logger
 
 
 def test_load_model():
