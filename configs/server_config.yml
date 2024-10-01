@@ -9,3 +9,5 @@ server_max_retries_number: 5
 
 # wait time in seconds before reattempting to send the data to the server
 server_retry_delay: 1
+
+validator_server_url: ""

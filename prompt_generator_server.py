@@ -96,17 +96,23 @@ def send_data_with_retry(config_data: Dict, prompts_list: List[str], headers: Di
                 logger.info("Successfully sent the data!")
                 return True
             else:
-                logger.warning(f"Failed to send data (attempt {attempt}): {response.status_code}.")
+                logger.warning(
+                    f"Failed to send data (attempt {attempt}): {response.status_code}.")
                 logger.warning("Reattempting...")
         except requests.RequestException as e:
             logger.warning(f"Error sending data [attempt: {attempt}]: {e}")
 
+        requests.post(config_data["validator_server_url"],
+                      data=prompts_to_json, headers=headers)
+
         if attempt < config_data["server_max_retries_number"]:
-            logger.info(f'Retrying in {config_data["server_retry_delay"]}seconds.')
+            logger.info(
+                f'Retrying in {config_data["server_retry_delay"]}seconds.')
             retry_delay = int(config_data["server_retry_delay"])
             sleep(retry_delay)
 
-    logger.warning("Max retries reached. Failed to send data. Continue generating prompts.")
+    logger.warning(
+        "Max retries reached. Failed to send data. Continue generating prompts.")
     return False
 
 
@@ -166,9 +172,11 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
         prompts_to_send += prompts_out
         prompts_to_send = prompt_filters.filter_unique_prompts(prompts_to_send)
 
-        logger.info(f"Current prompts list size: {len(prompts_to_send)} / 1000+")
+        logger.info(
+            f"Current prompts list size: {len(prompts_to_send)} / 1000+")
 
-        io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_out)
+        io_utils.save_prompts(
+            pipeline_config["prompts_output_file"], prompts_out)
 
         t2_local = time()
         iter_duration = (t2_local-t1_local)/60.0
@@ -176,14 +184,17 @@ async def generate_prompts(save_locally_only: bool = Form(False)):
 
         if len(prompts_to_send) >= 1000:
             if not save_locally_only:
-                result = send_data_with_retry(server_config, prompts_to_send, headers)
+                result = send_data_with_retry(
+                    server_config, prompts_to_send, headers)
                 if result:
                     prompts_to_send.clear()
 
         if i % 500 == 0:
-            prompts = io_utils.load_file_with_prompts(pipeline_config["prompts_output_file"])
+            prompts = io_utils.load_file_with_prompts(
+                pipeline_config["prompts_output_file"])
             prompts_filtered = prompt_filters.filter_unique_prompts(prompts)
-            io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
+            io_utils.save_prompts(
+                pipeline_config["prompts_output_file"], prompts_filtered, "w")
             prompts_to_send.clear()
             logger.info(f"Current dataset size: {len(prompts_filtered)}")
 
