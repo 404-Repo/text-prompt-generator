@@ -46,7 +46,7 @@ class VLLMBackend(BaseGeneratorBackend):
         messages = [
             {
                 "role": "system",
-                "content": "You are a helpful assistant"
+                "content": "You are a helpful assistant precisely following the instruction."
             },
             {
                 "role": "user",

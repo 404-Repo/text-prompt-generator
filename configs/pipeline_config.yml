@@ -17,7 +17,7 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Prompt Format: Each prompt must be written in lower case, unique, fully complete, grammatically correct, 
                      and limited to eight words or fewer.
                      Prompts must not finish with prepositions (for example: 'in', 'on', 'with', 'of', 'over' etc.) or 'and' word.
-                     Output: Provide a numbered list containing precisely [prompts_number] prompts."
+                     Output: Provide a numbered list containing precisely [prompts_number] prompts. Be concise and only generate what was requested."
 
 # Categories of objects from where the LLM model could sample the data.
 obj_categories: ["robots", "animals", "fantasy characters", "science fiction characters", "monsters and mythical creatures",
