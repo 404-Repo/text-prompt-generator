@@ -19,8 +19,8 @@ conda activate three-gen-prompt-generator
 conda info --env
 
 CUDA_HOME=${CONDA_PREFIX}
-pip install flash-attn==2.6.1 --no-build-isolation
-pip install flashinfer==0.1.3 -i https://flashinfer.ai/whl/cu121/torch2.4
+pip install flash-attn==2.7.4.post1 --no-build-isolation
+pip install flashinfer-python==0.2.0.post2 -i https://flashinfer.ai/whl/cu121/torch2.5
 
 # Store the path of the Conda interpreter
 CONDA_INTERPRETER_PATH=$(which python)
