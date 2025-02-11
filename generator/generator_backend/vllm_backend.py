@@ -41,6 +41,16 @@ class VLLMBackend(BaseGeneratorBackend):
 
         self._generator: LLM | None = None
 
+    @staticmethod
+    def _apply_conversation_template(prompt: str) -> [Dict]:
+        messages = [
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+        return messages
+
     def generate(self, instruction_prompt: str, object_categories: list[str]) -> list[str]:
         """
         Function that calls vLLM API for generating prompts.
@@ -69,6 +79,7 @@ class VLLMBackend(BaseGeneratorBackend):
             if self._generator is None:
                 raise ValueError("vLLM model not initialized.")
 
+            prompt_in = self._apply_conversation_template(prompt_in)
             outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "[category_name]")
