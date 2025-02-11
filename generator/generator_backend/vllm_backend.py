@@ -42,7 +42,7 @@ class VLLMBackend(BaseGeneratorBackend):
         self._generator: LLM | None = None
 
     @staticmethod
-    def _apply_conversation_template(prompt: str) -> [Dict]:
+    def _apply_conversation_template(prompt: str) -> [dict]:
         messages = [
             {
                 "role": "user",
