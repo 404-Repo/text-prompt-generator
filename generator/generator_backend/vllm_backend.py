@@ -45,6 +45,10 @@ class VLLMBackend(BaseGeneratorBackend):
     def _apply_conversation_template(prompt: str) -> [dict]:
         messages = [
             {
+                "role": "system",
+                "content": "You are a helpful assistant"
+            },
+            {
                 "role": "user",
                 "content": prompt
             }
@@ -79,8 +83,8 @@ class VLLMBackend(BaseGeneratorBackend):
             if self._generator is None:
                 raise ValueError("vLLM model not initialized.")
 
-            prompt_in = self._apply_conversation_template(prompt_in)
-            outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
+            conversation = self._apply_conversation_template(prompt_in)
+            outputs = self._generator.chat(conversation, sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "[category_name]")
             output_prompts.append(outputs[0].outputs[0].text)
