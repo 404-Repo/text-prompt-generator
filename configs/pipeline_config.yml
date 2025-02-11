@@ -7,22 +7,25 @@ hugging_face_api_key: ""
 # [prompts_number] will be replaced with prompts_num from this config;
 # [category_name] will be replaced with one of the strings stored in obj_categories list.
 
-instruction_prompt: "Task: Generate a dataset of fully complete, semantically and grammatically correct written prompts for 3D object generation using AI.
-                     Distinctive Features: Ensure each prompt includes one or two unique characteristics, such as color, shape, appearance, or pose using correct prepositions. 
-                     Describe static objects.
+instruction_prompt: "Task: Generate a dataset of fully complete, semantically and grammatically correct written prompts 
+                     for 3D object generation using AI. Distinctive Features: Ensure each prompt includes one or two 
+                     unique characteristics, such as color, shape, appearance, or pose using correct prepositions.
                      Category Specificity: All objects must belong exclusively to the [category_name] category. 
                      Describe only appearance of the object and exclude any description of the surroundings. 
-                     Exclusions: Do not include bodies of water (for example: lake, sea, river, marina, water) or 
+                     Exclusions: Do not include bodies of water (for example: lake, sea, river, marina, water, ocean etc.) or 
                      vast open areas (for example: field, forest, plain, park, street, highway, road, parking lot) in the prompts.
-                     Prompt Format: Each prompt must be written in lower case, unique, fully complete, grammatically correct, and limited to ten words or fewer.
-                     Prompts must not finish with prepositions (for example: 'in', 'on', 'with', 'of', 'over') or 'and' word.
+                     Prompt Format: Each prompt must be written in lower case, unique, fully complete, grammatically correct, 
+                     and limited to eight words or fewer.
+                     Prompts must not finish with prepositions (for example: 'in', 'on', 'with', 'of', 'over' etc.) or 'and' word.
                      Output: Provide a numbered list containing precisely [prompts_number] prompts."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["robots", "animals", "fantasy and science fiction creatures", "statues",
-                 "plants, mushrooms and trees", "gem stones and rocks", "vehicles", "weapons",
-                 "food and drinks", "household items", "sports equipment", "clothing", "furniture",
-                 "jewelry", "crafting and building tools", "musical instruments"]
+obj_categories: ["robots", "animals", "fantasy characters", "science fiction characters", "monsters and mythical creatures",
+                 "statues", "accessories", "plants, mushrooms and trees", "rocks and minerals", "vehicles", "weapons", "armor",
+                 "food and drinks", "household items", "sports equipment", "clothing", "furniture", "spaceships and space stations",
+                 "jewelry", "crafting and building tools", "musical instruments", "buildings", "toys and collectables",
+                 "military and war assets", "magic artifacts", "enchanted structures", "historical artifacts", "everyday objects",
+                 "factory equipment", "machines and engines"]
 
 # Words that prompts should not contain. Prompts with these words will be removed from the dataset and filtering stage.
 prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
