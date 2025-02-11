@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 
 class BaseGeneratorBackend(ABC):
@@ -7,8 +6,9 @@ class BaseGeneratorBackend(ABC):
     BaseGenerator is an abstract base class for defining different prompt generator backends.
     Subclasses must implement methods for generating prompts.
     """
+
     @abstractmethod
-    def generate(self, instruction_prompt: str,  object_categories: List[str]):
+    def generate(self, instruction_prompt: str, object_categories: list[str]) -> list[str]:
         """
         Function that calls generator API for generating prompts.
 
@@ -24,7 +24,7 @@ class BaseGeneratorBackend(ABC):
         pass
 
     @abstractmethod
-    def preload_model(self, model_name: str):
+    def preload_model(self, model_name: str) -> None:
         """
         Function for preloading LLM model in GPU memory
 
@@ -35,6 +35,6 @@ class BaseGeneratorBackend(ABC):
         pass
 
     @abstractmethod
-    def unload_model(self):
-        """ Function for unloading the model """
+    def unload_model(self) -> None:
+        """Function for unloading the model"""
         pass

@@ -1,0 +1,141 @@
+[tool.poetry]
+name = "text-prompt-generator"
+version = "0.1.0"
+description = ""
+authors = ["s7500 <stezurrodion69@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "1.26.4"
+torch = "==2.4.*"
+huggingface-hub = "==0.*"
+transformers = "==4.43.*"
+protobuf = "==5.*"
+tqdm = "4.66.5"
+pytest = "8.3.2"
+accelerate = "0.33.0"
+loguru = "0.7.2"
+nvitop = "1.3.2"
+python-multipart = "0.0.9"
+vllm = "0.5.5"
+bitsandbytes = "0.42"
+tensorizer = "^2.9.0"
+groq = "^0.11.0"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "==24.4.2"
+ruff = "==0.5.1"
+bandit = "==1.7.9"
+mypy = "==1.9.0"
+types-requests = "==2.31.0.0"
+poethepoet = "==0.27.0"
+types-PyYAML = "==6.0.12.20240808"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+target-version = ['py311']
+line-length = 120
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.pytest_cache
+  | \.idea
+  | \.venv
+  | \.vscode
+)/
+'''
+
+[tool.ruff]
+target-version = "py311"
+cache-dir = ".reports/ruff_cache"
+line-length = 120
+src = ["sources"]
+namespace-packages = ["sources"]
+fix = true
+output-format = "full"
+include = ["*.py"]
+exclude = [
+    '.venv/.*',
+    "tests",
+]
+
+[tool.ruff.lint]
+select = [
+    "E", # pycodestyle
+    "F", # pyflakes
+    "UP", # pyupgrade
+    "I", # isort
+    "S", # flake8-bandit
+    "B", # flake8-bugbear
+    "Q", # flake8-quotes
+    "ASYNC", # flake8-async
+    "PTH", # flake8-use-pathlib
+]
+# Allow autofix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Exclude directories
+exclude = [
+    ".*",
+    "tests",
+]
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = []
+
+[tool.ruff.lint.flake8-quotes]
+docstring-quotes = "double"
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+lines-after-imports = 2
+
+[tool.bandit]
+skips = ["B104"]
+exclude_dirs = [
+    "./.*/**",
+    "tests",
+]
+
+
+[tool.mypy]
+cache_dir = ".reports/mypy_cache/"
+ignore_missing_imports = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+warn_unused_ignores = false
+warn_return_any = true
+warn_no_return = false
+warn_unreachable = true
+strict_equality = true
+warn_redundant_casts = true
+exclude = [
+    '.venv/.*',
+    "tests",
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "types-pyyaml",
+]
+ignore_errors = true
+
+[tool.poe]
+poetry_command = ""
+
+[tool.poe.tasks.run-check]
+help = "Run tests and try fix format"
+ignore_fail = "return_non_zero"
+sequence = [
+    { cmd = "ruff check ." },
+    { cmd = "black ." },
+    { cmd = "bandit . -rq -c pyproject.toml" },
+    { cmd = "mypy --junit-xml .reports/mypy-junit-report.xml ." },
+]
