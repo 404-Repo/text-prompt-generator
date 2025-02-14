@@ -28,6 +28,7 @@ class VLLMBackend(BaseGeneratorBackend):
         self._top_p = config_data["vllm_api"]["top_p"]
         self._presence_penalty = config_data["vllm_api"]["presence_penalty"]
         self._frequency_penalty = config_data["vllm_api"]["frequency_penalty"]
+        self._model_name = ""
 
         # gpu parameters
         self._gpu_memory_utilization = config_data["vllm_api"]["gpu_memory_utilization"]
@@ -83,8 +84,11 @@ class VLLMBackend(BaseGeneratorBackend):
             if self._generator is None:
                 raise ValueError("vLLM model not initialized.")
 
-            conversation = self._apply_conversation_template(prompt_in)
-            outputs = self._generator.chat(conversation, sampling_params, use_tqdm=False)
+            if self._model_name != "THUDM/glm-4v-9b":
+                conversation = self._apply_conversation_template(prompt_in)
+                outputs = self._generator.chat(conversation, sampling_params, use_tqdm=False)
+            else:
+                outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "[category_name]")
             output_prompts.append(outputs[0].outputs[0].text)
@@ -124,6 +128,8 @@ class VLLMBackend(BaseGeneratorBackend):
             os.environ["VLLM_ATTENTION_BACKEND"] = "FLASHINFER"
         else:
             os.environ["VLLM_ATTENTION_BACKEND"] = "FLASH_ATTN"
+
+        self._model_name = model_name
 
         if speculative_model == "":
             self._generator = LLM(
