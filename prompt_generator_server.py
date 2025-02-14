@@ -49,10 +49,10 @@ async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]
     logger.info("Pre-downloading all models.")
     # Startup logic
     current_dir = Path.cwd()
-    generator_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "generator_config.yml")
-    llm_model = generator_config["vllm_api"]["llm_model"]
+    app.state.generator_config = io_utils.load_config_file(current_dir.resolve() / "configs" / "generator_config.yml")
+    # llm_model = generator_config["vllm_api"]["llm_model"]
     app.state.generator = PromptGenerator(args.backend)
-    app.state.generator.load_model(llm_model)
+    # app.state.generator.load_model(llm_model)
 
     yield
 
@@ -143,8 +143,21 @@ async def generate_prompts(save_locally_only: bool = Form(False)) -> None:
         logger.info("Running infinite loop. Interrupt by CTRL + C.")
 
     # loop for prompt generation
+    j=0
+    model_names = app.state.generator_config["vllm_api"]["llm_models"]
     prompts_to_send = []
+    change_model = True
     for i, _ in enumerate(total_iters):
+        if change_model:
+            ind = j % len(model_names)
+            app.state.generator.load_model(model_names[ind])
+            change_model = False
+
+            gc.collect()
+            torch.cuda.empty_cache()
+        else:
+            change_model = True
+
         t1_local = time()
 
         logger.info(f"Generation Iteration: {i}\n")
@@ -183,6 +196,10 @@ async def generate_prompts(save_locally_only: bool = Form(False)) -> None:
             io_utils.save_prompts(pipeline_config["prompts_output_file"], prompts_filtered, "w")
             prompts_to_send.clear()
             logger.info(f"Current dataset size: {len(prompts_filtered)}")
+
+        if i % pipeline_config["iterations_for_swapping_model"] and change_model:
+            app.state.generator.unload_model()
+            j += 1
 
 
 if __name__ == "__main__":
