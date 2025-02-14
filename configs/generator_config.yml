@@ -18,7 +18,8 @@ vllm_api:
   # the vllm model that will be used for the prompt generation;
   # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
   # awq - quantization level of the model supported by the vllm
-  llm_model: "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+  llm_models: ["Qwen/Qwen2.5-7B-Instruct-1M", "microsoft/phi-4", "THUDM/glm-4v-9b"]
+#  llm_models: ["allenai/OLMo-2-1124-13B-Instruct", "deepseek-ai/DeepSeek-R1-Distill-Qwen-14B", "Qwen/Qwen2.5-14B-Instruct"]
 
   # max tokens for prompt generation
   max_tokens: 150
