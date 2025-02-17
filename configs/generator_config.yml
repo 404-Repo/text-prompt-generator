@@ -18,7 +18,7 @@ vllm_api:
   # the vllm model that will be used for the prompt generation;
   # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
   # awq - quantization level of the model supported by the vllm
-  llm_model: ""
+  llm_models: [""]
 
   # max tokens for prompt generation
   max_tokens: 150
