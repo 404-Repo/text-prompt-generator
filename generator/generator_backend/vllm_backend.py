@@ -3,6 +3,7 @@ import gc
 import os
 import secrets
 from time import time
+from typing import Any
 
 import torch
 import tqdm
@@ -28,6 +29,7 @@ class VLLMBackend(BaseGeneratorBackend):
         self._top_p = config_data["vllm_api"]["top_p"]
         self._presence_penalty = config_data["vllm_api"]["presence_penalty"]
         self._frequency_penalty = config_data["vllm_api"]["frequency_penalty"]
+        self._model_name = ""
 
         # gpu parameters
         self._gpu_memory_utilization = config_data["vllm_api"]["gpu_memory_utilization"]
@@ -40,6 +42,14 @@ class VLLMBackend(BaseGeneratorBackend):
         self._speculative_draft_tensor_parallel_size = config_data["vllm_api"]["speculative_draft_tensor_parallel_size"]
 
         self._generator: LLM | None = None
+
+    @staticmethod
+    def _apply_conversation_template(prompt: str) -> list[dict[Any, Any]]:
+        messages = [
+            {"role": "system", "content": "You are a helpful assistant precisely following the instruction."},
+            {"role": "user", "content": prompt},
+        ]
+        return messages
 
     def generate(self, instruction_prompt: str, object_categories: list[str]) -> list[str]:
         """
@@ -69,7 +79,13 @@ class VLLMBackend(BaseGeneratorBackend):
             if self._generator is None:
                 raise ValueError("vLLM model not initialized.")
 
-            outputs = self._generator.generate([prompt_in], sampling_params, use_tqdm=False)
+            chat_template = self._generator.get_tokenizer().chat_template
+
+            if chat_template is not None:
+                conversation = self._apply_conversation_template(prompt_in)
+                outputs = self._generator.chat(messages=conversation, sampling_params=sampling_params, use_tqdm=False)
+            else:
+                outputs = self._generator.generate([prompt_in], sampling_params=sampling_params, use_tqdm=False)
 
             prompt_in = prompt_in.replace(category, "[category_name]")
             output_prompts.append(outputs[0].outputs[0].text)
@@ -109,6 +125,8 @@ class VLLMBackend(BaseGeneratorBackend):
             os.environ["VLLM_ATTENTION_BACKEND"] = "FLASHINFER"
         else:
             os.environ["VLLM_ATTENTION_BACKEND"] = "FLASH_ATTN"
+
+        self._model_name = model_name
 
         if speculative_model == "":
             self._generator = LLM(
