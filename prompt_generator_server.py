@@ -143,13 +143,12 @@ def generation(save_locally_only: bool = False) -> None:
         # added loading of the model
         if change_model:
             ind = j % len(model_names)
+            logger.warning(f"########## Current model in use: [ {model_names[ind]} ] ##########")
             app.state.generator.load_model(model_names[ind])
             change_model = False
 
             gc.collect()
             torch.cuda.empty_cache()
-        else:
-            change_model = True
 
         t1_local = time()
 
@@ -196,8 +195,10 @@ def generation(save_locally_only: bool = False) -> None:
             logger.info(f"Current dataset size: {len(prompts_filtered)}")
 
         # unloading current model being in use to swap it with a new one on the next iteration
-        if i % pipeline_config["iterations_for_swapping_model"] and change_model:
+        if i % pipeline_config["iterations_for_swapping_model"] == 0:
+            logger.warning("Unloading model before swapping ...")
             app.state.generator.unload_model()
+            change_model = True
             j += 1
 
 
@@ -220,6 +221,8 @@ async def generate_prompts(save_locally_only: bool = Form(False), prompt_generat
 
     try:
         generation(save_locally_only)
+        app.state.generator.unload_model()
+
     except RuntimeError as e:
         await post_exception_to_discord(str(e), prompt_generator_number)
         raise e
