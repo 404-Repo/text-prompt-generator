@@ -7,6 +7,6 @@ channels:
 dependencies:
   - python=3.11
   - pip
-  - cuda-toolkit=12.1.1
+  - cuda-toolkit=12.1
   - pip:
     - -r requirements.txt
