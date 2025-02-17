@@ -55,7 +55,7 @@ prompts_number: 150
 iterations_number: -1
 
 # amount of iterations after which the LLM model will be changed
-iterations_for_swapping_model: 5000
+iterations_for_swapping_model: 500
 
 # file where to output the prompts (.txt file)
 prompts_output_file: "prompt_dataset.txt"
