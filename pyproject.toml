@@ -2,8 +2,11 @@
 name = "text-prompt-generator"
 version = "0.2.0"
 description = ""
-authors = ["s7500 <stezurrodion69@gmail.com>"]
+authors = ["s7500 <stezurrodion69@gmail.com>",
+          "tesha91 <alexander@atlas.design>"]
 readme = "README.md"
+
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.11"
