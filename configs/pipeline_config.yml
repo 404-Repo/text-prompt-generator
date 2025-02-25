@@ -1,6 +1,6 @@
 # hugging face api token, can be generated within your account on the platform. Will be required
-# for downloading gemma LLM.
-hugging_face_api_key: ""
+# for downloading LLMs that require extra access (string)
+hugging_face_api_key:
 
 # the prompt that will be used for generating the dataset.
 # NOTE: [prompts_number] and [category_name] are mandatory placeholders.
@@ -22,30 +22,35 @@ instruction_prompt: "Task: Generate a dataset of fully complete, semantically an
                      Output: Provide a numbered list containing precisely [prompts_number] prompts. Be concise and only generate what was requested."
 
 # Categories of objects from where the LLM model could sample the data.
-obj_categories: ["robots", "animals", "fantasy characters", "science fiction characters", "monsters and mythical creatures",
-                 "statues", "accessories", "plants, mushrooms and trees", "rocks and minerals", "vehicles", "weapons", "armor",
-                 "food and drinks", "household items", "sports equipment", "clothing", "furniture", "spaceships and space stations",
-                 "jewelry", "crafting and building tools", "musical instruments", "buildings", "toys and collectables",
-                 "military and war assets", "magic artifacts", "enchanted structures", "historical artifacts", "everyday objects",
-                 "factory equipment", "machines and engines"]
+obj_categories: [ "robots", "animals", "fantasy characters", "science fiction characters", "monsters and mythical creatures",
+                  "statues", "accessories", "plants, mushrooms and trees", "rocks and minerals", "vehicles", "weapons", "armor",
+                  "food and drinks", "household items", "sports equipment", "clothing", "furniture", "spaceships and space stations",
+                  "jewelry", "crafting and building tools", "musical instruments", "buildings", "toys and collectables",
+                  "military and war assets", "magic artifacts", "enchanted structures", "historical artifacts", "everyday objects",
+                  "factory equipment", "machines and engines" ]
 
 # Words that prompts should not contain. Prompts with these words will be removed from the dataset and filtering stage.
-prompts_with_words_to_filter_out: ["sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
-                                   "tow", "city", "accessories", "jungle", "forest", "space", "pool", "pond", "I", "i",
-                                   "fields", "horizon", "oops", "hillside", "underwater", "floor", "grass", "nature", "mist",
-                                   "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
-                                   "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word",
-                                   "words", "money", "copy", "vacuum", "outdoor", "to", "us", "miami", "kidding", "time",
-                                   "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
-                                   "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
-                                   "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
-                                   "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
-                                   "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach", "water",
-                                   "ill", "first", "-", "think", "is", "are", "be", "wall", "passage", "path", "floating", "feet",
-                                   "hand", "so", "until", "rain", "cave"]
+prompts_with_words_to_filter_out: [ "sky", "skies", "river", "ocean", "sea", "garden", "wind", "field", "terrain", "family",
+                                    "tow", "city", "accessories", "jungle", "forest", "space", "pool", "pond", "I", "i",
+                                    "fields", "horizon", "oops", "hillside", "underwater", "floor", "grass", "nature", "mist",
+                                    "air", "waterfall", "music", "sunset", "sunrise", "beach", "room", "cluster", "accents",
+                                    "melody", "wind", "winds", "tale", "sure", "prompts", "prompt", "sunbeam", "water", "word",
+                                    "words", "money", "copy", "vacuum", "outdoor", "to", "us", "miami", "kidding", "time",
+                                    "sunken", "point", "like", "breathing", "whoops", "labyrinth", "village", "seaside",
+                                    "cloud", "clouds", "exterior", "no", "unit", "harbor", "window", "grip", "island", "song",
+                                    "ambiance", "orbit", "hope", "melody", "animate", "vagina", "you", "please", "lake",
+                                    "d", "classification", "tasks", "task", "output", "here", "motion", "generate", "output",
+                                    "avoid", "category", "street", "park", "make", "build", "marina", "what", "beach", "water",
+                                    "ill", "first", "-", "think", "is", "are", "be", "wall", "passage", "path", "floating", "feet",
+                                    "hand", "so", "until", "rain", "cave" ]
 #
-words_to_remove_from_prompts: ["create", "generate", "design", "build", "imagine", "make", "produce", "example",
-                               "develop", "paint", "construct", "answer", "craft", "form", "fabricate"]
+words_to_remove_from_prompts: [ "a", "an", "the", "create", "generate", "design", "build", "imagine", "make", "produce",
+                                "example", "develop", "paint", "construct", "answer", "craft", "form", "fabricate" ]
+
+prepositions: [ "in", "on", "at", "by", "with", "about", "against", "among", "before", "behind", "between", "during",
+                "for", "from", "of", "to", "over", "under", "through", "into", "upon", "within", "without", "along",
+                "across", "behind", "beneath", "beside", "beyond", "near", "off", "onto", "towards", "underneath",
+                "outside", "and", "that", "which" ]
 
 # amount of prompts to generate per category (can be in numbers or in words).
 prompts_number: 150
@@ -55,7 +60,7 @@ prompts_number: 150
 iterations_number: -1
 
 # amount of iterations after which the LLM model will be changed
-iterations_for_swapping_model: 500
+iterations_for_swapping_model: 100
 
-# file where to output the prompts (.txt file)
-prompts_output_file: "prompt_dataset.txt"
+# file to cache generated prompts to. Optional. Empty no to save prompts to the disk (string with path + file_name.txt)
+prompts_cache_file:

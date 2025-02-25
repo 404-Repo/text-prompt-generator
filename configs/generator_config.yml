@@ -1,67 +1,50 @@
-groq_api:
-  # put here token generated at https://console.groq.com/keys
-  api_key: ""
+# the vllm model that will be used for the prompt generation;
+# Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
+# awq - quantization level of the model supported by the vllm
+llm_models: [""]
 
-  # one of the models supported by groq platform: https://console.groq.com/docs/models
-  llm_model: ""
+# max tokens for prompt generation
+max_tokens: 150
 
-  # max tokens for prompt generation
-  max_tokens: 150
+# defines the maximum length of the model output
+max_model_len: 1024
 
-  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.35, 0.55]
+# temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
+temperature: [0.35, 0.55]
 
-  # random seed for sampling during prompt generation
-  seed: -1
+# defines how much of the GPU memory will be reserved for LLM
+gpu_memory_utilization: 0.9
 
-vllm_api:
-  # the vllm model that will be used for the prompt generation;
-  # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
-  # awq - quantization level of the model supported by the vllm
-  llm_models: [""]
+# Float that controls the cumulative probability of the top tokens to consider.
+# Must be in (0, 1]. Set to 1 to consider all tokens.
+top_p: 0.95
 
-  # max tokens for prompt generation
-  max_tokens: 150
+# Float that penalizes new tokens based on whether they appear in the generated text so far.
+# Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
+presence_penalty: 0.3
 
-  # defines the maximum length of the model output
-  max_model_len: 1024
+# Float that penalizes new tokens based on their frequency in the generated text so far.
+# Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
+frequency_penalty: 0.3
 
-  # temperature interval for generator, [min_val, max_val]; Should be within [0, 1]
-  temperature: [0.35, 0.55]
+# random seed for sampling during prompt generation
+seed: -1
 
-  # defines how much of the GPU memory will be reserved for LLM
-  gpu_memory_utilization: 0.9
+# the number of GPUs that will be used by vLLM
+tensor_parallel_size: 1
 
-  # Float that controls the cumulative probability of the top tokens to consider.
-  # Must be in (0, 1]. Set to 1 to consider all tokens.
-  top_p: 0.95
+# Speculative decoding [Optional];
+# for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
+speculative_model: ""
 
-  # Float that penalizes new tokens based on whether they appear in the generated text so far.
-  # Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
-  presence_penalty: 0.3
+# amount of speculative tokens
+num_speculative_tokens: 5
 
-  # Float that penalizes new tokens based on their frequency in the generated text so far.
-  # Values > 0 encourage the model to use new tokens, while values < 0 encourage the model to repeat tokens.
-  frequency_penalty: 0.3
+# ngram specific parameter:
+ngram_prompt_lookup_max: 4
 
-  # random seed for sampling during prompt generation
-  seed: -1
+# if speculative decoding is in use, this parameter should be set to True
+use_v2_block_manager: True
 
-  # the number of GPUs that will be used by vLLM
-  tensor_parallel_size: 1
-
-  # Speculative decoding [Optional];
-  # for more details see: https://docs.vllm.ai/en/latest/models/spec_decode.html
-  speculative_model: ""
-
-  # amount of speculative tokens
-  num_speculative_tokens: 5
-
-  # ngram specific parameter: 
-  ngram_prompt_lookup_max: 4
-
-  # if speculative decoding is in use, this parameter should be set to True
-  use_v2_block_manager: True
-
-  # should be set to 1, but in the future can be changed (check the link 'for more details:' above on dev status)
-  speculative_draft_tensor_parallel_size: 1
+# should be set to 1, but in the future can be changed (check the link 'for more details:' above on dev status)
+speculative_draft_tensor_parallel_size: 1
