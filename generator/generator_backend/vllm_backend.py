@@ -79,9 +79,10 @@ class VLLMBackend(BaseGeneratorBackend):
             if self._generator is None:
                 raise ValueError("vLLM model not initialized.")
 
-            chat_template = self._generator.get_tokenizer().chat_template
+            # chat_template = self._generator.get_tokenizer().chat_template
+            tokeniser = self._generator.get_tokenizer()
 
-            if chat_template is not None:
+            if  hasattr(tokeniser, "chat_template"):
                 conversation = self._apply_conversation_template(prompt_in)
                 outputs = self._generator.chat(messages=conversation, sampling_params=sampling_params, use_tqdm=False)
             else:
