@@ -82,7 +82,7 @@ class VLLMBackend(BaseGeneratorBackend):
             # chat_template = self._generator.get_tokenizer().chat_template
             tokeniser = self._generator.get_tokenizer()
 
-            if  hasattr(tokeniser, "chat_template"):
+            if hasattr(tokeniser, "chat_template"):
                 conversation = self._apply_conversation_template(prompt_in)
                 outputs = self._generator.chat(messages=conversation, sampling_params=sampling_params, use_tqdm=False)
             else:
