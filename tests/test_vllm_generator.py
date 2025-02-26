@@ -1,19 +1,19 @@
-import os
+from pathlib import Path
 
 import torch
 from generator.generator_backend.vllm_backend import VLLMBackend
-from generator.utils.io_utils import load_config_file
+from generator.config import load_generator_settings_from_yaml, load_pipeline_settings_from_yaml
 
 
-current_dir = os.getcwd()
-generator_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/generator_config.yml"))
-generator = VLLMBackend(generator_config)
+current_dir = Path.cwd().parent
+generator_settings = load_generator_settings_from_yaml(current_dir.resolve() / "configs" / "generator_config.yml")
+pipeline_settings = load_pipeline_settings_from_yaml(current_dir.resolve() / "configs" / "pipeline_config.yml")
+generator = VLLMBackend(generator_settings)
 
 
 def test_load_model():
-    generator.load_vllm_model(generator_config["vllm_api"]["llm_models"][0])
-    pipeline_config = load_config_file(os.path.join(os.path.relpath(current_dir), "configs/pipeline_config.yml"))
-    instruction_prompt = pipeline_config["instruction_prompt"]
+    generator.load_vllm_model(generator_settings.llm_models[0])
+    instruction_prompt = pipeline_settings.instruction_prompt
     instruction_prompt = instruction_prompt.replace("[prompts_number]", str(1))
     prompts = generator.generate(instruction_prompt, ["toys"])
 
