@@ -56,8 +56,6 @@ def cleanup(generator: PromptGenerator) -> None:
 
 
 def load_settings() -> tuple[ServiceSettings, PipelineSettings, GeneratorSettings]:
-    # TODO: re-arrange config
-    # TODO: server settings should be either about `get-prompts` service only or renamed to the app settings.
     current_dir = Path.cwd()
     service_settings = load_service_settings_from_yaml(current_dir.resolve() / "configs" / "service_config.yml")
     generator_settings = load_generator_settings_from_yaml(current_dir.resolve() / "configs" / "generator_config.yml")
@@ -75,7 +73,10 @@ def generate(
     prompts_to_send = []
     i = 0
     while pipeline_settings.iterations_number < 0 or i < pipeline_settings.iterations_number:
-        if i % pipeline_settings.iterations_for_swapping_model == 0:
+        if pipeline_settings.iterations_for_swapping_model > 0:
+            if i % pipeline_settings.iterations_for_swapping_model == 0:
+                next_model_idx = load_next_vllm_model(generator, vllm_models, next_model_idx)
+        elif i == 0 and pipeline_settings.iterations_for_swapping_model == 0:
             next_model_idx = load_next_vllm_model(generator, vllm_models, next_model_idx)
 
         logger.info(f"Generation Iteration: {i}\n")
