@@ -60,7 +60,7 @@ prompts_number: 150
 iterations_number: -1
 
 # amount of iterations after which the LLM model will be changed
-iterations_for_swapping_model: 500
+iterations_for_swapping_model: 100
 
 # file to cache generated prompts to. Optional. Empty no to save prompts to the disk (string with path + file_name.txt)
 prompts_cache_file:
