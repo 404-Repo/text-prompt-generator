@@ -11,7 +11,7 @@ def _initialize_huggingface(pipeline_settings: PipelineSettings) -> None:
     if pipeline_settings.hugging_face_api_key:
         login(token=pipeline_settings.hugging_face_api_key)
     else:
-        raise RaiseWarning("Hugging Face API key was not specified.")
+        raise RuntimeWarning("Hugging Face API key was not specified.")
 
 
 def _get_instruction_prompt(pipeline_settings: PipelineSettings) -> str:
