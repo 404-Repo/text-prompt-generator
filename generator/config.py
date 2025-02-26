@@ -7,14 +7,15 @@ from pydantic import BaseModel, Field, HttpUrl
 class ServiceSettings(BaseModel):
     generator_id: str = Field(..., description="Unique identifier for the generator")
     get_prompts_service_url: HttpUrl | None = Field(None, description="`get-prompts` service URL.")
-    get_prompts_api_key: str = Field(..., description="`get-prompts` API-Key.")
+    get_prompts_api_key: str | None = Field(None, description="`get-prompts` API-Key.")
     get_prompts_send_max_retries: int = Field(5, description="Maximum retries before continuing prompt generation.")
     get_prompts_send_retry_delay: int = Field(1, description="Delay (in seconds) before retrying the request.")
     discord_webhook_url: HttpUrl | None = Field(None, description="Discord webhook URL for server error notifications.")
 
 
 class PipelineSettings(BaseModel):
-    hugging_face_api_key: str = Field(..., description="Hugging Face API token for downloading Gemma LLM.")
+    hugging_face_api_key: str | None = Field(None, description="Hugging Face API token for downloading LLMs that "
+                                                               "require extra access (string).")
     instruction_prompt: str = Field(
         ...,
         description="Template for generating dataset prompts. "
