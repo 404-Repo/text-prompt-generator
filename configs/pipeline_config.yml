@@ -1,6 +1,6 @@
 # hugging face api token, can be generated within your account on the platform. Will be required
-# for downloading gemma LLM.
-hugging_face_api_key: ""
+# for downloading LLMs that require extra access (string)
+hugging_face_api_key:
 
 # the prompt that will be used for generating the dataset.
 # NOTE: [prompts_number] and [category_name] are mandatory placeholders.
@@ -62,5 +62,5 @@ iterations_number: -1
 # amount of iterations after which the LLM model will be changed
 iterations_for_swapping_model: 500
 
-# file to cache generated prompts to. Optional. Empty no to save prompts to the disk
+# file to cache generated prompts to. Optional. Empty no to save prompts to the disk (string with path + file_name.txt)
 prompts_cache_file:
