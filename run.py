@@ -104,8 +104,8 @@ def generate(
             if service_settings.get_prompts_service.service_url:
                 clear_prompts = send_data_with_retry(service_settings.get_prompts_service, prompts_to_send)
 
-            if service_settings.validate_service.service_url:
-                send_data_with_retry(service_settings.validate_service, prompts_to_send)
+            if service_settings.prompts_validator_service.service_url:
+                send_data_with_retry(service_settings.prompts_validator_service, prompts_to_send)
 
             if clear_prompts:
                 prompts_to_send.clear()

@@ -2,7 +2,7 @@
 generator_id: "1"
 
 # `get-prompts` service, service to aggregate and distribute generated prompts
-get_prompts:
+get_prompts_service:
   # Service URL. Optional. Empty for not sending prompts (string with url)
   service_url:
 
@@ -16,7 +16,7 @@ get_prompts:
   send_retry_delay: 1
 
 # optional service to monitor speed and quality of the generated prompts.
-validator:
+prompts_validator_service:
   # Service URL. Optional. Empty for not sending prompts (string with url)
   service_url:
 

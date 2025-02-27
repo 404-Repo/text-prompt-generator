@@ -17,7 +17,7 @@ class ServiceSettings(BaseModel):
         default_factory=lambda: PromptAggregatorServiceSettings(),
         description="service to aggregate and distribute generated prompts",
     )
-    validate_service: PromptAggregatorServiceSettings = Field(
+    prompts_validator_service: PromptAggregatorServiceSettings = Field(
         default_factory=lambda: PromptAggregatorServiceSettings(),
         description="service to monitor speed and quality of the generated prompts",
     )
