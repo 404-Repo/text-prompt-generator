@@ -1,19 +1,34 @@
 # Unique identifier for the generator, used to distinguish instances in the `get-prompts` service
 generator_id: "1"
 
-# `get-prompts` service URL. Optional. Empty for not sending prompts (string with url)
-get_prompts_service_url:
+# `get-prompts` service, service to aggregate and distribute generated prompts
+get_prompts:
+  # Service URL. Optional. Empty for not sending prompts (string with url)
+  service_url:
 
+  # API-Key. Optional. (string)
+  api_key:
 
-# `get-prompts` API-Key (string)
-get_prompts_api_key:
+  # Maximum amount of retries to send prompts to the service
+  send_max_retries: 5
 
+  # Wait time in seconds before reattempting to send prompts to the service, seconds
+  send_retry_delay: 1
 
-# maximum amount of retries to send prompts to the `get-prompts` service
-get_prompts_send_max_retries: 5
+# optional service to monitor speed and quality of the generated prompts.
+validator:
+  # Service URL. Optional. Empty for not sending prompts (string with url)
+  service_url:
 
-# wait time in seconds before reattempting to send prompts to the `get-prompts` service, seconds
-get_prompts_send_retry_delay: 1
+  # API-Key. Optional. (string)
+  api_key:
+
+  # Maximum amount of retries to send prompts to the service
+  send_max_retries: 5
+
+  # Wait time in seconds before reattempting to send prompts to the service, seconds
+  send_retry_delay: 1
+
 
 # discord channel for sending server errors. Optional. Empty for no discord notifications. (string with url)
 discord_webhook_url:

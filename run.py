@@ -8,6 +8,7 @@ import torch
 from generator.config import (
     GeneratorSettings,
     PipelineSettings,
+    PromptAggregatorServiceSettings,
     ServiceSettings,
     load_generator_settings_from_yaml,
     load_pipeline_settings_from_yaml,
@@ -93,13 +94,20 @@ def generate(
 
         # posting accumulated prompts to the remote server with prompt validator
         if len(prompts_to_send) >= 1000:
+            # The only case when we want to keep accumulating prompts is
+            # the `get-prompts` service configured and prompt not being able to be delivered.
+            clear_prompts = not service_settings.get_prompts_service.service_url
+
             if pipeline_settings.prompts_cache_file:
                 cache_prompts_to_file(pipeline_settings.prompts_cache_file, prompts_to_send)
 
-            if service_settings.get_prompts_service_url:
-                if send_data_with_retry(service_settings, prompts_to_send):
-                    prompts_to_send.clear()
-            else:
+            if service_settings.get_prompts_service.service_url:
+                clear_prompts = send_data_with_retry(service_settings.get_prompts_service, prompts_to_send)
+
+            if service_settings.validate_service.service_url:
+                send_data_with_retry(service_settings.validate_service, prompts_to_send)
+
+            if clear_prompts:
                 prompts_to_send.clear()
 
         i += 1
@@ -118,19 +126,19 @@ def cache_prompts_to_file(filename: str, prompts: list[str]) -> None:
         f.writelines("\n".join(prompts))
 
 
-def send_data_with_retry(service_settings: ServiceSettings, prompts: list[str]) -> bool:
+def send_data_with_retry(service_settings: PromptAggregatorServiceSettings, prompts: list[str]) -> bool:
     logger.info("Sending prompts to the `get-prompts` service.")
 
     prompts_to_json = json.dumps({"prompts": prompts})
-    max_retries = service_settings.get_prompts_send_max_retries
-    retry_delay = service_settings.get_prompts_send_retry_delay
+    max_retries = service_settings.send_max_retries
+    retry_delay = service_settings.send_retry_delay
 
-    headers = {"Content-Type": "application/json", "X-Api-Key": f"{service_settings.get_prompts_api_key}"}
+    headers = {"Content-Type": "application/json", "X-Api-Key": f"{service_settings.api_key}"}
 
     for attempt in range(1, max_retries + 1):
         try:
             response = requests.post(
-                str(service_settings.get_prompts_service_url), data=prompts_to_json, headers=headers, timeout=30
+                str(service_settings.service_url), data=prompts_to_json, headers=headers, timeout=30
             )
 
             if response.status_code == 200:

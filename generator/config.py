@@ -4,18 +4,30 @@ import yaml
 from pydantic import BaseModel, Field, HttpUrl
 
 
+class PromptAggregatorServiceSettings(BaseModel):
+    service_url: HttpUrl | None = Field(default=None, description="service URL.")
+    api_key: str | None = Field(default=None, description="`API-Key.")
+    send_max_retries: int = Field(default=5, description="Maximum retries before continuing prompt generation.")
+    send_retry_delay: int = Field(default=1, description="Delay (in seconds) before retrying the request.")
+
+
 class ServiceSettings(BaseModel):
     generator_id: str = Field(..., description="Unique identifier for the generator")
-    get_prompts_service_url: HttpUrl | None = Field(None, description="`get-prompts` service URL.")
-    get_prompts_api_key: str | None = Field(None, description="`get-prompts` API-Key.")
-    get_prompts_send_max_retries: int = Field(5, description="Maximum retries before continuing prompt generation.")
-    get_prompts_send_retry_delay: int = Field(1, description="Delay (in seconds) before retrying the request.")
+    get_prompts_service: PromptAggregatorServiceSettings = Field(
+        default_factory=lambda: PromptAggregatorServiceSettings(),
+        description="service to aggregate and distribute generated prompts",
+    )
+    validate_service: PromptAggregatorServiceSettings = Field(
+        default_factory=lambda: PromptAggregatorServiceSettings(),
+        description="service to monitor speed and quality of the generated prompts",
+    )
     discord_webhook_url: HttpUrl | None = Field(None, description="Discord webhook URL for server error notifications.")
 
 
 class PipelineSettings(BaseModel):
-    hugging_face_api_key: str | None = Field(None, description="Hugging Face API token for downloading LLMs that "
-                                                               "require extra access (string).")
+    hugging_face_api_key: str | None = Field(
+        None, description="Hugging Face API token for downloading LLMs that " "require extra access (string)."
+    )
     instruction_prompt: str = Field(
         ...,
         description="Template for generating dataset prompts. "
