@@ -14,7 +14,7 @@ CONDA_BASE=$(conda info --base)
 source "${CONDA_BASE}/etc/profile.d/conda.sh"
 
 # Create environment and activate it
-conda env create -f environment.yml
+conda env create -f ../environment.yml
 conda activate three-gen-prompt-generator
 conda info --env
 
@@ -30,9 +30,8 @@ cat <<EOF > ../generation.config.js
 module.exports = {
   apps : [{
     name: 'prompts_generator',
-    script: 'prompt_generator_server.py',
+    script: 'run.py',
     interpreter: '${CONDA_INTERPRETER_PATH}',
-    args: '--port 8888 --backend vllm'
   }]
 };
 EOF
