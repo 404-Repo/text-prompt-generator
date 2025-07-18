@@ -1,7 +1,7 @@
 # the vllm model that will be used for the prompt generation;
 # Supported models: https://docs.vllm.ai/en/latest/models/supported_models.html
 # awq - quantization level of the model supported by the vllm
-llm_models: [""]
+llm_models: ["microsoft/Phi-4-mini-instruct"]
 
 # max tokens for prompt generation
 max_tokens: 150
@@ -13,7 +13,7 @@ max_model_len: 1024
 temperature: [0.35, 0.55]
 
 # defines how much of the GPU memory will be reserved for LLM
-gpu_memory_utilization: 0.9
+gpu_memory_utilization: 0.75
 
 # Float that controls the cumulative probability of the top tokens to consider.
 # Must be in (0, 1]. Set to 1 to consider all tokens.

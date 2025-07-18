@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import yaml
 from pydantic import BaseModel, Field, HttpUrl
@@ -28,9 +29,9 @@ class PipelineSettings(BaseModel):
     hugging_face_api_key: str | None = Field(
         None, description="Hugging Face API token for downloading LLMs that " "require extra access (string)."
     )
-    instruction_prompt: str = Field(
-        ...,
-        description="Template for generating dataset prompts. "
+    instruction_template: str | None = Field(
+        None,
+        description="Template file for generating dataset prompts. "
         "Requires placeholders: [prompts_number] and [category_name].",
     )
     obj_categories: list[str] = Field(..., description="List of object categories used for dataset generation.")
@@ -86,3 +87,11 @@ def load_generator_settings_from_yaml(file_path: Path) -> GeneratorSettings:
     with file_path.open() as f:
         config_data = yaml.safe_load(f)
     return GeneratorSettings.model_validate(config_data)
+
+
+def load_settings() -> tuple[ServiceSettings, PipelineSettings, GeneratorSettings]:
+    current_dir = Path.cwd()
+    service_settings = load_service_settings_from_yaml(current_dir.resolve() / "configs" / "service_config.yml")
+    generator_settings = load_generator_settings_from_yaml(current_dir.resolve() / "configs" / "generator_config.yml")
+    pipeline_settings = load_pipeline_settings_from_yaml(current_dir.resolve() / "configs" / "pipeline_config.yml")
+    return service_settings, pipeline_settings, generator_settings

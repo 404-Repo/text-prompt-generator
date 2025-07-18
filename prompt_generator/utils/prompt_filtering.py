@@ -127,3 +127,16 @@ def remove_words_from_prompts(prompts: list[str], words_to_remove: set[str]) -> 
     logger.info(f"Removed undesired words. {num_augmented} out of {len(prompts)} prompts")
 
     return result_prompts
+
+
+def postprocess_prompts(
+        prompts: list[str],
+        words_to_filter: set[str],
+        words_to_remove: set[str],
+        prepositions: set[str],
+    ) -> list[str]:
+    prompts_out = post_process_generated_prompts(prompts)
+    prompts_out = filter_prompts_with_words(prompts_out, words_to_filter)
+    prompts_out = remove_words_from_prompts(prompts_out, words_to_remove)
+    prompts_out = correct_non_finished_prompts(prompts_out, prepositions)
+    return prompts_out

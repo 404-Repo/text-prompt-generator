@@ -2,25 +2,16 @@ import copy
 import gc
 import os
 import secrets
-from time import time
 
 import torch
-import tqdm
 from loguru import logger
 from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam
 from vllm import LLM, SamplingParams
 from vllm.distributed.parallel_state import destroy_model_parallel
 from vllm.entrypoints.chat_utils import ChatCompletionMessageParam
 
-from generator.config import GeneratorSettings
-from generator.utils import get_available_gpu_memory
-
-
-def _log_generation_time(start_time: float) -> None:
-    duration = (time() - start_time) / 60.0
-    logger.info(f" It took: {duration:.2f} min.")
-    logger.info(" Done.")
-    logger.info("\n")
+from prompt_generator.config import GeneratorSettings
+import prompt_generator.utils.gpu as gpu_utils
 
 
 class VLLMBackend:
@@ -33,7 +24,6 @@ class VLLMBackend:
         self._top_p = vllm_settings.top_p
         self._presence_penalty = vllm_settings.presence_penalty
         self._frequency_penalty = vllm_settings.frequency_penalty
-        self._model_name = ""
 
         # gpu parameters
         self._gpu_memory_utilization = vllm_settings.gpu_memory_utilization
@@ -47,7 +37,10 @@ class VLLMBackend:
 
         self._speculative_model = vllm_settings.speculative_model
 
-        self._generator: LLM | None = None
+        self._llm: LLM | None = None
+        self._model_name = ""
+        self._models = vllm_settings.llm_models
+        self._current_model_idx = 0
 
     @staticmethod
     def _apply_conversation_template(prompt: str) -> list[ChatCompletionMessageParam]:
@@ -58,7 +51,8 @@ class VLLMBackend:
             ChatCompletionUserMessageParam(role="user", content=prompt),
         ]
 
-    def generate(self, instruction_prompt: str, object_categories: list[str]) -> list[str]:
+
+    def generate(self, prompt: str) -> str:
         """
         Function that calls vLLM API for generating prompts.
 
@@ -71,37 +65,24 @@ class VLLMBackend:
         -------
         output_prompts: list with generated prompts
         """
+        temperature = secrets.SystemRandom().uniform(self._temperature[0], self._temperature[1])
+        seed = secrets.randbelow(int(1e5)) if self._seed < 0 else self._seed
+        sampling_params = self._create_sampling_params(temperature, seed)
 
-        prompt_in = copy.copy(instruction_prompt)
-        start_time = time()
+        if self._llm is None:
+            raise ValueError("vLLM model not initialized.")
 
-        output_prompts = []
-        for category in tqdm.tqdm(object_categories, desc="Generating prompts"):
-            temperature = secrets.SystemRandom().uniform(self._temperature[0], self._temperature[1])
-            prompt_in = prompt_in.replace("[category_name]", category)
-            seed = secrets.randbelow(int(1e5)) if self._seed < 0 else self._seed
+        # chat_template = self._generator.get_tokenizer().chat_template
+        tokeniser = self._llm.get_tokenizer()
 
-            sampling_params = self._create_sampling_params(temperature, seed)
+        if hasattr(tokeniser, "chat_template"):
+            conversation = self._apply_conversation_template(prompt)
+            outputs = self._llm.chat(messages=conversation, sampling_params=sampling_params, use_tqdm=False)
+            return outputs[0].outputs[0].text
 
-            if self._generator is None:
-                raise ValueError("vLLM model not initialized.")
+        outputs = self._llm.generate([prompt], sampling_params=sampling_params, use_tqdm=False)
+        return outputs[0].outputs[0].text
 
-            # chat_template = self._generator.get_tokenizer().chat_template
-            tokeniser = self._generator.get_tokenizer()
-
-            if hasattr(tokeniser, "chat_template"):
-                conversation = self._apply_conversation_template(prompt_in)
-                outputs = self._generator.chat(messages=conversation, sampling_params=sampling_params, use_tqdm=False)
-                output_prompts.append(outputs[0].outputs[0].text)
-            else:
-                outputs = self._generator.generate([prompt_in], sampling_params=sampling_params, use_tqdm=False)
-                output_prompts.append(outputs[0].outputs[0].text)
-
-            prompt_in = prompt_in.replace(category, "[category_name]")
-
-        _log_generation_time(start_time)
-
-        return output_prompts
 
     def _create_sampling_params(self, temperature: float, seed: int) -> SamplingParams:
         return SamplingParams(
@@ -114,7 +95,8 @@ class VLLMBackend:
             top_p=self._top_p,
         )
 
-    def load_vllm_model(self, model_name: str) -> None:
+
+    def load_model(self, model_name: str) -> None:
         """
         Function for preloading LLM model in GPU memory
 
@@ -131,7 +113,7 @@ class VLLMBackend:
         self._model_name = model_name
 
         if self._speculative_model == "":
-            self._generator = LLM(
+            self._llm = LLM(
                 model=model_name,
                 trust_remote_code=True,
                 tensor_parallel_size=self._tensor_parallel_size,
@@ -142,7 +124,7 @@ class VLLMBackend:
                 max_num_batched_tokens=2048,
             )
         elif self._speculative_model == "[ngram]":
-            self._generator = LLM(
+            self._llm = LLM(
                 model=model_name,
                 trust_remote_code=True,
                 tensor_parallel_size=self._tensor_parallel_size,
@@ -155,7 +137,7 @@ class VLLMBackend:
                 use_v2_block_manager=self._use_v2_block_manager,
             )
         else:
-            self._generator = LLM(
+            self._llm = LLM(
                 model=model_name,
                 trust_remote_code=True,
                 tensor_parallel_size=self._tensor_parallel_size,
@@ -167,11 +149,29 @@ class VLLMBackend:
                 use_v2_block_manager=self._use_v2_block_manager,
             )
 
-    def unload_vllm_model(self) -> None:
-        logger.info(f"Unloading VLLM model. VRAM available: {get_available_gpu_memory() / 1024 ** 3} Gb")
+
+    def unload_model(self) -> None:
+        logger.info(f"Unloading VLLM model. VRAM available: {gpu_utils.get_available_memory() / 1024 ** 3} Gb")
         destroy_model_parallel()
-        self._generator = None
+        self._llm = None
         gc.collect()
         torch.cuda.empty_cache()
 
-        logger.info(f"VLLM model unloaded. VRAM available: {get_available_gpu_memory() / 1024 ** 3} Gb")
+        logger.info(f"VLLM model unloaded. VRAM available: {gpu_utils.get_available_memory() / 1024 ** 3} Gb")
+
+
+    def load_next_model(self) -> None:
+        if not self._model_name:
+            self.load_model(self._models[self._current_model_idx])
+            return
+
+        if len(self._models) == 1:
+            return
+        
+        self.unload_model()
+        self._current_model_idx = (self._current_model_idx + 1) % len(self._models) 
+        self.load_model(self._models[self._current_model_idx])
+        gc.collect()
+        torch.cuda.empty_cache()
+
+        logger.info(f"Next model to use: [ {self._models[self._current_model_idx]} ]")
