@@ -22,9 +22,6 @@ CUDA_HOME=${CONDA_PREFIX}
 mkdir tmp
 wget -O ./tmp/flash_attn-2.7.4.post1-cp311-cp311-linux_x86_64.whl "https://github.com/404-Repo/compiled_libs/releases/download/flash-attn-cu126-torch270/flash_attn-2.7.4.post1-cp311-cp311-linux_x86_64.whl"
 pip install ./tmp/flash_attn-2.7.4.post1-cp311-cp311-linux_x86_64.whl
-
-wget -O ./tmp/flashinfer_python-0.2.5-cp39-abi3-linux_x86_64.whl "https://github.com/404-Repo/compiled_libs/releases/download/flashinfer-cu126-torch270/flashinfer_python-0.2.5-cp39-abi3-linux_x86_64.whl"
-pip install ./tmp/flashinfer_python-0.2.5-cp39-abi3-linux_x86_64.whl
 rm -rf tmp
 
 
