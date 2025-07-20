@@ -9,6 +9,7 @@ from openai.types.chat import ChatCompletionSystemMessageParam, ChatCompletionUs
 from vllm import LLM, SamplingParams
 from vllm.distributed.parallel_state import destroy_model_parallel
 from vllm.entrypoints.chat_utils import ChatCompletionMessageParam
+from vllm.sampling_params import GuidedDecodingParams
 
 from prompt_generator.config import GeneratorSettings
 import prompt_generator.utils.gpu as gpu_utils
@@ -52,7 +53,7 @@ class VLLMBackend:
         ]
 
 
-    def generate(self, prompt: str) -> str:
+    def generate(self, prompt: str, structured_output:str=None) -> str:
         """
         Function that calls vLLM API for generating prompts.
 
@@ -67,7 +68,7 @@ class VLLMBackend:
         """
         temperature = secrets.SystemRandom().uniform(self._temperature[0], self._temperature[1])
         seed = secrets.randbelow(int(1e5)) if self._seed < 0 else self._seed
-        sampling_params = self._create_sampling_params(temperature, seed)
+        sampling_params = self._create_sampling_params(temperature, seed, structured_output)
 
         if self._llm is None:
             raise ValueError("vLLM model not initialized.")
@@ -84,7 +85,18 @@ class VLLMBackend:
         return outputs[0].outputs[0].text
 
 
-    def _create_sampling_params(self, temperature: float, seed: int) -> SamplingParams:
+    def _create_sampling_params(self, temperature: float, seed: int, structured_output:str) -> SamplingParams:
+        if not structured_output:
+            return SamplingParams(
+                n=1,
+                presence_penalty=self._presence_penalty,
+                frequency_penalty=self._frequency_penalty,
+                seed=seed,
+                temperature=temperature,
+                max_tokens=self._max_tokens,
+                top_p=self._top_p,
+            )
+        
         return SamplingParams(
             n=1,
             presence_penalty=self._presence_penalty,
@@ -93,6 +105,7 @@ class VLLMBackend:
             temperature=temperature,
             max_tokens=self._max_tokens,
             top_p=self._top_p,
+            guided_decoding=GuidedDecodingParams(json=structured_output)
         )
 
 
