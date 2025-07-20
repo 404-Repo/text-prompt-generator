@@ -25,10 +25,7 @@ class SimpleGenerator(AbstractGenerator):
             category_letter = rd.choices(string.ascii_uppercase, weights=weights)
             object_letter = rd.choices(string.ascii_uppercase, weights=weights)
             instruction_prompt = self._instruction_template.render(category_letter=category_letter, object_letter=object_letter)
-            x = self._backend.generate(instruction_prompt, structured_output=Output.model_json_schema())
-            print(category_letter, object_letter)
-            print(x)
-            output = Output.model_validate_json(x)
+            output = Output.model_validate_json(self._backend.generate(instruction_prompt, structured_output=Output.model_json_schema()))
             output_prompts.append(output.description)
 
         return output_prompts
