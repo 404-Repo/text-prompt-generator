@@ -49,7 +49,7 @@ def generate(
         log_duration(f"Iteration {i}: ", generation_start_time)
 
         # posting accumulated prompts to the remote server with prompt validator
-        if len(prompts_to_send) >= 100:
+        if len(prompts_to_send) >= 1000:
             # The only case when we want to keep accumulating prompts is
             # the `get-prompts` service configured and prompt not being able to be delivered.
             clear_prompts = not service_settings.get_prompts_service.service_url
