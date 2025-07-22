@@ -49,7 +49,7 @@ def generate(
         log_duration(f"Iteration {i}: ", generation_start_time)
 
         # posting accumulated prompts to the remote server with prompt validator
-        if len(prompts_to_send) >= 1000:
+        if len(prompts_to_send) >= 100:
             # The only case when we want to keep accumulating prompts is
             # the `get-prompts` service configured and prompt not being able to be delivered.
             clear_prompts = not service_settings.get_prompts_service.service_url
@@ -57,11 +57,11 @@ def generate(
             if pipeline_settings.prompts_cache_file:
                 cache_prompts_to_file(pipeline_settings.prompts_cache_file, prompts_to_send)
 
-            # if service_settings.get_prompts_service.service_url:
-            #     clear_prompts = send_data_with_retry(service_settings.get_prompts_service, prompts_to_send)
+            if service_settings.get_prompts_service.service_url:
+                clear_prompts = send_data_with_retry(service_settings.get_prompts_service, prompts_to_send)
 
-            # if service_settings.prompts_validator_service.service_url:
-            #     send_data_with_retry(service_settings.prompts_validator_service, prompts_to_send)
+            if service_settings.prompts_validator_service.service_url:
+                send_data_with_retry(service_settings.prompts_validator_service, prompts_to_send)
 
             if clear_prompts:
                 prompts_to_send.clear()
