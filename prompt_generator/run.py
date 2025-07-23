@@ -34,10 +34,13 @@ def generate(
     i = 0
     while pipeline_settings.iterations_number < 0 or i < pipeline_settings.iterations_number:
 
-        if pipeline_settings.iterations_for_swapping_model > 0 and i % pipeline_settings.iterations_for_swapping_model == 0:
-                generator.load_next_model()
+        if (
+            pipeline_settings.iterations_for_swapping_model > 0
+            and i % pipeline_settings.iterations_for_swapping_model == 0
+        ):
+            generator.load_next_model()
         elif i == 0 and pipeline_settings.iterations_for_swapping_model == 0:
-                generator.load_next_model()
+            generator.load_next_model()
 
         logger.info(f"Generation Iteration: {i}\n")
 
@@ -58,10 +61,10 @@ def generate(
                 cache_prompts_to_file(pipeline_settings.prompts_cache_file, prompts_to_send)
 
             if service_settings.get_prompts_service.service_url:
-                clear_prompts = send_data_with_retry(service_settings.get_prompts_service, prompts_to_send)
+                clear_prompts = send_data_with_retry(service_settings, prompts_to_send)
 
             if service_settings.prompts_validator_service.service_url:
-                send_data_with_retry(service_settings.prompts_validator_service, prompts_to_send)
+                send_data_with_retry(service_settings, prompts_to_send)
 
             if clear_prompts:
                 prompts_to_send.clear()
@@ -74,19 +77,26 @@ def cache_prompts_to_file(filename: str, prompts: list[str]) -> None:
         f.writelines("\n".join(prompts))
 
 
-def send_data_with_retry(service_settings: PromptAggregatorServiceSettings, prompts: list[str]) -> bool:
+def send_data_with_retry(service_settings: ServiceSettings, prompts: list[str]) -> bool:
     logger.info("Sending prompts to the `get-prompts` service.")
 
     prompts_to_json = json.dumps({"prompts": prompts})
-    max_retries = service_settings.send_max_retries
-    retry_delay = service_settings.send_retry_delay
+    max_retries = service_settings.prompts_validator_service.send_max_retries
+    retry_delay = service_settings.prompts_validator_service.send_retry_delay
 
-    headers = {"Content-Type": "application/json", "X-Api-Key": f"{service_settings.api_key}"}
+    headers = {
+        "Content-Type": "application/json",
+        "X-Api-Key": f"{service_settings.prompts_validator_service.api_key}",
+        "X-POD-ID": service_settings.generator_id,
+    }
 
     for attempt in range(1, max_retries + 1):
         try:
             response = requests.post(
-                str(service_settings.service_url), data=prompts_to_json, headers=headers, timeout=30
+                str(service_settings.prompts_validator_service.service_url),
+                data=prompts_to_json,
+                headers=headers,
+                timeout=30,
             )
 
             if response.status_code == 200:
@@ -103,6 +113,7 @@ def send_data_with_retry(service_settings: PromptAggregatorServiceSettings, prom
 
     logger.warning("Max retries reached. Failed to send prompt. Continue generating prompts.")
     return False
+
 
 def main() -> None:
     service_settings, pipeline_settings, generator_settings = load_settings()
@@ -125,6 +136,7 @@ def main() -> None:
 
     cleanup(generator)
     logger.info("Done.")
+
 
 if __name__ == "__main__":
     main()

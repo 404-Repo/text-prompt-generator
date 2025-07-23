@@ -16,7 +16,6 @@ class AbstractGenerator(ABC):
         if pipeline_settings.instruction_template:
             self._instruction_template = template.load(pipeline_settings.instruction_template)
 
-
     def load_model(self, model_name: str) -> None:
         self._backend.load_model(model_name)
 

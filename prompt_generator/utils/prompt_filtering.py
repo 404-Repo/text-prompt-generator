@@ -130,11 +130,11 @@ def remove_words_from_prompts(prompts: list[str], words_to_remove: set[str]) -> 
 
 
 def postprocess_prompts(
-        prompts: list[str],
-        words_to_filter: set[str],
-        words_to_remove: set[str],
-        prepositions: set[str],
-    ) -> list[str]:
+    prompts: list[str],
+    words_to_filter: set[str],
+    words_to_remove: set[str],
+    prepositions: set[str],
+) -> list[str]:
     prompts_out = post_process_generated_prompts(prompts)
     prompts_out = filter_prompts_with_words(prompts_out, words_to_filter)
     prompts_out = remove_words_from_prompts(prompts_out, words_to_remove)

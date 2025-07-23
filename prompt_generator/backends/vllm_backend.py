@@ -52,8 +52,7 @@ class VLLMBackend:
             ChatCompletionUserMessageParam(role="user", content=prompt),
         ]
 
-
-    def generate(self, prompt: str, structured_output:str=None) -> str:
+    def generate(self, prompt: str, structured_output: str = None) -> str:
         """
         Function that calls vLLM API for generating prompts.
 
@@ -84,8 +83,7 @@ class VLLMBackend:
         outputs = self._llm.generate([prompt], sampling_params=sampling_params, use_tqdm=False)
         return outputs[0].outputs[0].text
 
-
-    def _create_sampling_params(self, temperature: float, seed: int, structured_output:str) -> SamplingParams:
+    def _create_sampling_params(self, temperature: float, seed: int, structured_output: str) -> SamplingParams:
         if not structured_output:
             return SamplingParams(
                 n=1,
@@ -95,7 +93,7 @@ class VLLMBackend:
                 max_tokens=self._max_tokens,
                 top_p=self._top_p,
             )
-        
+
         return SamplingParams(
             n=1,
             presence_penalty=self._presence_penalty,
@@ -103,9 +101,8 @@ class VLLMBackend:
             temperature=temperature,
             max_tokens=self._max_tokens,
             top_p=self._top_p,
-            guided_decoding=GuidedDecodingParams(json=structured_output)
+            guided_decoding=GuidedDecodingParams(json=structured_output),
         )
-
 
     def load_model(self, model_name: str) -> None:
         """
@@ -160,7 +157,6 @@ class VLLMBackend:
                 use_v2_block_manager=self._use_v2_block_manager,
             )
 
-
     def unload_model(self) -> None:
         logger.info(f"Unloading VLLM model. VRAM available: {gpu_utils.get_available_memory() / 1024 ** 3} Gb")
         destroy_model_parallel()
@@ -170,7 +166,6 @@ class VLLMBackend:
 
         logger.info(f"VLLM model unloaded. VRAM available: {gpu_utils.get_available_memory() / 1024 ** 3} Gb")
 
-
     def load_next_model(self) -> None:
         if not self._model_name:
             self.load_model(self._models[self._current_model_idx])
@@ -178,9 +173,9 @@ class VLLMBackend:
 
         if len(self._models) == 1:
             return
-        
+
         self.unload_model()
-        self._current_model_idx = (self._current_model_idx + 1) % len(self._models) 
+        self._current_model_idx = (self._current_model_idx + 1) % len(self._models)
         self.load_model(self._models[self._current_model_idx])
         gc.collect()
         torch.cuda.empty_cache()
