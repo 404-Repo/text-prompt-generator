@@ -29,14 +29,9 @@ rm -rf tmp
 CONDA_INTERPRETER_PATH=$(which python)
 
 # Generate the generation.config.js file for PM2 with specified configurations
-cat <<EOF > ../generation.config.js
-module.exports = {
-  apps : [{
-    name: 'prompts_generator',
-    script: '-m prompt_generator.run',
-    interpreter: '${CONDA_INTERPRETER_PATH}',
-  }]
-};
+cat <<EOF > ../start.sh
+#!/bin/bash
+${CONDA_INTERPRETER_PATH} -m prompot_generator.run
 EOF
 
 echo -e "\n\n[INFO] generation.config.js generated for PM2."
