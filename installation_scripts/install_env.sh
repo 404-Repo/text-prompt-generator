@@ -33,7 +33,7 @@ cat <<EOF > ../generation.config.js
 module.exports = {
   apps : [{
     name: 'prompts_generator',
-    script: 'run.py',
+    script: '-m prompt_generator.run',
     interpreter: '${CONDA_INTERPRETER_PATH}',
   }]
 };
