@@ -25,7 +25,7 @@ class SimpleGenerator(AbstractGenerator):
 
         for i in tqdm.tqdm(range(self._number_of_prompts)):
             category_letter = rd.choices(string.ascii_uppercase, weights=weights)
-            object_letter = rd.choices(string.ascii_uppercase, weights=weights)
+            object_letter = rd.choices(string.ascii_uppercase)
             instruction_prompt = self._instruction_template.render(
                 category_letter=category_letter, object_letter=object_letter
             )
